@@ -1,22 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { DropdownMenuSelect } from "@/components/ui/dropdown-menu";
 
 const navigation = [
   { name: "Home", href: "/" },
   { name: "About", href: "/about" },
   { name: "Senate", href: "/senate" },
   { name: "Committees", href: "/committees" },
+  { name: "Documents", href: "/documents" },
   { name: "Events", href: "/events" },
-];
-
-const categoryOptions = [
-  "Memorandum",
-  "Resolutions",
-  "Executive Order",
-  "Special Order",
 ];
 
 interface HeaderProps {
@@ -24,15 +16,15 @@ interface HeaderProps {
 }
 
 export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-[#173490]/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E7C609] text-sm font-black text-[#173490] shadow-sm">
-            USG
-          </div>
+          <img
+            src="/usg.jpg"
+            alt="USG Logo"
+            className="h-12 w-12 rounded-full object-cover"
+          />
           <div>
             <p className="text-lg font-bold text-white">
               University Student Government
@@ -53,22 +45,24 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
               {item.name}
             </Link>
           ))}
-          <DropdownMenuSelect
-            variant="header"
-            triggerLabel="USG Documents"
-            options={categoryOptions}
-            value={selectedCategory}
-            onValueChange={setSelectedCategory}
-            placeholder="Filter by category"
-          />
         </nav>
 
-        <Link
-          href="/admin"
-          className="rounded-full bg-[#E7C609] px-5 py-2.5 text-sm font-bold text-[#173490] transition hover:brightness-95"
-        >
-          Admin Login
-        </Link>
+        <button className="rounded-full bg-white/10 p-2.5 text-white transition hover:bg-white/20">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </button>
       </div>
     </header>
   );

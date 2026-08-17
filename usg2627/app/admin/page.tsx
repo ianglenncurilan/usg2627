@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DropdownMenuCheckboxes } from "@/components/ui/dropdown-menu";
 import GridShell from "../components/GridShell";
+import { supabase } from "@/lib/supabase";
 
 const initialDocuments = [
   {
@@ -35,6 +37,35 @@ const initialEvents = [
 ];
 
 export default function AdminPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.push("/login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
   const [documentForm, setDocumentForm] = useState({
     title: "",
     category: "Memorandum",
@@ -104,6 +135,17 @@ export default function AdminPage() {
     setEventForm({ title: "", date: "", type: "Upcoming" });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-[#173490] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <GridShell>
       <header className="border-b border-slate-200 bg-[#173490] text-white">
@@ -143,6 +185,12 @@ export default function AdminPage() {
             >
               Reports
             </a>
+            <button
+              onClick={handleLogout}
+              className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/20"
+            >
+              Logout
+            </button>
           </nav>
         </div>
       </header>

@@ -1,23 +1,54 @@
-import Header from "../components/Header";
 import GridShell from "../components/GridShell";
 
 const committees = [
   {
-    name: "Blue Ribbon",
+    name: "Department of Students' Welfare and Development",
     description: "Oversight and integrity investigations.",
   },
   {
-    name: "Rules & Ethics",
+    name: "Department of Public Information and Creative Communications",
     description: "Parliamentary procedures and ethics compliance.",
   },
-  { name: "Finance", description: "Budget review and fiscal oversight." },
+  { name: "Department of Interior, Local Governance and Subordinate Units", description: "Budget review and fiscal oversight." },
   { name: "Education", description: "Academic policy and student welfare." },
   {
-    name: "Public Affairs",
+    name: "Department of Finance and Treasury",
     description: "Campus communications and advocacy.",
   },
   {
-    name: "Youth Development",
+    name: "Department of Environment and Natural Resources",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "Department of Budget and Management",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "Department of Academics, Sports, Culture, Arts and Technology",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "Executive Branch",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "Office of the President",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "Department of Secretary",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "Office of the Vice President",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "Office of the Student Regent",
+    description: "Programs and leadership growth initiatives.",
+  },
+  {
+    name: "University Student Government Legislative Branch",
     description: "Programs and leadership growth initiatives.",
   },
 ];
@@ -25,8 +56,6 @@ const committees = [
 export default function CommitteesPage() {
   return (
     <GridShell>
-      <Header subtitle="Committees" />
-
       <main className="mx-auto max-w-6xl px-6 py-20">
         <h1 className="text-5xl font-black tracking-[-0.06em] text-slate-900">
           Standing Committees

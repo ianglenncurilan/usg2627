@@ -1,11 +1,8 @@
-import Header from "../components/Header";
 import GridShell from "../components/GridShell";
 
 export default function AboutPage() {
   return (
     <GridShell>
-      <Header subtitle="About" />
-
       <main className="mx-auto max-w-5xl px-6 py-20">
         <h1 className="text-5xl font-black tracking-[-0.06em] text-slate-900">
           About USG

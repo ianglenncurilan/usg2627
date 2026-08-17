@@ -1,4 +1,3 @@
-import Header from "../components/Header";
 import GridShell from "../components/GridShell";
 
 const events = [
@@ -10,8 +9,6 @@ const events = [
 export default function EventsPage() {
   return (
     <GridShell>
-      <Header subtitle="Events" />
-
       <main className="mx-auto max-w-6xl px-6 py-20">
         <h1 className="text-5xl font-black tracking-[-0.06em] text-slate-900">
           Events
