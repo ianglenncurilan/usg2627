@@ -5,57 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { DropdownMenuSelect } from "@/components/ui/dropdown-menu";
-
-const documents = [
-  {
-    id: "2026-015",
-    type: "RESOLUTION",
-    title: "Establishment of Campus Sustainability Green Roof Fund",
-    issuingBody: "Committee on Environmental Affairs",
-    date: "Oct 24, 2026",
-    status: "Enacted",
-  },
-  {
-    id: "2026-014",
-    type: "MEMORANDUM",
-    title: "Guidelines for Student Organization Funding Allocation",
-    issuingBody: "Finance Committee",
-    date: "Oct 22, 2026",
-    status: "Enacted",
-  },
-  {
-    id: "2026-013",
-    type: "EXECUTIVE ORDER",
-    title: "Student Services Coordination and Resource Optimization",
-    issuingBody: "Office of the President",
-    date: "Oct 20, 2026",
-    status: "Enacted",
-  },
-  {
-    id: "2026-012",
-    type: "SPECIAL ORDER",
-    title: "Committee Assignments for Academic Year 2026-2027",
-    issuingBody: "Senate Secretariat",
-    date: "Oct 18, 2026",
-    status: "Enacted",
-  },
-  {
-    id: "2026-011",
-    type: "RESOLUTION",
-    title: "Student Mental Health Support Initiative",
-    issuingBody: "Committee on Student Welfare",
-    date: "Oct 15, 2026",
-    status: "Enacted",
-  },
-  {
-    id: "2026-010",
-    type: "MEMORANDUM",
-    title: "Academic Calendar Adjustments for Fall Semester",
-    issuingBody: "Academic Affairs",
-    date: "Oct 12, 2026",
-    status: "Enacted",
-  },
-];
+import { supabase } from "@/lib/supabase";
 
 const documentTypes = ["All", "Resolution", "Memorandum", "Executive Order", "Special Order"];
 const academicYears = ["2025-2026", "2024-2025", "2023-2024"];
@@ -85,7 +35,28 @@ export default function DocumentsPage() {
   const [selectedStatus, setSelectedStatus] = useState("Enacted");
   const [sortBy, setSortBy] = useState("Newest Published");
   const [currentPage, setCurrentPage] = useState(1);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 6;
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    const { data, error } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("status", "published")
+      .order("published_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching documents:", error);
+    } else {
+      setDocuments(data || []);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     const categoryParam = searchParams.get("category");
@@ -95,13 +66,13 @@ export default function DocumentsPage() {
     }
   }, [searchParams]);
 
-  const filteredDocuments = documents.filter((doc) => {
+  const filteredDocuments = documents.filter((doc: any) => {
     const matchesSearch =
       searchQuery === "" ||
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.id.toLowerCase().includes(searchQuery.toLowerCase());
+      doc.tracking_number.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = selectedType === "All" || doc.type === selectedType.toUpperCase();
-    const matchesStatus = selectedStatus === "All" || doc.status === selectedStatus;
+    const matchesStatus = selectedStatus === "All" || doc.status === selectedStatus.toLowerCase();
     return matchesSearch && matchesType && matchesStatus;
   });
 
@@ -112,6 +83,18 @@ export default function DocumentsPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  if (loading) {
+    return (
+      <GridShell>
+        <main className="mx-auto max-w-7xl px-6 py-20">
+          <div className="flex items-center justify-center">
+            <div className="h-12 w-12 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </main>
+      </GridShell>
+    );
+  }
 
   return (
     <GridShell>
@@ -209,7 +192,7 @@ export default function DocumentsPage() {
 
         {/* Document List */}
         <div className="mt-4 space-y-3">
-          {displayedDocuments.map((doc) => (
+          {displayedDocuments.map((doc: any) => (
             <div
               key={doc.id}
               className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
@@ -224,17 +207,30 @@ export default function DocumentsPage() {
                     {doc.type === "MEMORANDUM" && "Memorandum No. "}
                     {doc.type === "EXECUTIVE ORDER" && "Executive Order No. "}
                     {doc.type === "SPECIAL ORDER" && "Special Order No. "}
-                    {doc.id}: {doc.title}
+                    {doc.tracking_number}: {doc.title}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-600">{doc.issuingBody}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{doc.date}</p>
+                  <p className="mt-1 text-sm text-slate-600">{doc.issuing_body}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {doc.published_at ? new Date(doc.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
                 </div>
-                <Link
-                  href={`/documents/${doc.id}`}
-                  className="mt-2 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609] md:mt-0"
-                >
-                  View →
-                </Link>
+                {doc.file_url ? (
+                  <a
+                    href={doc.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609] md:mt-0"
+                  >
+                    View →
+                  </a>
+                ) : (
+                  <Link
+                    href={`/documents/${doc.id}`}
+                    className="mt-2 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609] md:mt-0"
+                  >
+                    View →
+                  </Link>
+                )}
               </div>
             </div>
           ))}

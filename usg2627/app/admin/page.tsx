@@ -1,40 +1,42 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { DropdownMenuCheckboxes } from "@/components/ui/dropdown-menu";
-import GridShell from "../components/GridShell";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import AdminSidebar from "../components/AdminSidebar";
 
 const initialDocuments = [
   {
     id: 1,
-    title: "USG Memorandum No. 001",
-    category: "Memorandum",
-    status: "Published",
-    date: "2026-08-12",
+    title: "Sustainable Green Roof Funding Authorization",
+    category: "RESOLUTION",
+    tracking: "RES-2026-016",
+    status: "Pending",
+    author: "Treasurer Lim",
+    date: "2026-08-18",
   },
   {
     id: 2,
-    title: "Resolution on Student Wellness Program",
-    category: "Resolution",
-    status: "Under Review",
-    date: "2026-08-09",
+    title: "Audit Guidelines for Recognized Student Organizations",
+    category: "MEMORANDUM",
+    tracking: "MEMO-2026-009",
+    status: "Published",
+    author: "Sec. Almonte",
+    date: "2026-08-18",
   },
   {
     id: 3,
-    title: "Executive Order 2026-04",
-    category: "Executive Order",
-    status: "Draft",
-    date: "2026-08-07",
+    title: "Mandatory Student Seats on Academic Boards",
+    category: "EXEC ORDER",
+    tracking: "EO-2026-004",
+    status: "Approved",
+    author: "President Villanueva",
+    date: "2026-08-17",
   },
 ];
 
-const initialEvents = [
-  { id: 1, title: "Leadership Assembly", date: "2026-08-22", type: "Upcoming" },
-  { id: 2, title: "Constitution Day Forum", date: "2026-08-02", type: "Past" },
-  { id: 3, title: "Student Services Fair", date: "2026-07-17", type: "Past" },
-];
+
 
 export default function AdminPage() {
   const router = useRouter();
@@ -61,79 +63,25 @@ export default function AdminPage() {
     return () => subscription.unsubscribe();
   }, [router]);
 
+  const [documents] = useState(initialDocuments);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
-  const [documentForm, setDocumentForm] = useState({
-    title: "",
-    category: "Memorandum",
-    status: "Draft",
-    author: "",
-    tracking: "",
-  });
-
-  const [eventForm, setEventForm] = useState({
-    title: "",
-    date: "",
-    type: "Upcoming",
-  });
-
-  const [documents, setDocuments] = useState(initialDocuments);
-  const [events, setEvents] = useState(initialEvents);
-  const [message, setMessage] = useState("Ready for review.");
-
-  const totals = useMemo(
-    () => ({
-      documents: documents.length,
-      published: documents.filter((d) => d.status === "Published").length,
-      pending: documents.filter((d) => d.status !== "Published").length,
-      events: events.length,
-    }),
-    [documents, events],
-  );
-
-  const handleDocumentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const freshDocument = {
-      id: Date.now(),
-      title: documentForm.title || "Untitled document",
-      category: documentForm.category,
-      status: documentForm.status,
-      date: new Date().toISOString().slice(0, 10),
-    };
-
-    setDocuments((current) => [freshDocument, ...current]);
-    setMessage(
-      `Saved: ${freshDocument.title} submitted for ${freshDocument.status.toLowerCase()} review.`,
-    );
-    setDocumentForm({
-      title: "",
-      category: "Memorandum",
-      status: "Draft",
-      author: "",
-      tracking: "",
-    });
+  const totals = {
+    totalDocuments: 847,
+    weeklyChange: "+12 this wk",
+    pendingApproval: 12,
+    pendingLabel: "Requires Review",
+    publishedThisMonth: 34,
+    monthlyChange: "+8% MoM",
+    activeEncoders: 8,
+    encoderStatus: "Full Team Online",
   };
 
-  const handleEventSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
 
-    const freshEvent = {
-      id: Date.now(),
-      title: eventForm.title || "New event",
-      date: eventForm.date || new Date().toISOString().slice(0, 10),
-      type: eventForm.type,
-    };
-
-    setEvents((current) => [freshEvent, ...current]);
-    setMessage(
-      `Event saved: ${freshEvent.title} marked as ${freshEvent.type.toLowerCase()}.`,
-    );
-    setEventForm({ title: "", date: "", type: "Upcoming" });
-  };
 
   if (loading) {
     return (
@@ -147,392 +95,167 @@ export default function AdminPage() {
   }
 
   return (
-    <GridShell>
-      <header className="border-b border-slate-200 bg-[#173490] text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#E7C609] text-sm font-black text-[#173490]">
-              USG
-            </div>
-            <div>
-              <p className="text-lg font-semibold">
-                University Student Government
-              </p>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-200">
-                Administrative Portal
-              </p>
-            </div>
+    <div className="flex min-h-screen bg-slate-100">
+      <AdminSidebar />
+      
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-8">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+            <p className="text-slate-600">Welcome back, Administrator</p>
           </div>
-          <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-            <a href="/" className="text-slate-200 transition hover:text-white">
-              Public Portal
-            </a>
-            <a
-              href="#documents"
-              className="text-slate-200 transition hover:text-white"
-            >
-              Documents
-            </a>
-            <a
-              href="#events"
-              className="text-slate-200 transition hover:text-white"
-            >
-              Events
-            </a>
-            <a
-              href="#reports"
-              className="text-slate-200 transition hover:text-white"
-            >
-              Reports
-            </a>
-            <button
-              onClick={handleLogout}
-              className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/20"
-            >
-              Logout
-            </button>
-          </nav>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-10">
-        <section className="mb-8 flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#173490]">
-              Editorial Desk
-            </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-              Content Management Dashboard
-            </h1>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            {message}
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-4">
-          {[
-            {
-              label: "Published Docs",
-              value: totals.published,
-              tone: "bg-[#173490] text-white",
-            },
-            {
-              label: "Pending Review",
-              value: totals.pending,
-              tone: "bg-[#E7C609] text-[#173490]",
-            },
-            {
-              label: "Total Records",
-              value: totals.documents,
-              tone: "bg-white text-slate-900",
-            },
-            {
-              label: "Events",
-              value: totals.events,
-              tone: "bg-slate-900 text-white",
-            },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className={`rounded-2xl p-5 shadow-sm ring-1 ring-slate-200 ${item.tone}`}
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-75">
-                {item.label}
+          <section className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Total Documents
               </p>
-              <p className="mt-3 text-3xl font-black">{item.value}</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">{totals.totalDocuments}</p>
+              <p className="mt-1 text-sm text-emerald-600">{totals.weeklyChange}</p>
             </div>
-          ))}
-        </section>
-
-        <section className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div
-            id="documents"
-            className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200"
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#173490]">
-                  Upload
-                </p>
-                <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                  Document Submission
-                </h2>
-              </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
-                RBAC: Encoder
-              </span>
+            
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pending Approval
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">{totals.pendingApproval}</p>
+              <p className="mt-1 text-sm text-amber-600">{totals.pendingLabel}</p>
             </div>
+            
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Published This Month
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">{totals.publishedThisMonth}</p>
+              <p className="mt-1 text-sm text-emerald-600">{totals.monthlyChange}</p>
+            </div>
+            
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Active Encoders
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">{totals.activeEncoders}</p>
+              <p className="mt-1 text-sm text-emerald-600">{totals.encoderStatus}</p>
+            </div>
+          </section>
 
-            <form onSubmit={handleDocumentSubmit} className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Document title
-                </label>
-                <input
-                  value={documentForm.title}
-                  onChange={(event) =>
-                    setDocumentForm((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 outline-none transition focus:border-[#173490] focus:bg-white"
-                  placeholder="e.g., Memorandum No. 001"
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Category
-                  </label>
-                  <DropdownMenuCheckboxes
-                    options={[
-                      "Memorandum",
-                      "Resolutions",
-                      "Executive Order",
-                      "Special Order",
-                    ]}
-                    value={documentForm.category}
-                    onValueChange={(value) =>
-                      setDocumentForm((current) => ({
-                        ...current,
-                        category: value,
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Status
-                  </label>
-                  <select
-                    value={documentForm.status}
-                    onChange={(event) =>
-                      setDocumentForm((current) => ({
-                        ...current,
-                        status: event.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 outline-none transition focus:border-[#173490] focus:bg-white"
-                  >
-                    <option>Draft</option>
-                    <option>First Reading</option>
-                    <option>Second Reading</option>
-                    <option>Third Reading</option>
-                    <option>Passed</option>
-                    <option>Archived</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Author / Office
-                  </label>
-                  <input
-                    value={documentForm.author}
-                    onChange={(event) =>
-                      setDocumentForm((current) => ({
-                        ...current,
-                        author: event.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 outline-none transition focus:border-[#173490] focus:bg-white"
-                    placeholder="e.g., Office of the President"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Tracking No.
-                  </label>
-                  <input
-                    value={documentForm.tracking}
-                    onChange={(event) =>
-                      setDocumentForm((current) => ({
-                        ...current,
-                        tracking: event.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 outline-none transition focus:border-[#173490] focus:bg-white"
-                    placeholder="USG-RES-2026-004"
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-                PDF upload dropzone: Official document, signed memorandum, or
-                resolution attachment.
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  className="rounded-xl bg-[#173490] px-5 py-3 font-semibold text-white transition hover:bg-[#102a72]"
+          <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">
+              Recent Document & System Activity
+            </h2>
+            <div className="space-y-4">
+              {documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-start gap-4 rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50"
                 >
-                  Save as Draft
-                </button>
-                <button
-                  type="button"
-                  className="rounded-xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                >
-                  Send for Review
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <div
-            id="events"
-            className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200"
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#173490]">
-                  Calendar
-                </p>
-                <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                  Live Event Entry
-                </h2>
-              </div>
-              <span className="rounded-full bg-[#E7C609] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#173490]">
-                Publish
-              </span>
-            </div>
-
-            <form onSubmit={handleEventSubmit} className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Event title
-                </label>
-                <input
-                  value={eventForm.title}
-                  onChange={(event) =>
-                    setEventForm((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 outline-none transition focus:border-[#173490] focus:bg-white"
-                  placeholder="e.g., Constitutional Assembly"
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    value={eventForm.date}
-                    onChange={(event) =>
-                      setEventForm((current) => ({
-                        ...current,
-                        date: event.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 outline-none transition focus:border-[#173490] focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Type
-                  </label>
-                  <select
-                    value={eventForm.type}
-                    onChange={(event) =>
-                      setEventForm((current) => ({
-                        ...current,
-                        type: event.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 outline-none transition focus:border-[#173490] focus:bg-white"
-                  >
-                    <option>Upcoming</option>
-                    <option>Past</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-                Media upload area for event posters, official photos, and
-                captions.
-              </div>
-
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-[#E7C609] px-5 py-3 font-semibold text-[#173490] transition hover:brightness-95"
-              >
-                Publish Event
-              </button>
-            </form>
-          </div>
-        </section>
-
-        <section
-          id="reports"
-          className="mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200"
-        >
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#173490]">
-                Queue
-              </p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                Publishing Workflow
-              </h2>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-100 text-slate-700">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Title</th>
-                  <th className="px-4 py-3 font-semibold">Category</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((document) => (
-                  <tr
-                    key={document.id}
-                    className="border-t border-slate-200 hover:bg-slate-50"
-                  >
-                    <td className="px-4 py-3 font-medium text-slate-800">
-                      {document.title}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {document.category}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          document.status === "Published"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : document.status === "Draft"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-sky-100 text-sky-700"
-                        }`}
-                      >
-                        {document.status}
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#173490] text-xs font-bold text-white">
+                    {doc.category.slice(0, 3)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-[#173490]">
+                        {doc.category}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {document.date}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                      <span className="text-xs text-slate-500">{doc.tracking}</span>
+                    </div>
+                    <h3 className="mt-1 font-medium text-slate-900">{doc.title}</h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Submitted by {doc.author}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        doc.status === "Published"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : doc.status === "Approved"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {doc.status}
+                    </span>
+                    <p className="mt-2 text-xs text-slate-500">
+                      {doc.id === 1 ? "Just now" : doc.id === 2 ? "2 hours ago" : "Yesterday"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">
+              Quick Operations
+            </h2>
+            <div className="grid gap-4 md:grid-cols-3">
+              <Link
+                href="/admin/documents"
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-[#173490] bg-[#173490] px-4 py-3 font-semibold text-white transition hover:bg-[#102a72]"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                  <path d="M12 18v-6" />
+                  <path d="M9 15l3 3 3-3" />
+                </svg>
+                Create New Official Document
+              </Link>
+              
+              <button className="flex items-center justify-center gap-2 rounded-lg border-2 border-[#173490] bg-white px-4 py-3 font-semibold text-[#173490] transition hover:bg-slate-50">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+                  <path d="M18 14h-8" />
+                  <path d="M15 18h-5" />
+                  <path d="M10 6h8v4h-8V6Z" />
+                </svg>
+                Write Press Release / News
+              </button>
+              
+              <button className="flex items-center justify-center gap-2 rounded-lg border-2 border-[#173490] bg-white px-4 py-3 font-semibold text-[#173490] transition hover:bg-slate-50">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                Invite System User / Encoder
+              </button>
+            </div>
+          </section>
+        </div>
       </main>
-    </GridShell>
+    </div>
   );
 }

@@ -9,8 +9,8 @@ const committees = [
     name: "Department of Public Information and Creative Communications",
     description: "Parliamentary procedures and ethics compliance.",
   },
-  { name: "Department of Interior, Local Governance and Subordinate Units", description: "Budget review and fiscal oversight." },
-  { name: "Education", description: "Academic policy and student welfare." },
+  { name: "Department of Interior, Local Governance and Subordinate Units", 
+    description: "Budget review and fiscal oversight." },
   {
     name: "Department of Finance and Treasury",
     description: "Campus communications and advocacy.",
