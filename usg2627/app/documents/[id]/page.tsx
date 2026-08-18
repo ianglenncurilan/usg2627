@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "../../components/GridShell";
+import { supabase } from "@/lib/supabase";
 
 const documentData = {
   "2026-015": {
@@ -53,7 +55,80 @@ const getTypeColor = (type: string) => {
 };
 
 export default function DocumentDetailPage({ params }: { params: { id: string } }) {
-  const doc = documentData[params.id as keyof typeof documentData];
+  const [resolvedParams, setResolvedParams] = useState<any>(null);
+  const [doc, setDoc] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (params) {
+      if (typeof (params as any).then === "function") {
+        (params as any).then((resolved: any) => setResolvedParams(resolved));
+      } else {
+        setResolvedParams(params);
+      }
+    }
+  }, [params]);
+
+  const id = resolvedParams?.id;
+
+  useEffect(() => {
+    if (!id) return;
+
+    async function fetchDoc() {
+      // Check static mock data
+      const staticDoc = documentData[id as keyof typeof documentData];
+      if (staticDoc) {
+        setDoc(staticDoc);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("documents")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching document:", error);
+        } else if (data) {
+          setDoc({
+            type: data.type,
+            number: `${data.type === "RESOLUTION" ? "Resolution" : data.type === "MEMORANDUM" ? "Memorandum" : data.type === "EXECUTIVE ORDER" ? "Executive Order" : "Special Order"} No. ${data.tracking_number}`,
+            title: data.title,
+            dateEnacted: data.published_at 
+              ? new Date(data.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+              : new Date(data.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            sponsorCommittee: data.issuing_body,
+            voteTally: data.author ? `Author: ${data.author}` : "N/A",
+            status: data.status.toUpperCase(),
+            fileName: data.file_name || "Document.pdf",
+            fileUrl: data.file_url,
+            description: data.description,
+          });
+        }
+      } catch (err) {
+        console.error("Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDoc();
+  }, [id]);
+
+  if (loading || !resolvedParams) {
+    return (
+      <GridShell>
+        <main className="mx-auto max-w-7xl px-6 py-20">
+          <div className="flex items-center justify-center py-20">
+            <div className="h-12 w-12 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </main>
+      </GridShell>
+    );
+  }
 
   if (!doc) {
     return (
@@ -225,34 +300,38 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              {/* PDF Content Placeholder */}
-              <div className="min-h-[600px] bg-slate-100 p-8">
-                <div className="mx-auto max-w-3xl rounded-lg bg-white p-8 shadow-sm">
-                  <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
-                    University Student Government
-                  </p>
-                  <p className="mt-2 text-center text-sm font-bold text-slate-900">
-                    Office of the Senate President
-                  </p>
-                  <p className="mt-4 text-center text-lg font-black text-slate-900">
-                    {doc.number}
-                  </p>
-                  <div className="mt-8 space-y-4 text-sm text-slate-700">
-                    <p className="font-semibold">WHEREAS, the University Student Government recognizes...</p>
-                    <p>
-                      Be it resolved by the University Student Government Senate that a Campus Sustainability Green Roof Fund be established to support student-led environmental initiatives and sustainable development projects across campus facilities.
+              {/* PDF Content Viewer or Description Fallback */}
+              {doc.fileUrl ? (
+                <div className="w-full h-[600px] bg-slate-100">
+                  <iframe
+                    src={doc.fileUrl}
+                    className="w-full h-full border-none"
+                    title={doc.title}
+                  />
+                </div>
+              ) : (
+                <div className="min-h-[600px] bg-slate-100 p-8">
+                  <div className="mx-auto max-w-3xl rounded-lg bg-white p-8 shadow-sm">
+                    <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      University Student Government
                     </p>
-                    <p className="font-semibold mt-6">WHEREAS, this fund shall...</p>
-                    <p>
-                      Provide financial resources for student organizations and departments to implement green roof projects, renewable energy installations, and other sustainability measures that contribute to the university's environmental goals.
+                    <p className="mt-2 text-center text-sm font-bold text-slate-900">
+                      Office of the {doc.type === "RESOLUTION" ? "Senate President" : "Secretariat"}
                     </p>
-                    <p className="font-semibold mt-6">THEREFORE, BE IT RESOLVED...</p>
-                    <p>
-                      That the University Student Government hereby establishes the Campus Sustainability Green Roof Fund with an initial allocation of ₱500,000 from the Student Activities Fund, to be administered by the Committee on Environmental Affairs in coordination with the University Facilities Management Office.
+                    <p className="mt-4 text-center text-lg font-black text-slate-900">
+                      {doc.number}
                     </p>
+                    <div className="mt-8 space-y-4 text-sm text-slate-700">
+                      <p className="font-semibold">{doc.title}</p>
+                      {doc.description ? (
+                        <p>{doc.description}</p>
+                      ) : (
+                        <p>No description or digital text content is available for this document.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -331,9 +410,20 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
               <p className="mt-2 text-sm text-slate-600">
                 Download a certified PDF for record-keeping purposes.
               </p>
-              <button className="mt-4 w-full rounded-lg bg-[#173490] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1e4bb8]">
-                Download Certified PDF
-              </button>
+              {doc.fileUrl ? (
+                <a
+                  href={doc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 block w-full text-center rounded-lg bg-[#173490] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1e4bb8]"
+                >
+                  Download Certified File
+                </a>
+              ) : (
+                <button className="mt-4 w-full rounded-lg bg-[#173490] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1e4bb8]">
+                  Download Certified PDF
+                </button>
+              )}
             </div>
           </div>
         </div>

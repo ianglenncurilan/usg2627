@@ -8,7 +8,8 @@ import { supabase } from "@/lib/supabase";
 const navigation = [
   { name: "Dashboard", href: "/admin" },
   { name: "Documents", href: "/admin/documents" },
-  { name: "News & Press", href: "/admin#news" },
+  { name: "News & Press", href: "/admin/news" },
+  { name: "Events", href: "/admin/events" },
   { name: "Users", href: "/admin#users" },
   { name: "Settings", href: "/admin#settings" },
 ];
@@ -24,17 +25,7 @@ export default function AdminSidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col bg-[#173490] text-white">
-      <div className="flex items-center gap-3 p-6 border-b border-white/10">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E7C609] text-sm font-black text-[#173490]">
-          USG
-        </div>
-        <div>
-          <p className="text-sm font-semibold">University Student Government</p>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-300">
-            Admin Portal
-          </p>
-        </div>
-      </div>
+
 
       <nav className="flex-1 px-4 py-6">
         <ul className="space-y-1">
@@ -44,11 +35,10 @@ export default function AdminSidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${
-                    isActive
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${isActive
                       ? "bg-[#E7C609] text-[#173490]"
                       : "text-slate-200 hover:bg-white/10 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {item.name}
                 </Link>

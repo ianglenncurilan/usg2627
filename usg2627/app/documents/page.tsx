@@ -72,7 +72,10 @@ export default function DocumentsPage() {
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.tracking_number.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = selectedType === "All" || doc.type === selectedType.toUpperCase();
-    const matchesStatus = selectedStatus === "All" || doc.status === selectedStatus.toLowerCase();
+    const matchesStatus =
+      selectedStatus === "All" ||
+      (selectedStatus === "Enacted" && doc.status === "published") ||
+      doc.status === selectedStatus.toLowerCase();
     return matchesSearch && matchesType && matchesStatus;
   });
 
