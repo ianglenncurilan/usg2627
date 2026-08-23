@@ -1,33 +1,48 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { DropdownMenuSelect } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
 
-const documentTypes = ["All", "Resolution", "Memorandum", "Executive Order", "Special Order"];
+const documentTypes = [
+  "All",
+  "Resolution",
+  "Executive Order",
+  "Administrative Order",
+  "Memorandum",
+  "Special Order",
+  "Advisory",
+  "Financial Documents"
+];
 const academicYears = ["2025-2026", "2024-2025", "2023-2024"];
 const statuses = ["All", "Enacted", "Pending", "Archived"];
 const sortOptions = ["Newest Published", "Oldest Published", "Document Number A-Z", "Document Number Z-A"];
 
 const getTypeColor = (type: string) => {
-  switch (type) {
+  switch (type?.toUpperCase()) {
     case "RESOLUTION":
       return "bg-blue-100 text-blue-800";
-    case "MEMORANDUM":
-      return "bg-green-100 text-green-800";
     case "EXECUTIVE ORDER":
       return "bg-purple-100 text-purple-800";
+    case "ADMINISTRATIVE ORDER":
+      return "bg-indigo-100 text-indigo-800";
+    case "MEMORANDUM":
+      return "bg-green-100 text-green-800";
     case "SPECIAL ORDER":
       return "bg-orange-100 text-orange-800";
+    case "ADVISORY":
+      return "bg-amber-100 text-amber-800";
+    case "FINANCIAL DOCUMENTS":
+      return "bg-emerald-100 text-emerald-800";
     default:
       return "bg-slate-100 text-slate-800";
   }
 };
 
-export default function DocumentsPage() {
+function DocumentsContent() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("All");
@@ -207,9 +222,12 @@ export default function DocumentsPage() {
                   </span>
                   <h3 className="mt-2 text-base font-semibold text-slate-900">
                     {doc.type === "RESOLUTION" && "Resolution No. "}
-                    {doc.type === "MEMORANDUM" && "Memorandum No. "}
                     {doc.type === "EXECUTIVE ORDER" && "Executive Order No. "}
+                    {doc.type === "ADMINISTRATIVE ORDER" && "Administrative Order No. "}
+                    {doc.type === "MEMORANDUM" && "Memorandum No. "}
                     {doc.type === "SPECIAL ORDER" && "Special Order No. "}
+                    {doc.type === "ADVISORY" && "Advisory No. "}
+                    {doc.type === "FINANCIAL DOCUMENTS" && "Financial Document: "}
                     {doc.tracking_number}: {doc.title}
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">{doc.issuing_body}</p>
@@ -285,5 +303,22 @@ export default function DocumentsPage() {
         </div>
       </main>
     </GridShell>
+  );
+}
+
+export default function DocumentsPage() {
+  return (
+    <Suspense
+      fallback={
+        <GridShell>
+          <main className="mx-auto max-w-7xl px-6 py-20 text-center">
+            <div className="h-12 w-12 border-4 border-[#173490] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading Documents...</p>
+          </main>
+        </GridShell>
+      }
+    >
+      <DocumentsContent />
+    </Suspense>
   );
 }

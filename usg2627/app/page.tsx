@@ -12,46 +12,64 @@ const quickLinks = [
     href: "/about",
   },
   {
-    title: "Senate",
+    title: "Legislative",
     description: "Leadership and office directory.",
-    href: "/senate",
+    href: "/legislative",
   },
   {
-    title: "Committees",
-    description: "Oversight and standing committees.",
-    href: "/committees",
+    title: "Cabinet",
+    description: "Executive departments and cabinet directorships.",
+    href: "/cabinet",
   },
   {
-    title: "Documents",
-    description: "Resolutions, memos, and public records.",
-    href: "/documents",
+    title: "Transparency",
+    description: "USG budgetary disclosures, event liquidations, and financial audits.",
+    href: "/budgetary-transparency",
   },
 ];
 
 const documentTypes = [
   {
-    title: "Memorandums",
-    description: "Internal communications and policy directives",
-    count: "24",
-    href: "/documents?category=Memorandum",
-  },
-  {
     title: "Resolutions",
-    description: "Official legislative acts and decisions",
+    description: "Official legislative acts, motions, and enactments",
     count: "156",
-    href: "/documents?category=Resolutions",
+    href: "/documents?category=Resolution",
   },
   {
     title: "Executive Orders",
-    description: "Presidential directives and implementations",
+    description: "Presidential directives and administrative policies",
     count: "42",
     href: "/documents?category=Executive Order",
   },
   {
+    title: "Administrative Orders",
+    description: "Departmental rules, regulations, and office orders",
+    count: "31",
+    href: "/documents?category=Administrative Order",
+  },
+  {
+    title: "Memorandums",
+    description: "Internal communications and official circulars",
+    count: "24",
+    href: "/documents?category=Memorandum",
+  },
+  {
     title: "Special Orders",
-    description: "Ad-hoc directives and emergency measures",
+    description: "Ad-hoc task force designations and committee assignments",
     count: "18",
     href: "/documents?category=Special Order",
+  },
+  {
+    title: "Advisories",
+    description: "Campus bulletins, public notices, and student updates",
+    count: "65",
+    href: "/documents?category=Advisory",
+  },
+  {
+    title: "Financial Documents",
+    description: "Official financial statements, balance sheets, and audit reports",
+    count: "39",
+    href: "/documents?category=Financial Documents",
   },
 ];
 
@@ -456,9 +474,12 @@ export default function Home() {
                       </span>
                       <h3 className="mt-3 text-lg font-semibold text-slate-900">
                         {pub.type === "RESOLUTION" && "Resolution No. "}
-                        {pub.type === "MEMORANDUM" && "Memorandum No. "}
                         {pub.type === "EXECUTIVE ORDER" && "Executive Order No. "}
+                        {pub.type === "ADMINISTRATIVE ORDER" && "Administrative Order No. "}
+                        {pub.type === "MEMORANDUM" && "Memorandum No. "}
                         {pub.type === "SPECIAL ORDER" && "Special Order No. "}
+                        {pub.type === "ADVISORY" && "Advisory No. "}
+                        {pub.type === "FINANCIAL DOCUMENTS" && "Financial Document: "}
                         {pub.tracking_number ? `${pub.tracking_number}: ${pub.title}` : pub.title}
                       </h3>
                     </div>

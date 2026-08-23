@@ -40,15 +40,21 @@ const relatedDocuments = [
 ];
 
 const getTypeColor = (type: string) => {
-  switch (type) {
+  switch (type?.toUpperCase()) {
     case "RESOLUTION":
       return "bg-blue-100 text-blue-800";
-    case "MEMORANDUM":
-      return "bg-green-100 text-green-800";
     case "EXECUTIVE ORDER":
       return "bg-purple-100 text-purple-800";
+    case "ADMINISTRATIVE ORDER":
+      return "bg-indigo-100 text-indigo-800";
+    case "MEMORANDUM":
+      return "bg-green-100 text-green-800";
     case "SPECIAL ORDER":
       return "bg-orange-100 text-orange-800";
+    case "ADVISORY":
+      return "bg-amber-100 text-amber-800";
+    case "FINANCIAL DOCUMENTS":
+      return "bg-emerald-100 text-emerald-800";
     default:
       return "bg-slate-100 text-slate-800";
   }

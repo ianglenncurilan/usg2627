@@ -10,6 +10,7 @@ const navigation = [
   { name: "Documents", href: "/admin/documents" },
   { name: "News & Press", href: "/admin/news" },
   { name: "Events", href: "/admin/events" },
+  { name: "Budget Transparency", href: "/admin/budgetary-transparency" },
   { name: "Users", href: "/admin#users" },
   { name: "Settings", href: "/admin#settings" },
 ];

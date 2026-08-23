@@ -5,10 +5,11 @@ import Link from "next/link";
 const navigation = [
   { name: "Home", href: "/" },
   { name: "About", href: "/about" },
-  { name: "Senate", href: "/senate" },
-  { name: "Committees", href: "/committees" },
+  { name: "Legislative", href: "/legislative" },
+  { name: "Cabinet", href: "/cabinet" },
   { name: "Documents", href: "/documents" },
   { name: "Events", href: "/events" },
+  { name: "Transparency", href: "/budgetary-transparency" },
 ];
 
 interface HeaderProps {

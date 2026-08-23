@@ -7,9 +7,12 @@ import AdminSidebar from "../../components/AdminSidebar";
 
 const documentTypes = [
   "RESOLUTION",
-  "MEMORANDUM",
   "EXECUTIVE ORDER",
-  "SPECIAL ORDER"
+  "ADMINISTRATIVE ORDER",
+  "MEMORANDUM",
+  "SPECIAL ORDER",
+  "ADVISORY",
+  "FINANCIAL DOCUMENTS"
 ];
 
 export default function AdminDocumentsPage() {
