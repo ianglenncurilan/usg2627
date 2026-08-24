@@ -31,6 +31,7 @@ export default function AdminDocumentsPage() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("Admin");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -39,6 +40,23 @@ export default function AdminDocumentsPage() {
         router.push("/login");
       } else {
         setLoading(false);
+        if (session.user) {
+          try {
+            const { data: profile } = await supabase
+              .from("user_profiles")
+              .select("role")
+              .eq("user_id", session.user.id)
+              .single();
+
+            if (profile?.role) {
+              setCurrentUserRole(profile.role);
+            } else if (session.user.user_metadata?.role) {
+              setCurrentUserRole(session.user.user_metadata.role);
+            }
+          } catch (err) {
+            console.error("Role check note:", err);
+          }
+        }
         fetchDocuments();
       }
     };
@@ -233,8 +251,19 @@ export default function AdminDocumentsPage() {
         <div className="p-8">
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Documents Management</h1>
-              <p className="text-slate-600">Upload and manage official documents</p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-slate-900">Documents Management</h1>
+                {currentUserRole === "Admin" ? (
+                  <span className="rounded bg-purple-100 px-2.5 py-0.5 text-xs font-black uppercase text-purple-800">
+                    👑 Admin (Full Control)
+                  </span>
+                ) : (
+                  <span className="rounded bg-blue-100 px-2.5 py-0.5 text-xs font-bold uppercase text-blue-700">
+                    👤 User (Upload Only)
+                  </span>
+                )}
+              </div>
+              <p className="text-slate-600">Upload official documents (Pending review for Users, Full approval for Admins)</p>
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
@@ -514,28 +543,40 @@ export default function AdminDocumentsPage() {
                       </p>
                       <div className="flex gap-1">
                         {doc.status === "pending" && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(doc.id)}
-                              className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-blue-700"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(doc.id)}
-                              className="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
-                            >
-                              Reject
-                            </button>
-                          </>
+                          currentUserRole === "Admin" ? (
+                            <>
+                              <button
+                                onClick={() => handleApprove(doc.id)}
+                                className="rounded bg-[#173490] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700 cursor-pointer shadow-xs"
+                              >
+                                ✓ Approve
+                              </button>
+                              <button
+                                onClick={() => handleReject(doc.id)}
+                                className="rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700 cursor-pointer shadow-xs"
+                              >
+                                ✕ Reject
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-slate-500 font-semibold italic bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                              🔒 Pending Admin Review
+                            </span>
+                          )
                         )}
                         {doc.status === "approved" && (
-                          <button
-                            onClick={() => handlePublish(doc.id)}
-                            className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                          >
-                            Publish
-                          </button>
+                          currentUserRole === "Admin" ? (
+                            <button
+                              onClick={() => handlePublish(doc.id)}
+                              className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700 cursor-pointer shadow-xs"
+                            >
+                              🚀 Publish
+                            </button>
+                          ) : (
+                            <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                              ✓ Approved by Admin
+                            </span>
+                          )
                         )}
                       </div>
                     </div>

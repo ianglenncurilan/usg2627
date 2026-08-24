@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-interface ProfileCardProps {
+export interface FiledBill {
+  number: string;
+  title: string;
+  description?: string;
+}
+
+export interface ProfileCardProps {
   name: string;
   role: string;
   department?: string;
@@ -10,7 +16,7 @@ interface ProfileCardProps {
   email?: string;
   roomAddress?: string;
   avatarSrc?: string;
-  bio?: string;
+  filedBills?: FiledBill[];
   initiatives?: string[];
 }
 
@@ -22,7 +28,7 @@ export default function ProfileCard({
   email,
   roomAddress,
   avatarSrc,
-  bio,
+  filedBills,
   initiatives = [
     "Student representation and policy enactment",
     "Campus welfare and administrative oversight",
@@ -30,6 +36,20 @@ export default function ProfileCard({
   ],
 }: ProfileCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Default sample filed bills if none provided
+  const activeFiledBills: FiledBill[] = filedBills || [
+    {
+      number: "Senate Bill No. 2627-021",
+      title: "AN ACT ESTABLISHING COLLEGE-BASED MEDICAL RESPONSE TEAMS IN EACH COLLEGE OF CARAGA STATE UNIVERSITY – MAIN CAMPUS",
+      description: "Mandates the creation and training of certified student first-responder units equipped with basic emergency kits across all college departments to ensure immediate health care support during campus activities.",
+    },
+    {
+      number: "Senate Bill No. 2627-022",
+      title: "AN ACT INSTITUTIONALIZING A SEMESTRAL MENTAL HEALTH AND WELLNESS TRIVIA CHALLENGE FOR STUDENTS OF CARAGA STATE UNIVERSITY – MAIN CAMPUS",
+      description: "Establishes semestral campus-wide mental health advocacy events and interactive wellness trivia programs aimed at promoting psychological well-being and student support awareness.",
+    },
+  ];
 
   return (
     <>
@@ -90,7 +110,7 @@ export default function ProfileCard({
             </div>
           </div>
 
-          {/* Contact & Office Info (Single Phone Line) */}
+          {/* Contact Line */}
           <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
             {directLine && (
               <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-600">
@@ -111,35 +131,15 @@ export default function ProfileCard({
                 <span>Direct Line: {directLine}</span>
               </div>
             )}
-            {roomAddress && (
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-600">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-[#173490] flex-shrink-0"
-                >
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-                <span>{roomAddress}</span>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Social Icon & View Profile Modal Trigger */}
+        {/* Action Bar: Social Icon & View Profile Modal Trigger */}
         <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
           <a
             href="#"
             className="rounded-full bg-[#1877F2] p-2 text-white transition hover:bg-[#166fe5]"
-            aria-label="Facebook"
+            aria-label="Facebook Profile"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -162,20 +162,20 @@ export default function ProfileCard({
         </div>
       </div>
 
-      {/* View Profile Modal */}
+      {/* View Profile Modal - Highest Z-Index (z-[9999]) & Padded Overlay */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 pt-20 sm:pt-24 bg-slate-900/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200"
+            className="relative my-auto w-full max-w-3xl sm:max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute right-5 top-5 rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition cursor-pointer"
+              className="absolute right-5 top-5 z-10 rounded-full bg-white/90 p-2 text-slate-600 hover:bg-white hover:text-slate-900 shadow-md transition cursor-pointer"
               aria-label="Close modal"
             >
               <svg
@@ -194,134 +194,126 @@ export default function ProfileCard({
               </svg>
             </button>
 
-            {/* Profile Header */}
-            <div className="flex flex-col items-center text-center">
-              <div className="h-28 w-28 rounded-full bg-gradient-to-br from-[#173490] to-[#1e4bb8] ring-4 ring-[#173490]/15 overflow-hidden shadow-md">
-                {avatarSrc ? (
-                  <img
-                    src={avatarSrc}
-                    alt={name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-white">
-                    {name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)}
+            {/* Modal Header Banner */}
+            <div className="relative bg-gradient-to-r from-sky-100 via-blue-50 to-indigo-100 p-6 sm:p-8 border-b border-sky-200/60">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6 pr-8">
+                {/* Large Avatar */}
+                <div className="h-28 w-28 sm:h-32 sm:w-32 flex-shrink-0 rounded-full border-4 border-white ring-4 ring-[#173490]/25 shadow-md overflow-hidden bg-gradient-to-br from-[#173490] to-[#1e4bb8]">
+                  {avatarSrc ? (
+                    <img
+                      src={avatarSrc}
+                      alt={name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-white">
+                      {name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Member Title Banner Pill */}
+                <div className="flex-1 text-center sm:text-left">
+                  <div className="inline-block rounded-2xl bg-white/80 backdrop-blur-sm px-5 py-3 shadow-xs border border-sky-200/80">
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-wide text-slate-900 uppercase">
+                      {name}
+                    </h2>
+                    <p className="mt-1 text-sm sm:text-base font-bold italic text-[#173490]">
+                      {role}
+                    </p>
                   </div>
-                )}
+                  <p className="mt-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600">
+                    {department}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 sm:p-8 max-h-[60vh] overflow-y-auto space-y-6">
+              
+              {/* FILED BILL / FILED BILLS SECTION */}
+              <div>
+                <h3 className="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-2 mb-4 flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-[#173490]"
+                  >
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" x2="8" y1="13" y2="13" />
+                    <line x1="16" x2="8" y1="17" y2="17" />
+                  </svg>
+                  <span>FILED BILL:</span>
+                </h3>
+
+                <div className="space-y-4">
+                  {activeFiledBills.map((bill, index) => (
+                    <div
+                      key={index}
+                      className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 text-center shadow-xs transition hover:bg-slate-50 hover:border-slate-300"
+                    >
+                      <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                        {bill.number}
+                      </h4>
+                      <p className="mt-2 text-xs sm:text-sm font-semibold uppercase leading-relaxed text-slate-800 tracking-wide max-w-2xl mx-auto">
+                        {bill.title}
+                      </p>
+                      {bill.description && (
+                        <p className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-2.5 max-w-2xl mx-auto italic font-medium">
+                          "{bill.description}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <h2 className="mt-4 text-2xl font-black text-slate-900">{name}</h2>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-                <span className="rounded-full bg-[#173490]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#173490]">
-                  {role}
-                </span>
+              {/* Contact Information */}
+              <div className="pt-2 border-t border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                  Officer Contact Details
+                </h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {directLine && (
+                    <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/80">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Direct Contact
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-slate-800">{directLine}</p>
+                    </div>
+                  )}
+
+                  {email && (
+                    <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200/80">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Official Email
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-[#173490] truncate">{email}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              <p className="mt-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                {department}
-              </p>
+
             </div>
 
-            {/* Detailed Info Cards */}
-            <div className="mt-6 space-y-3 rounded-2xl bg-slate-50 p-4 border border-slate-100 text-xs sm:text-sm text-slate-700">
-              {directLine && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-xs text-[#173490]">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Direct Contact</p>
-                    <p className="font-semibold text-slate-800">{directLine}</p>
-                  </div>
-                </div>
-              )}
-
-              {roomAddress && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-xs text-[#173490]">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                      <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Office Location</p>
-                    <p className="font-semibold text-slate-800">{roomAddress}</p>
-                  </div>
-                </div>
-              )}
-
-              {email && (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-xs text-[#173490]">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect width="20" height="16" x="2" y="4" rx="2" />
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Official Email</p>
-                    <p className="font-semibold text-slate-800">{email}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Key Focus & Responsibilities */}
-            <div className="mt-5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#173490] mb-2">
-                Mandate & Core Responsibilities
-              </h4>
-              <ul className="space-y-1.5 text-xs text-slate-600">
-                {initiatives.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#173490] mt-1.5 flex-shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Close Modal Footer Action */}
-            <div className="mt-6 flex justify-end border-t border-slate-100 pt-4">
+            {/* Modal Footer */}
+            <div className="p-4 sm:px-8 border-t border-slate-100 bg-slate-50/50 flex justify-end">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="rounded-xl bg-[#173490] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#1e4bb8] cursor-pointer shadow-md"
+                className="rounded-xl bg-[#173490] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#102a72] cursor-pointer shadow-md"
               >
                 Close Profile
               </button>

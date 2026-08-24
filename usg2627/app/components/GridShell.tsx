@@ -18,7 +18,7 @@ export default function GridShell({ children }: { children: ReactNode }) {
         }}
       />
 
-      <div className="relative z-10">{children}</div>
+      <div className="relative">{children}</div>
     </div>
   );
 }

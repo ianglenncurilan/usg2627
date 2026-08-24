@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
+import { supabase } from "@/lib/supabase";
 
 interface CabinetMember {
   name: string;
   role: string;
+  department?: string;
   avatarSrc?: string;
   trunkLine?: string;
   directLine?: string;
@@ -18,6 +20,7 @@ interface CabinetMember {
 
 interface CabinetDepartment {
   name: string;
+  acronym: string;
   description: string;
   logoSrc: string;
   mandate?: string;
@@ -27,6 +30,7 @@ interface CabinetDepartment {
 const cabinetDepartments: CabinetDepartment[] = [
   {
     name: "Department of Students' Welfare and Development",
+    acronym: "DSWD",
     description: "Student advocacy, welfare programs, student rights protection, and mental health support initiatives.",
     logoSrc: "/usg.jpg",
     mandate: "Ensuring student well-being, equal access to support services, and active advocacy for student body rights and welfare.",
@@ -71,6 +75,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Department of Public Information and Creative Communications",
+    acronym: "DPICC",
     description: "Official press releases, institutional branding, graphic designs, and university-wide student publications.",
     logoSrc: "/usg.jpg",
     mandate: "Disseminating official student government notices, maintaining public transparency, and crafting creative publications.",
@@ -115,6 +120,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Department of Interior, Local Governance and Subordinate Units",
+    acronym: "DILG",
     description: "Local councils liaison, student organizations coordination, policy compliance, and governance affairs.",
     logoSrc: "/usg.jpg",
     mandate: "Bridging the central student government with collegiate local councils and accredited student organizations.",
@@ -159,6 +165,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Department of Finance and Treasury",
+    acronym: "DFT",
     description: "Fiscal allocation, institutional budget tracking, financial disclosures, and official receipts auditing.",
     logoSrc: "/usg.jpg",
     mandate: "Safeguarding student funds with absolute fiscal integrity, transparent records, and prompt financial disclosures.",
@@ -203,6 +210,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Department of Environment and Natural Resources",
+    acronym: "DENR",
     description: "Campus sustainability initiatives, waste reduction campaigns, green spaces, and eco-advocacy projects.",
     logoSrc: "/usg.jpg",
     mandate: "Fostering environmental responsibility and driving institutional programs towards a clean, zero-waste green campus.",
@@ -247,6 +255,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Department of Budget and Management",
+    acronym: "DBM",
     description: "Resource optimization, project expenditure auditing, budget projections, and administrative procurement.",
     logoSrc: "/usg.jpg",
     mandate: "Overseeing project viability, expenditure ceilings, and prudent management of student activity resources.",
@@ -291,6 +300,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Department of Academics, Sports, Culture, Arts and Technology",
+    acronym: "DASCAT",
     description: "Academic congresses, athletic tournaments, cultural festivals, student innovation, and digital tools.",
     logoSrc: "/usg.jpg",
     mandate: "Promoting holistic student development through scholastic excellence, artistic expression, and athletic engagement.",
@@ -335,6 +345,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Office of the President",
+    acronym: "OP",
     description: "Executive leadership, university administration liaison, presidential directives, and governance vision.",
     logoSrc: "/usg.jpg",
     mandate: "Leading the executive branch with visionary governance, institutional representation, and decisive public service.",
@@ -379,6 +390,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Office of the Vice President",
+    acronym: "OVP",
     description: "Executive branch coordination, inter-branch liaison, special flagship projects, and internal management.",
     logoSrc: "/usg.jpg",
     mandate: "Assisting executive leadership and overseeing specialized cross-departmental student initiatives.",
@@ -423,6 +435,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Department of the Secretariat",
+    acronym: "DS",
     description: "Official documentation, minutes archival, executive correspondence, and records repository management.",
     logoSrc: "/usg.jpg",
     mandate: "Preserving historical records, ensuring accurate documentation of executive actions, and managing official communications.",
@@ -467,6 +480,7 @@ const cabinetDepartments: CabinetDepartment[] = [
   },
   {
     name: "Office of the Student Regent",
+    acronym: "OSR",
     description: "Student representation in the University Board of Regents, university-level policy reforms, and student advocacy.",
     logoSrc: "/usg.jpg",
     mandate: "Carrying the unified student body voice to the highest policy-making governing board of the university.",
@@ -513,6 +527,54 @@ const cabinetDepartments: CabinetDepartment[] = [
 
 export default function CabinetPage() {
   const [selectedDept, setSelectedDept] = useState<CabinetDepartment | null>(null);
+  const [departments, setDepartments] = useState<CabinetDepartment[]>(cabinetDepartments);
+
+  useEffect(() => {
+    fetchDynamicMembers();
+  }, []);
+
+  const fetchDynamicMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("members")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const updated = cabinetDepartments.map((dept) => {
+          const matchingDbMembers = data
+            .filter((m: any) => m.department && m.department.toLowerCase() === dept.name.toLowerCase())
+            .map((m: any) => ({
+              name: m.name || m.full_name || "USG Member",
+              role: m.role,
+              department: m.department,
+              avatarSrc: m.profile_url || "/grad_ pic2.jpg",
+              directLine: m.phone_number || "loc. 6000",
+              email: m.email || "usg@carsu.edu.ph",
+              roomAddress: m.room_address || "Executive Suite",
+              assignedProjects: 10,
+              initiativesLed: 5,
+              term: "2026-2027",
+            }));
+
+          if (matchingDbMembers.length > 0) {
+            const seedFiltered = dept.members.filter(
+              (sm) => !matchingDbMembers.some((dm: any) => dm.name.toLowerCase() === sm.name.toLowerCase())
+            );
+            return {
+              ...dept,
+              members: [...matchingDbMembers, ...seedFiltered],
+            };
+          }
+          return dept;
+        });
+
+        setDepartments(updated);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <GridShell>
@@ -536,36 +598,38 @@ export default function CabinetPage() {
 
         {/* Departments Grid */}
         <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {cabinetDepartments.map((dept) => (
+          {departments.map((dept) => (
             <div
               key={dept.name}
               className="group flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:border-[#173490]/40 hover:shadow-xl backdrop-blur-sm will-change-transform animate-fade-in-up"
             >
               <div>
-                {/* Top Row: Logo and Tag */}
-                <div className="flex items-start gap-4">
-                  <img
-                    src={dept.logoSrc || "/usg.jpg"}
-                    alt={`${dept.name} Logo`}
-                    className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-[#173490]/20 flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="flex-1 min-w-0 pt-1">
-                    <span className="inline-block rounded-full bg-[#173490]/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-widest text-[#173490]">
-                      Cabinet Department
+                {/* Centered Top Header: Logo, Acronym Badge, Member Count */}
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative">
+                    <img
+                      src={dept.logoSrc || "/usg.jpg"}
+                      alt={`${dept.name} Logo`}
+                      className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-[#173490]/20 transition-transform duration-300 group-hover:scale-105 mx-auto"
+                    />
+                  </div>
+                  <div className="mt-3 flex flex-col items-center gap-1">
+                    <span className="inline-block rounded-full bg-[#173490]/10 px-4 py-1 text-xs font-black uppercase tracking-widest text-[#173490]">
+                      {dept.acronym}
                     </span>
-                    <span className="block mt-1 text-xs font-semibold text-slate-500">
+                    <span className="text-xs font-semibold text-slate-500">
                       {dept.members.length} Appointed Members
                     </span>
                   </div>
                 </div>
 
                 {/* Department Name */}
-                <h2 className="mt-4 text-xl font-bold text-slate-900 group-hover:text-[#173490] transition leading-snug">
+                <h2 className="mt-4 text-xl font-bold text-slate-900 group-hover:text-[#173490] transition leading-snug text-center">
                   {dept.name}
                 </h2>
 
                 {/* Summary Description */}
-                <p className="mt-3 text-sm leading-relaxed text-slate-600 line-clamp-3">
+                <p className="mt-3 text-sm leading-relaxed text-slate-600 line-clamp-3 text-center">
                   {dept.description}
                 </p>
               </div>
@@ -612,17 +676,17 @@ export default function CabinetPage() {
         {/* Modal: Department Member Profiling */}
         {selectedDept && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 pt-20 sm:pt-24 bg-slate-900/75 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
             onClick={() => setSelectedDept(null)}
           >
             <div
-              className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200"
+              className="relative my-auto max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
                 onClick={() => setSelectedDept(null)}
-                className="absolute right-5 top-5 rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition cursor-pointer"
+                className="absolute right-5 top-5 rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition cursor-pointer z-10"
                 aria-label="Close modal"
               >
                 <svg
@@ -642,23 +706,23 @@ export default function CabinetPage() {
               </button>
 
               {/* Department Header in Modal */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b border-slate-100 pb-6 pr-10">
+              <div className="flex flex-col sm:flex-row items-center gap-5 border-b border-slate-100 pb-6 text-center sm:text-left pr-8">
                 <img
                   src={selectedDept.logoSrc || "/usg.jpg"}
                   alt={`${selectedDept.name} Logo`}
-                  className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-4 border-white shadow-lg ring-2 ring-[#173490]/20 flex-shrink-0"
+                  className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-4 border-white shadow-lg ring-2 ring-[#173490]/20 flex-shrink-0 mx-auto sm:mx-0"
                 />
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-[#173490]/10 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-[#173490]">
-                      Cabinet Department
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <span className="rounded-full bg-[#173490]/10 px-3 py-0.5 text-xs font-black uppercase tracking-wider text-[#173490]">
+                      {selectedDept.acronym}
                     </span>
                     <span className="text-xs text-slate-400 font-medium">•</span>
                     <span className="text-xs text-slate-500 font-semibold">
                       {selectedDept.members.length} Officers & Members
                     </span>
                   </div>
-                  <h2 className="mt-1 text-2xl sm:text-3xl font-black text-slate-900">
+                  <h2 className="mt-1.5 text-2xl sm:text-3xl font-black text-slate-900">
                     {selectedDept.name}
                   </h2>
                   <p className="mt-1 text-sm text-slate-600">
@@ -696,7 +760,7 @@ export default function CabinetPage() {
                   >
                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M22 21v-2a4 4 0 0 3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                   </svg>
                   <span>Appointed Department Officers</span>
@@ -736,6 +800,26 @@ export default function CabinetPage() {
                             <span className="inline-block mt-1 rounded-md bg-[#173490]/10 px-2 py-0.5 text-[11px] font-bold text-[#173490]">
                               {member.role}
                             </span>
+                            <p className="mt-1 text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-[#173490] flex-shrink-0"
+                              >
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                              </svg>
+                              <span className="truncate">{member.department || `${selectedDept.name} (${selectedDept.acronym})`}</span>
+                            </p>
                           </div>
                         </div>
 
@@ -779,27 +863,6 @@ export default function CabinetPage() {
                                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                               </svg>
                               <span>Direct: {member.directLine}</span>
-                            </div>
-                          )}
-
-                          {member.roomAddress && (
-                            <div className="flex items-center gap-2">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="13"
-                                height="13"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-[#173490] flex-shrink-0"
-                              >
-                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                                <circle cx="12" cy="10" r="3" />
-                              </svg>
-                              <span className="truncate">{member.roomAddress}</span>
                             </div>
                           )}
                         </div>

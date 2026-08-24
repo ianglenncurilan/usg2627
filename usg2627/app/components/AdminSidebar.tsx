@@ -7,11 +7,13 @@ import { supabase } from "@/lib/supabase";
 
 const navigation = [
   { name: "Dashboard", href: "/admin" },
+  { name: "Members Management", href: "/admin/members" },
+  { name: "Org Structure", href: "/admin/org-structure" },
   { name: "Documents", href: "/admin/documents" },
   { name: "News & Press", href: "/admin/news" },
   { name: "Events", href: "/admin/events" },
   { name: "Budget Transparency", href: "/admin/budgetary-transparency" },
-  { name: "Users", href: "/admin#users" },
+  { name: "Users", href: "/admin/users" },
   { name: "Settings", href: "/admin#settings" },
 ];
 
