@@ -220,7 +220,7 @@ export default function CabinetPage() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-40px" }}
+          viewport={{ once: false, margin: "-40px" }}
           className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3"
         >
           {departments.map((dept) => (

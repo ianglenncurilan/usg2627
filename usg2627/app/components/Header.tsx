@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
 const navigation = [
   {
@@ -77,6 +78,15 @@ interface HeaderProps {
 export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 15);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close menu when route changes
   useEffect(() => {
@@ -105,7 +115,16 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
   }, [mobileMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-blue-900 bg-[#173490] text-white shadow-md">
+    <motion.header
+      initial={{ y: -60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className={`sticky top-0 z-40 transition-all duration-300 ${
+        isScrolled
+          ? "border-b border-blue-900/80 bg-[#173490]/95 backdrop-blur-md shadow-xl py-0.5"
+          : "border-b border-blue-900 bg-[#173490] shadow-md"
+      } text-white`}
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0 pr-2">
@@ -271,6 +290,6 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

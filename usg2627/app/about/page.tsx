@@ -127,7 +127,7 @@ export default function AboutPage() {
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: false, margin: "-40px" }}
             className="grid gap-8 lg:grid-cols-3"
           >
             {/* MISSION */}
@@ -186,7 +186,7 @@ export default function AboutPage() {
           <motion.section
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
+            viewport={{ once: false, margin: "-40px" }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-lg"
           >
@@ -271,7 +271,7 @@ export default function AboutPage() {
           <motion.section
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
+            viewport={{ once: false, margin: "-40px" }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xl overflow-hidden"
           >

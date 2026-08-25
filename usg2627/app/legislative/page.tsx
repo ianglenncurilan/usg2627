@@ -208,7 +208,8 @@ export default function LegislativePage() {
           <motion.div
             variants={containerVariants}
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-40px" }}
             className="mt-10 grid gap-6 md:grid-cols-2"
           >
             {members.map((member, index) => (

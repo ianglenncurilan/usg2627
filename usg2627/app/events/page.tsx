@@ -5,13 +5,13 @@ import { supabase } from "@/lib/supabase";
 import GridShell from "../components/GridShell";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Mock fallbacks if Supabase table does not exist or is empty
+// Static mock fallbacks with fixed ISO dates to prevent SSR/CSR Date.now() hydration mismatch
 const staticEvents = [
   {
     id: "1",
     title: "USG Leadership Assembly",
     description: "Annual gathering of student leaders to align on campus priorities, present legislative agenda proposals, and formulate welfare plans.",
-    event_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000).toISOString(), // 4.5 days from now
+    event_date: "2026-08-30T09:00:00.000Z",
     location: "Student Center Assembly Hall",
   },
   {
@@ -53,9 +53,11 @@ const itemVariants = {
 };
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
+    setMounted(true);
     const calculateTimeLeft = () => {
       const difference = +new Date(targetDate) - +new Date();
       if (difference <= 0) {
@@ -78,8 +80,31 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
     return () => clearInterval(timer);
   }, [targetDate]);
 
+  if (!mounted) {
+    return (
+      <div className="mt-6 grid grid-cols-4 gap-2 text-center opacity-60">
+        <div className="rounded-2xl bg-slate-950 p-3 shadow-md border border-slate-800 flex flex-col justify-center min-w-[60px]">
+          <span className="text-2xl font-black tracking-tight text-white">0</span>
+          <span className="text-[9px] font-bold tracking-wider text-[#E7C609] uppercase">Days</span>
+        </div>
+        <div className="rounded-2xl bg-slate-950 p-3 shadow-md border border-slate-800 flex flex-col justify-center min-w-[60px]">
+          <span className="text-2xl font-black tracking-tight text-white">00</span>
+          <span className="text-[9px] font-bold tracking-wider text-[#E7C609] uppercase">Hours</span>
+        </div>
+        <div className="rounded-2xl bg-slate-950 p-3 shadow-md border border-slate-800 flex flex-col justify-center min-w-[60px]">
+          <span className="text-2xl font-black tracking-tight text-white">00</span>
+          <span className="text-[9px] font-bold tracking-wider text-[#E7C609] uppercase">Mins</span>
+        </div>
+        <div className="rounded-2xl bg-slate-950 p-3 shadow-md border border-slate-800 flex flex-col justify-center min-w-[60px]">
+          <span className="text-2xl font-black tracking-tight text-rose-500">00</span>
+          <span className="text-[9px] font-bold tracking-wider text-[#E7C609] uppercase">Secs</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="mt-6 grid grid-cols-4 gap-2 text-center">
+    <div className="mt-6 grid grid-cols-4 gap-2 text-center" suppressHydrationWarning>
       <div className="rounded-2xl bg-slate-950 p-3 shadow-md border border-slate-800 flex flex-col justify-center min-w-[60px]">
         <span className="text-2xl font-black tracking-tight text-white">{timeLeft.days}</span>
         <span className="text-[9px] font-bold tracking-wider text-[#E7C609] uppercase">Days</span>
@@ -98,6 +123,30 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
       </div>
     </div>
   );
+}
+
+function FormattedDate({ dateString }: { dateString: string }) {
+  const [formatted, setFormatted] = useState(dateString);
+
+  useEffect(() => {
+    try {
+      const d = new Date(dateString);
+      setFormatted(
+        d.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
+        })
+      );
+    } catch {
+      setFormatted(dateString);
+    }
+  }, [dateString]);
+
+  return <span suppressHydrationWarning>{formatted}</span>;
 }
 
 export default function EventsPage() {
@@ -202,7 +251,8 @@ export default function EventsPage() {
             key={activeTab}
             variants={containerVariants}
             initial="hidden"
-            animate="visible"
+            whileInView="visible"
+            viewport={{ once: false, margin: "-40px" }}
             className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3"
           >
             <AnimatePresence mode="popLayout">
@@ -241,16 +291,9 @@ export default function EventsPage() {
                     </h2>
 
                     {/* Date Display */}
-                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-500">
+                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-500" suppressHydrationWarning>
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                      {new Date(event.event_date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit'
-                      })}
+                      <FormattedDate dateString={event.event_date} />
                     </p>
 
                     {/* Description */}

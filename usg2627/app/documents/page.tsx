@@ -245,7 +245,8 @@ function DocumentsContent() {
         <motion.div
           variants={containerVariants}
           initial="hidden"
-          animate="visible"
+          whileInView="visible"
+          viewport={{ once: false, margin: "-40px" }}
           className="mt-4 space-y-3"
         >
           <AnimatePresence mode="popLayout">
