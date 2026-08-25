@@ -195,7 +195,7 @@ export default function EventsPage() {
         >
           <div>
             <h1 className="text-5xl font-black tracking-[-0.06em] text-slate-900">
-              Campus Events & Forums
+              Campus Events
             </h1>
             <p className="mt-3 text-lg text-slate-600">
               Keep track of student assemblies, policy dialogues, and committee summits
