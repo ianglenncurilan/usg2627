@@ -4,76 +4,55 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "./components/GridShell";
 import { supabase } from "@/lib/supabase";
+import { motion } from "framer-motion";
 
-const quickLinks = [
+const topDocumentTypes = [
   {
-    title: "About USG",
-    description: "Student governance and leadership initiatives.",
-    href: "/about",
-  },
-  {
-    title: "Legislative",
-    description: "Leadership and office directory.",
-    href: "/legislative",
-  },
-  {
-    title: "Cabinet",
-    description: "Executive departments and cabinet directorships.",
-    href: "/cabinet",
-  },
-  {
-    title: "Transparency",
-    description: "USG budgetary disclosures, event liquidations, and financial audits.",
-    href: "/budgetary-transparency",
-  },
-];
-
-const documentTypes = [
-  {
+    type: "RESOLUTION",
     title: "Resolutions",
     description: "Official legislative acts, motions, and enactments",
-    count: "156",
     href: "/documents?category=Resolution",
   },
   {
+    type: "EXECUTIVE ORDER",
     title: "Executive Orders",
     description: "Presidential directives and administrative policies",
-    count: "42",
     href: "/documents?category=Executive Order",
   },
   {
+    type: "ADMINISTRATIVE ORDER",
     title: "Administrative Orders",
     description: "Departmental rules, regulations, and office orders",
-    count: "31",
     href: "/documents?category=Administrative Order",
   },
   {
+    type: "MEMORANDUM",
     title: "Memorandums",
     description: "Internal communications and official circulars",
-    count: "24",
     href: "/documents?category=Memorandum",
-  },
-  {
-    title: "Special Orders",
-    description: "Ad-hoc task force designations and committee assignments",
-    count: "18",
-    href: "/documents?category=Special Order",
-  },
-  {
-    title: "Advisories",
-    description: "Campus bulletins, public notices, and student updates",
-    count: "65",
-    href: "/documents?category=Advisory",
-  },
-  {
-    title: "Financial Documents",
-    description: "Official financial statements, balance sheets, and audit reports",
-    count: "39",
-    href: "/documents?category=Financial Documents",
   },
 ];
 
-// Static recent publications removed in favor of dynamic Supabase fetch
+const bottomDocumentTypes = [
+  {
+    type: "SPECIAL ORDER",
+    title: "Special Orders",
+    description: "Ad-hoc task force designations and committee assignments",
+    href: "/documents?category=Special Order",
+  },
+  {
+    type: "ADVISORY",
+    title: "Advisories",
+    description: "Campus bulletins, public notices, and student updates",
+    href: "/documents?category=Advisory",
+  },
+  {
+    type: "FINANCIAL DOCUMENTS",
+    title: "Financial Documents",
+    description: "Official financial statements, balance sheets, and audit reports",
+    href: "/documents?category=Financial Documents",
+  },
+];
 
 const staticNewsItems = [
   {
@@ -120,13 +99,46 @@ const staticFeaturedStories = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.09,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.55,
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+    },
+  },
+};
+
 export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [recentPublications, setRecentPublications] = useState<any[]>([]);
   const [loadingPublications, setLoadingPublications] = useState(true);
+  const [docCounts, setDocCounts] = useState<Record<string, number>>({
+    RESOLUTION: 0,
+    "EXECUTIVE ORDER": 0,
+    "ADMINISTRATIVE ORDER": 0,
+    MEMORANDUM: 0,
+    "SPECIAL ORDER": 0,
+    ADVISORY: 0,
+    "FINANCIAL DOCUMENTS": 0,
+  });
   const [featuredStories, setFeaturedStories] = useState<any[]>(staticFeaturedStories);
   const [newsItems, setNewsItems] = useState<any[]>(staticNewsItems);
+
+
 
   useEffect(() => {
     async function fetchNews() {
@@ -175,19 +187,41 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    async function fetchRecent() {
+    async function fetchDocumentsData() {
       try {
         const { data, error } = await supabase
           .from("documents")
           .select("*")
           .eq("status", "published")
-          .order("published_at", { ascending: false })
-          .limit(4);
+          .order("published_at", { ascending: false });
 
         if (error) {
-          console.error("Error fetching recent publications:", error);
+          console.error("Error fetching documents:", error);
         } else if (data) {
-          setRecentPublications(data);
+          setRecentPublications(data.slice(0, 4));
+
+          const counts: Record<string, number> = {
+            RESOLUTION: 0,
+            "EXECUTIVE ORDER": 0,
+            "ADMINISTRATIVE ORDER": 0,
+            MEMORANDUM: 0,
+            "SPECIAL ORDER": 0,
+            ADVISORY: 0,
+            "FINANCIAL DOCUMENTS": 0,
+          };
+
+          data.forEach((doc: any) => {
+            if (doc.type) {
+              const typeKey = doc.type.trim().toUpperCase();
+              if (counts[typeKey] !== undefined) {
+                counts[typeKey] += 1;
+              } else {
+                counts[typeKey] = (counts[typeKey] || 0) + 1;
+              }
+            }
+          });
+
+          setDocCounts(counts);
         }
       } catch (err) {
         console.error("Error:", err);
@@ -195,7 +229,7 @@ export default function Home() {
         setLoadingPublications(false);
       }
     }
-    fetchRecent();
+    fetchDocumentsData();
   }, []);
 
   useEffect(() => {
@@ -222,41 +256,75 @@ export default function Home() {
 
   return (
     <GridShell>
+
+
       <main className="mx-auto max-w-7xl px-6 py-20">
-        <section className="flex min-h-[calc(100vh-120px)] flex-col items-center justify-center text-center">
-          <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-[0_6px_20px_rgba(15,23,42,0.04)] backdrop-blur-sm">
+        {/* Hero Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 35 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+          className="flex min-h-[calc(100vh-120px)] flex-col items-center justify-center text-center"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-8 inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-[0_6px_20px_rgba(15,23,42,0.04)] backdrop-blur-sm"
+          >
             <span className="h-3 w-3 rounded-full bg-[#5ab07d] shadow-[0_0_0_4px_rgba(90,176,125,0.15)]" />
             <span>Official Student Portal</span>
-          </div>
+          </motion.div>
 
-          <h1 className="max-w-5xl text-5xl font-black tracking-[-0.06em] text-slate-900 md:text-7xl">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-5xl text-5xl font-black tracking-[-0.06em] text-slate-900 md:text-7xl"
+          >
             University Student Government
-          </h1>
+          </motion.h1>
 
-          <p className="mt-6 max-w-3xl text-xl leading-8 text-slate-600 md:text-2xl">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-6 max-w-3xl text-xl leading-8 text-slate-600 md:text-2xl"
+          >
             Public service, student accountability, and governance across campus
             leadership, documents, and events.
-          </p>
+          </motion.p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+          >
             <Link
               href="/about"
-              className="rounded-full bg-[#E7C609] px-6 py-3 text-sm font-bold text-[#173490] shadow-sm transition hover:brightness-95"
+              className="rounded-full bg-[#E7C609] px-6 py-3 text-sm font-bold text-[#173490] shadow-sm transition hover:brightness-95 hover:scale-105 active:scale-95"
             >
               Learn More
             </Link>
             <Link
               href="/documents"
-              className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50"
+              className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50 hover:scale-105 active:scale-95"
             >
               View Documents
             </Link>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Latest Official Publication */}
         {currentStory && (
-          <section className="mt-16 py-12">
+          <motion.section
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-16 py-12"
+          >
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12">
               <div className={`lg:w-[42%] transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="mb-5 flex items-center gap-3">
@@ -378,31 +446,17 @@ export default function Home() {
                 />
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
-        <section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {quickLinks.map((link) => (
-            <Link
-              key={link.title}
-              href={link.href}
-              className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#173490]">
-                Section
-              </p>
-              <h2 className="mt-3 text-2xl font-black text-slate-900">
-                {link.title}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {link.description}
-              </p>
-            </Link>
-          ))}
-        </section>
-
         {/* Quick Access Document Portal */}
-        <section className="mt-20">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-20"
+        >
           <div className="mb-8">
             <h2 className="text-3xl font-black tracking-tight text-slate-900">
               Quick Access Document Portal
@@ -411,33 +465,90 @@ export default function Home() {
               Browse official USG documents by category
             </p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {documentTypes.map((doc) => (
-              <Link
-                key={doc.title}
-                href={doc.href}
-                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#173490] hover:shadow-md"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#173490]">
-                      {doc.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-600">
-                      {doc.description}
-                    </p>
-                  </div>
-                  <span className="text-2xl font-black text-[#E7C609]">
-                    {doc.count}
-                  </span>
-                </div>
-              </Link>
-            ))}
+
+          <div className="space-y-6">
+            {/* Top Row: 4 Cards */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-40px" }}
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              {topDocumentTypes.map((doc) => (
+                <motion.div
+                  key={doc.title}
+                  variants={itemVariants}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                >
+                  <Link
+                    href={doc.href}
+                    className="group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#173490] hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#173490]">
+                          {doc.title}
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-600">
+                          {doc.description}
+                        </p>
+                      </div>
+                      <span className="text-2xl font-black text-[#E7C609] shrink-0">
+                        {docCounts[doc.type] ?? 0}
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Bottom Row: 3 Cards */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-40px" }}
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {bottomDocumentTypes.map((doc) => (
+                <motion.div
+                  key={doc.title}
+                  variants={itemVariants}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                >
+                  <Link
+                    href={doc.href}
+                    className="group flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#173490] hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#173490]">
+                          {doc.title}
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-600">
+                          {doc.description}
+                        </p>
+                      </div>
+                      <span className="text-2xl font-black text-[#E7C609] shrink-0">
+                        {docCounts[doc.type] ?? 0}
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Recent Publications */}
-        <section className="mt-20">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-20"
+        >
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-black tracking-tight text-slate-900">
@@ -454,7 +565,13 @@ export default function Home() {
               View Archive →
             </Link>
           </div>
-          <div className="space-y-4">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            className="space-y-4"
+          >
             {loadingPublications ? (
               <div className="flex justify-center py-8">
                 <div className="h-8 w-8 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
@@ -463,8 +580,10 @@ export default function Home() {
               <p className="text-center text-slate-500 py-8">No recent publications found</p>
             ) : (
               recentPublications.map((pub) => (
-                <div
+                <motion.div
                   key={pub.id}
+                  variants={itemVariants}
+                  whileHover={{ y: -2, transition: { duration: 0.2 } }}
                   className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition"
                 >
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -508,14 +627,20 @@ export default function Home() {
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* News & Press Releases */}
-        <section className="mt-20">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-20"
+        >
           <div className="mb-8">
             <h2 className="text-3xl font-black tracking-tight text-slate-900">
               News & Press Releases
@@ -524,47 +649,60 @@ export default function Home() {
               Latest updates and announcements from USG
             </p>
           </div>
-          <div className="grid gap-6 md:grid-cols-3">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            className="grid gap-6 md:grid-cols-3"
+          >
             {newsItems.map((news) => (
-              <div
+              <motion.div
                 key={news.title}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                variants={itemVariants}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between"
               >
-                {news.imageSrc ? (
-                  <div className="mb-4 h-40 rounded-xl overflow-hidden relative border border-slate-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={news.imageSrc} alt={news.title} className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="mb-4 h-40 rounded-xl bg-gradient-to-br from-[#173490] to-[#1e4bb8]" />
-                )}
-                <span className="text-xs font-semibold text-slate-500">
-                  {news.date}
-                </span>
-                <h3 className="mt-2 text-lg font-bold text-slate-900">
-                  {news.title}
-                </h3>
-                <p className="mt-2 text-sm text-slate-600 line-clamp-3">
-                  {news.description}
-                </p>
-                {news.linkHref ? (
-                  <a
-                    href={news.linkHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-block text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]"
-                  >
-                    Read Full Article →
-                  </a>
-                ) : (
-                  <button className="mt-4 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]">
-                    Read Full Article →
-                  </button>
-                )}
-              </div>
+                <div>
+                  {news.imageSrc ? (
+                    <div className="mb-4 h-40 rounded-xl overflow-hidden relative border border-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={news.imageSrc} alt={news.title} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="mb-4 h-40 rounded-xl bg-gradient-to-br from-[#173490] to-[#1e4bb8]" />
+                  )}
+                  <span className="text-xs font-semibold text-slate-500">
+                    {news.date}
+                  </span>
+                  <h3 className="mt-2 text-lg font-bold text-slate-900">
+                    {news.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600 line-clamp-3">
+                    {news.description}
+                  </p>
+                </div>
+
+                <div className="mt-4">
+                  {news.linkHref ? (
+                    <a
+                      href={news.linkHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]"
+                    >
+                      Read Full Article →
+                    </a>
+                  ) : (
+                    <button className="text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]">
+                      Read Full Article →
+                    </button>
+                  )}
+                </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
       </main>
     </GridShell>
   );

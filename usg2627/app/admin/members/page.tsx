@@ -25,7 +25,7 @@ const initialSeedMembers = [
     name: "Cresencio U. Ablan",
     role: "USG Senator",
     department: "Department of Public Information and Creative Communications",
-    profile_url: "/grad_ pic2.jpg",
+    profile_url: "/usg.jpg",
     phone_number: "(632) 552-6601 loc. 5301",
     email: "cresencio.ablan@carsu.edu.ph",
     facebook_url: "https://facebook.com",
@@ -48,7 +48,7 @@ const initialSeedMembers = [
     name: "Win Gatchalian",
     role: "Legislative President",
     department: "Department of Students' Welfare and Development",
-    profile_url: "/grad_ pic2.jpg",
+    profile_url: "/usg.jpg",
     phone_number: "(632) 552-6601 loc. 5301",
     email: "win.gatchalian@carsu.edu.ph",
     facebook_url: "https://facebook.com",
@@ -250,7 +250,7 @@ export default function AdminMembersPage() {
         title: formData.role,
         department: formData.department,
         department_name: formData.department,
-        profile_url: avatarUrl || "/grad_ pic2.jpg",
+        profile_url: avatarUrl || "/usg.jpg",
         phone_number: formData.phone_number || null,
         email: formData.email || null,
         facebook_url: formData.facebook_url || null,
@@ -335,7 +335,7 @@ export default function AdminMembersPage() {
         title: formData.role,
         department: formData.department,
         department_name: formData.department,
-        profile_url: avatarUrl || "/grad_ pic2.jpg",
+        profile_url: avatarUrl || "/usg.jpg",
         phone_number: formData.phone_number || null,
         email: formData.email || null,
         facebook_url: formData.facebook_url || null,
@@ -619,7 +619,7 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                         <td className="px-6 py-4 align-top">
                           <div className="flex items-center gap-3">
                             <img
-                              src={member.profile_url || "/grad_ pic2.jpg"}
+                              src={member.profile_url || "/usg.jpg"}
                               alt={member.name}
                               className="h-12 w-12 rounded-full object-cover border-2 border-slate-200 shadow-xs flex-shrink-0"
                             />

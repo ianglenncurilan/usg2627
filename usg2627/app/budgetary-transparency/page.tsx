@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { supabase } from "@/lib/supabase";
+import { motion } from "framer-motion";
 
 // Pre-seeded fallback data if database is empty or not yet migrated
 const fallbackBudgetData = [
@@ -102,7 +103,7 @@ const getStatusBadge = (status: string) => {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200/80">
       {status}
     </span>
   );
@@ -125,16 +126,12 @@ export default function BudgetaryTransparencyPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.warn("Supabase fetch failed (table may not exist yet), displaying fallback data:", error.message);
+      if (error || !data || data.length === 0) {
         setBudgetItems(fallbackBudgetData);
-      } else if (data && data.length > 0) {
-        setBudgetItems(data);
       } else {
-        setBudgetItems(fallbackBudgetData);
+        setBudgetItems(data);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setBudgetItems(fallbackBudgetData);
     } finally {
       setLoading(false);
@@ -157,9 +154,14 @@ export default function BudgetaryTransparencyPage() {
   return (
     <GridShell>
       <main className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
-        
+
         {/* Breadcrumbs & Badge */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6 flex flex-wrap items-center gap-3"
+        >
           <div className="inline-flex items-center gap-2 rounded-full border border-[#173490]/20 bg-[#173490]/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#173490]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -179,24 +181,39 @@ export default function BudgetaryTransparencyPage() {
           </div>
           <span className="text-xs font-medium text-slate-400">•</span>
           <span className="text-xs font-semibold text-slate-500">Official Publication Portal</span>
-        </div>
+        </motion.div>
 
         {/* Title */}
-        <h1 className="text-4xl font-black tracking-[-0.05em] text-slate-900 sm:text-5xl lg:text-6xl">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="text-4xl font-black tracking-[-0.05em] text-slate-900 sm:text-5xl lg:text-6xl"
+        >
           USG Budgetary Transparency
-        </h1>
+        </motion.h1>
 
         {/* Summary about that page */}
-        <p className="mt-4 max-w-4xl text-base sm:text-lg leading-relaxed text-slate-600">
-          The University Student Government (USG) is firmly committed to absolute fiscal integrity, 
-          transparent governance, and responsible stewardship of student funds. This official transparency repository provides real-time 
-          access to all allocated project expenditures, institutional activities, and official documentation. 
-          Students, faculty, and stakeholders can monitor fiscal statuses, verify resource distribution, and access 
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-4 max-w-4xl text-base sm:text-lg leading-relaxed text-slate-600"
+        >
+          The University Student Government (USG) is firmly committed to absolute fiscal integrity,
+          transparent governance, and responsible stewardship of student funds. This official transparency repository provides real-time
+          access to all allocated project expenditures, institutional activities, and official documentation.
+          Students, faculty, and stakeholders can monitor fiscal statuses, verify resource distribution, and access
           financial and budgetary reports for every student-funded initiative.
-        </p>
+        </motion.p>
 
         {/* Filter and Search Bar */}
-        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-10 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+        >
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             {/* Search */}
             <div className="relative flex-1">
@@ -230,21 +247,26 @@ export default function BudgetaryTransparencyPage() {
                 <button
                   key={status}
                   onClick={() => setSelectedStatus(status)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
-                    selectedStatus === status
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${selectedStatus === status
                       ? "bg-[#173490] text-white shadow-sm"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}
+                    }`}
                 >
                   {status}
                 </button>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* 3 Columns Section: Events, Link, Status */}
-        <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="h-10 w-10 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
@@ -457,15 +479,21 @@ export default function BudgetaryTransparencyPage() {
               </table>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Footer Note / Inquiries */}
-        <div className="mt-12 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 p-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-12 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 p-6 text-center"
+        >
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
             Questions on USG Disclosures & Financial Records?
           </h3>
           <p className="mt-2 text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
-            All student body funds are subject to institutional audit. If you require specific audit schedules, receipts, or breakdown copies, 
+            All student body funds are subject to institutional audit. If you require specific audit schedules, receipts, or breakdown copies,
             contact the Office of the USG Treasurer or the Committee on Budget and Finance.
           </p>
           <div className="mt-4">
@@ -473,10 +501,10 @@ export default function BudgetaryTransparencyPage() {
               href="mailto:usg@carsu.edu.ph"
               className="inline-flex items-center gap-2 rounded-full bg-[#173490] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#102a72]"
             >
-              Contact Office of the Treasurer
+              Contact USG
             </a>
           </div>
-        </div>
+        </motion.div>
 
       </main>
     </GridShell>

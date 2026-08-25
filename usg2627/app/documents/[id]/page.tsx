@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "../../components/GridShell";
 import { supabase } from "@/lib/supabase";
+import { motion } from "framer-motion";
 
 const documentData = {
   "2026-015": {
@@ -100,16 +101,14 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           console.error("Error fetching document:", error);
         } else if (data) {
           setDoc({
-            type: data.type,
-            number: `${data.type === "RESOLUTION" ? "Resolution" : data.type === "MEMORANDUM" ? "Memorandum" : data.type === "EXECUTIVE ORDER" ? "Executive Order" : "Special Order"} No. ${data.tracking_number}`,
+            type: data.type || "DOCUMENT",
+            number: data.tracking_number || `Document #${data.id}`,
             title: data.title,
-            dateEnacted: data.published_at 
-              ? new Date(data.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-              : new Date(data.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-            sponsorCommittee: data.issuing_body,
-            voteTally: data.author ? `Author: ${data.author}` : "N/A",
-            status: data.status.toUpperCase(),
-            fileName: data.file_name || "Document.pdf",
+            dateEnacted: data.published_at ? new Date(data.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : "Pending Publication",
+            sponsorCommittee: data.issuing_body || "USG Administration",
+            voteTally: "Enacted by Assembly",
+            status: data.status ? data.status.toUpperCase() : "PUBLISHED",
+            fileName: data.file_name || `${data.title}.pdf`,
             fileUrl: data.file_url,
             description: data.description,
           });
@@ -124,7 +123,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     fetchDoc();
   }, [id]);
 
-  if (loading || !resolvedParams) {
+  if (loading) {
     return (
       <GridShell>
         <main className="mx-auto max-w-7xl px-6 py-20">
@@ -155,7 +154,12 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
     <GridShell>
       <main className="mx-auto max-w-7xl px-6 py-20">
         {/* Breadcrumbs */}
-        <nav className="mb-6 flex items-center gap-2 text-sm text-slate-600">
+        <motion.nav
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6 flex items-center gap-2 text-sm text-slate-600"
+        >
           <Link href="/" className="hover:text-[#173490]">
             Home
           </Link>
@@ -165,11 +169,16 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           </Link>
           <span>/</span>
           <span className="font-medium text-slate-900">{doc.number}</span>
-        </nav>
+        </motion.nav>
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <motion.div
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-2"
+          >
             {/* Document Header */}
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${getTypeColor(doc.type)}`}>
@@ -213,7 +222,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
             </div>
 
             {/* PDF Viewer */}
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-200 p-4">
                 <div className="flex items-center gap-3">
                   <svg
@@ -232,77 +241,6 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                     <polyline points="14 2 14 8 20 8" />
                   </svg>
                   <span className="text-sm font-medium text-slate-900">{doc.fileName}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" x2="16.65" y1="21" y2="16.65" />
-                      <line x1="11" x2="11" y1="8" y2="14" />
-                      <line x1="8" x2="14" y1="11" y2="11" />
-                    </svg>
-                  </button>
-                  <button className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" x2="16.65" y1="21" y2="16.65" />
-                      <line x1="8" x2="14" y1="11" y2="11" />
-                    </svg>
-                  </button>
-                  <button className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" x2="12" y1="15" y2="3" />
-                    </svg>
-                  </button>
-                  <button className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 9V2h12v7" />
-                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                      <path d="M6 14h12v8H6z" />
-                    </svg>
-                  </button>
                 </div>
               </div>
 
@@ -339,10 +277,15 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-6"
+          >
             {/* Related Documents */}
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="text-lg font-bold text-slate-900">Related Documents</h3>
@@ -431,7 +374,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
                 </button>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
       </main>
     </GridShell>

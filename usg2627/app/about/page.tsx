@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
 import { supabase } from "@/lib/supabase";
+import { motion } from "framer-motion";
 
 const initialOrgCharts = [
   {
@@ -27,6 +28,28 @@ const initialOrgCharts = [
     badge: "Executive Departments",
   },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.55,
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+    },
+  },
+};
 
 export default function AboutPage() {
   const [activeTab, setActiveTab] = useState<"org1" | "org2" | "org3">("org1");
@@ -60,7 +83,12 @@ export default function AboutPage() {
       <div className="bg-slate-50 min-h-screen pb-24">
 
         {/* HERO HEADER */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#173490] via-[#1b3da8] to-[#0f2466] py-20 text-white shadow-xl">
+        <motion.section
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="relative overflow-hidden bg-gradient-to-b from-[#173490] via-[#1b3da8] to-[#0f2466] py-20 text-white shadow-xl"
+        >
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-blue-400/20 via-transparent to-transparent"></div>
           
           <div className="relative mx-auto max-w-7xl px-6 text-center">
@@ -90,15 +118,24 @@ export default function AboutPage() {
               </span>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         <div className="mx-auto max-w-7xl px-6 -mt-8 relative z-10 space-y-16">
 
           {/* MISSION & VISION & GOALS SECTION */}
-          <section className="grid gap-8 lg:grid-cols-3">
-            
+          <motion.section
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="grid gap-8 lg:grid-cols-3"
+          >
             {/* MISSION */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl">
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl"
+            >
               <span className="text-xs font-black uppercase tracking-[0.25em] text-[#173490]">
                 Our Mission
               </span>
@@ -108,10 +145,14 @@ export default function AboutPage() {
               <p className="mt-4 text-sm leading-relaxed text-slate-600 font-medium">
                 To empower and represent the Caraga State University student body through transparent governance, proactive policy advocacy, accountable leadership, and inclusive student services that safeguard student rights and institutional welfare.
               </p>
-            </div>
+            </motion.div>
 
             {/* VISION */}
-            <div className="rounded-3xl border border-blue-200/80 bg-gradient-to-br from-white to-blue-50/60 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl">
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="rounded-3xl border border-blue-200/80 bg-gradient-to-br from-white to-blue-50/60 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl"
+            >
               <span className="text-xs font-black uppercase tracking-[0.25em] text-[#173490]">
                 Our Vision
               </span>
@@ -121,10 +162,14 @@ export default function AboutPage() {
               <p className="mt-4 text-sm leading-relaxed text-slate-600 font-medium">
                 To serve as a premier student government championing academic freedom, holistic student development, progressive youth leadership, and sustainable community advancement across the Caraga region and beyond.
               </p>
-            </div>
+            </motion.div>
 
             {/* STRATEGIC GOALS SUMMARY */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl">
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl"
+            >
               <span className="text-xs font-black uppercase tracking-[0.25em] text-emerald-800">
                 Core Goal
               </span>
@@ -134,12 +179,17 @@ export default function AboutPage() {
               <p className="mt-4 text-sm leading-relaxed text-slate-600 font-medium">
                 Fostering an open, responsive, and innovative legislative & executive ecosystem where every student’s voice is heard, respected, and translated into concrete university policy and developmental programs.
               </p>
-            </div>
-
-          </section>
+            </motion.div>
+          </motion.section>
 
           {/* 4 CORE STRATEGIC OBJECTIVES */}
-          <section className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-lg">
+          <motion.section
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-lg"
+          >
             <div className="text-center max-w-3xl mx-auto mb-10">
               <span className="inline-block rounded-full bg-blue-100 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wider text-[#173490]">
                 Strategic Pillars
@@ -152,9 +202,18 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              
-              <div className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-40px" }}
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group"
+              >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#173490] text-white font-bold mb-4 shadow-xs">
                   1
                 </div>
@@ -162,9 +221,13 @@ export default function AboutPage() {
                 <p className="mt-2 text-xs text-slate-600 leading-relaxed">
                   Publishing open budgetary disclosures, legislative resolutions, and executive reports for total campus accountability.
                 </p>
-              </div>
+              </motion.div>
 
-              <div className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group">
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group"
+              >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#173490] text-white font-bold mb-4 shadow-xs">
                   2
                 </div>
@@ -172,9 +235,13 @@ export default function AboutPage() {
                 <p className="mt-2 text-xs text-slate-600 leading-relaxed">
                   Active representation in university councils, safeguarding student welfare, academic equity, and student rights.
                 </p>
-              </div>
+              </motion.div>
 
-              <div className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group">
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group"
+              >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#173490] text-white font-bold mb-4 shadow-xs">
                   3
                 </div>
@@ -182,9 +249,13 @@ export default function AboutPage() {
                 <p className="mt-2 text-xs text-slate-600 leading-relaxed">
                   Launching digital student services, emergency relief funds, mental health initiatives, and athletic/cultural events.
                 </p>
-              </div>
+              </motion.div>
 
-              <div className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group">
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="rounded-2xl bg-slate-50 p-6 border border-slate-200/70 hover:border-[#173490] transition group"
+              >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#173490] text-white font-bold mb-4 shadow-xs">
                   4
                 </div>
@@ -192,14 +263,18 @@ export default function AboutPage() {
                 <p className="mt-2 text-xs text-slate-600 leading-relaxed">
                   Driving eco-friendly campus projects, community outreach, and leadership development across Caraga Region.
                 </p>
-              </div>
-
-            </div>
-          </section>
+              </motion.div>
+            </motion.div>
+          </motion.section>
 
           {/* ORGANIZATIONAL STRUCTURE FULL-IMAGE GRAPHICS SECTION */}
-          <section className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xl overflow-hidden">
-            
+          <motion.section
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-10 shadow-xl overflow-hidden"
+          >
             {/* Header & Tabs */}
             <div className="mb-8 text-center max-w-3xl mx-auto">
               <span className="inline-block rounded-full bg-[#173490]/10 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-[#173490] border border-[#173490]/20 mb-3">
@@ -274,8 +349,7 @@ export default function AboutPage() {
                 />
               </div>
             </div>
-
-          </section>
+          </motion.section>
 
         </div>
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { DropdownMenuSelect } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { motion, AnimatePresence } from "framer-motion";
 
 const documentTypes = [
   "All",
@@ -20,6 +21,28 @@ const documentTypes = [
 const academicYears = ["2025-2026", "2024-2025", "2023-2024"];
 const statuses = ["All", "Enacted", "Pending", "Archived"];
 const sortOptions = ["Newest Published", "Oldest Published", "Document Number A-Z", "Document Number Z-A"];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+    },
+  },
+};
 
 const getTypeColor = (type: string) => {
   switch (type?.toUpperCase()) {
@@ -117,12 +140,22 @@ function DocumentsContent() {
   return (
     <GridShell>
       <main className="mx-auto max-w-7xl px-6 py-20">
-        <h1 className="text-5xl font-black tracking-[-0.06em] text-slate-900">
+        <motion.h1
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          className="text-5xl font-black tracking-[-0.06em] text-slate-900"
+        >
           Public Documents
-        </h1>
+        </motion.h1>
 
         {/* Search and Filters */}
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+        >
           <div className="flex flex-col gap-3 lg:flex-row">
             <div className="flex-1">
               <div className="relative">
@@ -190,7 +223,7 @@ function DocumentsContent() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Document Count and Sort */}
         <div className="mt-6 flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
@@ -208,54 +241,65 @@ function DocumentsContent() {
           </div>
         </div>
 
-        {/* Document List */}
-        <div className="mt-4 space-y-3">
-          {displayedDocuments.map((doc: any) => (
-            <div
-              key={doc.id}
-              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="flex-1">
-                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wider ${getTypeColor(doc.type)}`}>
-                    {doc.type}
-                  </span>
-                  <h3 className="mt-2 text-base font-semibold text-slate-900">
-                    {doc.type === "RESOLUTION" && "Resolution No. "}
-                    {doc.type === "EXECUTIVE ORDER" && "Executive Order No. "}
-                    {doc.type === "ADMINISTRATIVE ORDER" && "Administrative Order No. "}
-                    {doc.type === "MEMORANDUM" && "Memorandum No. "}
-                    {doc.type === "SPECIAL ORDER" && "Special Order No. "}
-                    {doc.type === "ADVISORY" && "Advisory No. "}
-                    {doc.type === "FINANCIAL DOCUMENTS" && "Financial Document: "}
-                    {doc.tracking_number}: {doc.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-600">{doc.issuing_body}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {doc.published_at ? new Date(doc.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </p>
+        {/* Document List with Staggered Entrance */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="mt-4 space-y-3"
+        >
+          <AnimatePresence mode="popLayout">
+            {displayedDocuments.map((doc: any) => (
+              <motion.div
+                key={doc.id}
+                variants={itemVariants}
+                layout
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md hover:border-[#173490]/30"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="flex-1">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wider ${getTypeColor(doc.type)}`}>
+                      {doc.type}
+                    </span>
+                    <h3 className="mt-2 text-base font-semibold text-slate-900">
+                      {doc.type === "RESOLUTION" && "Resolution No. "}
+                      {doc.type === "EXECUTIVE ORDER" && "Executive Order No. "}
+                      {doc.type === "ADMINISTRATIVE ORDER" && "Administrative Order No. "}
+                      {doc.type === "MEMORANDUM" && "Memorandum No. "}
+                      {doc.type === "SPECIAL ORDER" && "Special Order No. "}
+                      {doc.type === "ADVISORY" && "Advisory No. "}
+                      {doc.type === "FINANCIAL DOCUMENTS" && "Financial Document: "}
+                      {doc.tracking_number}: {doc.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">{doc.issuing_body}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {doc.published_at ? new Date(doc.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                  {doc.file_url ? (
+                    <a
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609] md:mt-0 inline-flex items-center gap-1"
+                    >
+                      <span>View</span>
+                      <span>→</span>
+                    </a>
+                  ) : (
+                    <Link
+                      href={`/documents/${doc.id}`}
+                      className="mt-2 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609] md:mt-0 inline-flex items-center gap-1"
+                    >
+                      <span>View</span>
+                      <span>→</span>
+                    </Link>
+                  )}
                 </div>
-                {doc.file_url ? (
-                  <a
-                    href={doc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609] md:mt-0"
-                  >
-                    View →
-                  </a>
-                ) : (
-                  <Link
-                    href={`/documents/${doc.id}`}
-                    className="mt-2 text-sm font-semibold text-[#173490] transition hover:text-[#E7C609] md:mt-0"
-                  >
-                    View →
-                  </Link>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Pagination */}
         <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-4 md:flex-row">

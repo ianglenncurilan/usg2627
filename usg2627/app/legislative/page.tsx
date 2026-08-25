@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
 import ProfileCard from "../components/ProfileCard";
 import { supabase } from "@/lib/supabase";
+import { motion } from "framer-motion";
 
 const seedMembers = [
   {
@@ -11,7 +12,7 @@ const seedMembers = [
     name: "Cresencio U. Ablan",
     role: "USG Senator",
     department: "Department of Public Information and Creative Communications",
-    avatarSrc: "/grad_ pic2.jpg",
+    avatarSrc: "/usg.jpg",
     directLine: "(632) 552-6601 loc. 5301",
     email: "cresencio.ablan@carsu.edu.ph",
     roomAddress: "Room 502, Legislative Building",
@@ -31,7 +32,7 @@ const seedMembers = [
     name: "Win Gatchalian",
     role: "Legislative President",
     department: "Department of Students' Welfare and Development",
-    avatarSrc: "/grad_ pic2.jpg",
+    avatarSrc: "/usg.jpg",
     directLine: "(632) 552-6601 loc. 5301",
     email: "win.gatchalian@carsu.edu.ph",
     roomAddress: "Room 502, Legislative Building",
@@ -51,7 +52,7 @@ const seedMembers = [
     name: "Vicente C. Sotto III",
     role: "Legislative President Pro Tempore",
     department: "Department of Finance and Treasury",
-    avatarSrc: "/grad_ pic2.jpg",
+    avatarSrc: "/usg.jpg",
     directLine: "(632) 552-6601 loc. 5302",
     email: "vicente.sotto@carsu.edu.ph",
     roomAddress: "Room 503, Legislative Building",
@@ -71,7 +72,7 @@ const seedMembers = [
     name: "Maria Imelda Josefa",
     role: "Legislative Secretary General",
     department: "Department of the Secretariat",
-    avatarSrc: "/grad_ pic2.jpg",
+    avatarSrc: "/usg.jpg",
     directLine: "(632) 552-6601 loc. 5303",
     email: "maria.josefa@carsu.edu.ph",
     roomAddress: "Room 504, Legislative Building",
@@ -87,7 +88,7 @@ const seedMembers = [
     name: "Rafael P. Santos",
     role: "Chair, Committee on Rules & Ethics",
     department: "Department of Interior, Local Governance and Subordinate Units",
-    avatarSrc: "/grad_ pic2.jpg",
+    avatarSrc: "/usg.jpg",
     directLine: "(632) 552-6601 loc. 5304",
     email: "rafael.santos@carsu.edu.ph",
     roomAddress: "Room 505, Legislative Building",
@@ -103,7 +104,7 @@ const seedMembers = [
     name: "Patricia Mae Alcantara",
     role: "Chair, Committee on Student Rights",
     department: "Department of Academics, Sports, Culture, Arts and Technology",
-    avatarSrc: "/grad_ pic2.jpg",
+    avatarSrc: "/usg.jpg",
     directLine: "(632) 552-6601 loc. 5305",
     email: "patricia.alcantara@carsu.edu.ph",
     roomAddress: "Room 506, Legislative Building",
@@ -115,6 +116,28 @@ const seedMembers = [
     ],
   },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 25 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.55,
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+    },
+  },
+};
 
 export default function LegislativePage() {
   const [members, setMembers] = useState<any[]>([]);
@@ -134,12 +157,11 @@ export default function LegislativePage() {
       if (error || !data || data.length === 0) {
         setMembers(seedMembers);
       } else {
-        // Map database fields to ProfileCard props
         const mapped = data.map((m: any) => ({
           name: m.name || m.full_name || "USG Member",
           role: m.role,
           department: m.department,
-          avatarSrc: m.profile_url || "/grad_ pic2.jpg",
+          avatarSrc: m.profile_url || "/usg.jpg",
           directLine: m.phone_number || "(632) 552-6601",
           email: m.email || "usg@carsu.edu.ph",
           roomAddress: m.room_address || "Room 502, Legislative Building",
@@ -158,7 +180,12 @@ export default function LegislativePage() {
   return (
     <GridShell>
       <main className="mx-auto max-w-6xl px-6 py-20">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-8"
+        >
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#173490]/20 bg-[#173490]/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#173490]">
               <span className="h-2 w-2 rounded-full bg-[#E7C609]" />
@@ -171,18 +198,25 @@ export default function LegislativePage() {
               The legislative body responsible for enacting resolutions, policy measures, budget allocations, and student ordinances.
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-10 w-10 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="mt-10 grid gap-6 md:grid-cols-2"
+          >
             {members.map((member, index) => (
-              <ProfileCard key={member.id || index} {...member} />
+              <motion.div key={member.id || index} variants={itemVariants}>
+                <ProfileCard {...member} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </main>
     </GridShell>
