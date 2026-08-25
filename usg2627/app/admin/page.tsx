@@ -144,11 +144,11 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen flex-col md:flex-row bg-slate-100">
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
+      <main className="flex-1 min-w-0 overflow-y-auto">
+        <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
             <p className="text-slate-600">Welcome back, Administrator</p>

@@ -25,44 +25,44 @@ export default function Footer() {
             <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-[#E7C609]">
               Documents
             </h3>
-            <ul className="space-y-2 text-sm text-slate-300">
+            <ul className="grid grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-2 text-sm text-slate-300">
               <li>
-                <Link href="/documents?category=Resolution" className="transition hover:text-white">
+                <Link href="/documents?category=Resolution" className="transition hover:text-white block">
                   Resolutions
                 </Link>
               </li>
               <li>
-                <Link href="/documents?category=Executive Order" className="transition hover:text-white">
+                <Link href="/documents?category=Executive Order" className="transition hover:text-white block">
                   Executive Orders
                 </Link>
               </li>
               <li>
-                <Link href="/documents?category=Administrative Order" className="transition hover:text-white">
+                <Link href="/documents?category=Administrative Order" className="transition hover:text-white block">
                   Administrative Orders
                 </Link>
               </li>
               <li>
-                <Link href="/documents?category=Memorandum" className="transition hover:text-white">
+                <Link href="/documents?category=Memorandum" className="transition hover:text-white block">
                   Memorandums
                 </Link>
               </li>
               <li>
-                <Link href="/documents?category=Special Order" className="transition hover:text-white">
+                <Link href="/documents?category=Special Order" className="transition hover:text-white block">
                   Special Orders
                 </Link>
               </li>
               <li>
-                <Link href="/documents?category=Advisory" className="transition hover:text-white">
+                <Link href="/documents?category=Advisory" className="transition hover:text-white block">
                   Advisories
                 </Link>
               </li>
               <li>
-                <Link href="/documents?category=Financial Documents" className="transition hover:text-white">
+                <Link href="/documents?category=Financial Documents" className="transition hover:text-white block">
                   Financial Documents
                 </Link>
               </li>
               <li>
-                <Link href="/budgetary-transparency" className="transition hover:text-white text-[#E7C609] font-medium">
+                <Link href="/budgetary-transparency" className="transition hover:text-white text-[#E7C609] font-medium block">
                   Budgetary Transparency
                 </Link>
               </li>

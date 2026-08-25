@@ -306,11 +306,11 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen flex-col md:flex-row bg-slate-100">
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8 max-w-7xl">
+      <main className="flex-1 min-w-0 overflow-y-auto">
+        <div className="p-4 sm:p-6 md:p-8 max-w-7xl">
 
           {/* Toast Notification */}
           {toastMessage && (
