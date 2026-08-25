@@ -32,6 +32,11 @@ export const metadata: Metadata = {
   title: "University Student Government | Official Institutional Portal",
   description:
     "Official institutional portal for the University Student Government of Caraga State University, featuring news, documents, legislative leadership, cabinet, and events.",
+  icons: {
+    icon: "/usg.jpg",
+    shortcut: "/usg.jpg",
+    apple: "/usg.jpg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
