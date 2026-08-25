@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 );
 
 -- Ensure all required columns exist even if the user_profiles pre-existed
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS user_id UUID;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'User';
@@ -44,6 +45,7 @@ END $$;
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
 
 -- Enable Row Level Security
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
@@ -68,14 +70,15 @@ BEGIN
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', 'USG User'),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'role', 'User'),
     FALSE
   )
   ON CONFLICT (email) DO UPDATE SET
     user_id = EXCLUDED.user_id,
     full_name = EXCLUDED.full_name,
-    role = EXCLUDED.role;
+    role = EXCLUDED.role,
+    updated_at = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

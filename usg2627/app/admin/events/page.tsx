@@ -69,19 +69,31 @@ export default function AdminEventsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error: insertError } = await supabase
+      const eventPayload: any = {
+        title: formData.title,
+        description: formData.description,
+        event_date: new Date(formData.event_date).toISOString(),
+        location: formData.location,
+      };
+
+      if (user?.id) {
+        eventPayload.created_by = user.id;
+      }
+
+      let { error: insertError } = await supabase
         .from("events")
-        .insert({
-          title: formData.title,
-          description: formData.description,
-          event_date: new Date(formData.event_date).toISOString(),
-          location: formData.location,
-          created_by: user?.id,
-        });
+        .insert(eventPayload);
+
+      // Fallback if created_by column is missing in PostgreSQL schema cache
+      if (insertError && insertError.message && (insertError.message.includes("created_by") || insertError.code === "PGRST204")) {
+        delete eventPayload.created_by;
+        const fallbackRes = await supabase.from("events").insert(eventPayload);
+        insertError = fallbackRes.error;
+      }
 
       if (insertError) {
         console.error("Error inserting event:", insertError);
-        alert("Error saving event. Please try again.");
+        alert(`Error saving event: ${insertError.message}`);
       } else {
         alert("Event created successfully!");
         setFormData({
@@ -93,9 +105,9 @@ export default function AdminEventsPage() {
         setIsModalOpen(false);
         fetchEvents();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error:", error);
-      alert("An error occurred. Please try again.");
+      alert(`An error occurred: ${error.message || "Please try again."}`);
     } finally {
       setSaving(false);
     }
