@@ -62,7 +62,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/budgetary-transparency" className="transition hover:text-white text-[#E7C609] font-medium block">
+                <Link href="/budgetary-transparency" className="transition hover:text-white text-slate-300 block">
                   Budgetary Transparency
                 </Link>
               </li>

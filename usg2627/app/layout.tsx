@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Roboto_Condensed, Playfair_Display, Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
+import { Roboto_Condensed, Lora, Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Header from "./components/Header";
@@ -11,10 +11,10 @@ const robotoCondensed = Roboto_Condensed({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
-const playfairDisplay = Playfair_Display({
+const lora = Lora({
   subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["500", "600", "700", "800", "900"],
+  variable: "--font-heading",
+  weight: ["500", "600", "700"],
 });
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -43,12 +43,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      data-scroll-behavior="smooth"
       className={cn(
         "h-full",
         "antialiased",
         robotoCondensed.variable,
-        playfairDisplay.variable,
+        lora.variable,
         plusJakartaSans.variable,
         geistMono.variable,
         "font-sans"

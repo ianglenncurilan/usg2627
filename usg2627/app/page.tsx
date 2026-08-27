@@ -5,6 +5,14 @@ import Link from "next/link";
 import GridShell from "./components/GridShell";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const topDocumentTypes = [
   {
@@ -69,6 +77,21 @@ const staticNewsItems = [
     title: "Leadership Assembly Set for Next Week",
     date: "Aug 13, 2026",
     description: "Annual gathering of student leaders to discuss campus priorities.",
+  },
+  {
+    title: "Campus Infrastructure & Facility Upgrade Plan Announced",
+    date: "Aug 10, 2026",
+    description: "Major investments planned for student spaces, study lounges, and sports complexes.",
+  },
+  {
+    title: "Annual Student Organization Fair & Accreditation",
+    date: "Aug 05, 2026",
+    description: "Registration and re-accreditation open for all official campus student groups.",
+  },
+  {
+    title: "Academic Honor Council Selection Open Call",
+    date: "Jul 28, 2026",
+    description: "Applications now open for student representatives on the honor council.",
   },
 ];
 
@@ -137,6 +160,14 @@ export default function Home() {
   });
   const [featuredStories, setFeaturedStories] = useState<any[]>(staticFeaturedStories);
   const [newsItems, setNewsItems] = useState<any[]>(staticNewsItems);
+  const [newsPage, setNewsPage] = useState(1);
+  const newsPerPage = 3;
+
+  const totalNewsPages = Math.ceil(newsItems.length / newsPerPage);
+  const displayedNewsItems = newsItems.slice(
+    (newsPage - 1) * newsPerPage,
+    newsPage * newsPerPage
+  );
 
 
 
@@ -318,7 +349,7 @@ export default function Home() {
           <motion.section
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-50px" }}
+            viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="mt-16 py-12"
           >
@@ -391,17 +422,11 @@ export default function Home() {
                           <line x1="10" x2="21" y1="14" y2="3" />
                         </svg>
                       </Link>
-                      <Link
-                        href="/documents"
-                        className="inline-flex items-center rounded-full border border-slate-300 px-7 py-3.5 text-base font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                      >
-                        All Publications
-                      </Link>
                     </div>
                   </div>
                   <div className="lg:w-[55%]">
                     {currentStory.imageSrc && !currentStory.imageSrc.includes("/images/") ? (
-                      <div className="relative h-[300px] lg:h-[480px] rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50">
+                      <div className="relative h-[360px] lg:h-[540px] rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={currentStory.imageSrc}
@@ -410,7 +435,7 @@ export default function Home() {
                         />
                       </div>
                     ) : (
-                      <div className="relative h-[300px] lg:h-[480px] rounded-3xl bg-gradient-to-br from-[#1e4bb8] to-[#173490] shadow-lg flex items-center justify-center">
+                      <div className="relative h-[360px] lg:h-[540px] rounded-3xl bg-gradient-to-br from-[#1e4bb8] to-[#173490] shadow-lg flex items-center justify-center">
                         <div className="absolute inset-0 flex items-center justify-center">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -453,7 +478,7 @@ export default function Home() {
         <motion.section
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mt-20"
         >
@@ -472,7 +497,7 @@ export default function Home() {
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: false, margin: "-40px" }}
+              viewport={{ once: true }}
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
             >
               {topDocumentTypes.map((doc) => (
@@ -508,7 +533,7 @@ export default function Home() {
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: false, margin: "-40px" }}
+              viewport={{ once: true }}
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             >
               {bottomDocumentTypes.map((doc) => (
@@ -545,7 +570,7 @@ export default function Home() {
         <motion.section
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mt-20"
         >
@@ -569,7 +594,7 @@ export default function Home() {
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, margin: "-40px" }}
+            viewport={{ once: true }}
             className="space-y-4"
           >
             {loadingPublications ? (
@@ -637,7 +662,7 @@ export default function Home() {
         <motion.section
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mt-20"
         >
@@ -649,59 +674,94 @@ export default function Home() {
               Latest updates and announcements from USG
             </p>
           </div>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, margin: "-40px" }}
-            className="grid gap-6 md:grid-cols-3"
-          >
-            {newsItems.map((news) => (
-              <motion.div
-                key={news.title}
-                variants={itemVariants}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between"
-              >
-                <div>
-                  {news.imageSrc ? (
-                    <div className="mb-4 h-40 rounded-xl overflow-hidden relative border border-slate-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={news.imageSrc} alt={news.title} className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="mb-4 h-40 rounded-xl bg-gradient-to-br from-[#173490] to-[#1e4bb8]" />
-                  )}
-                  <span className="text-xs font-semibold text-slate-500">
-                    {news.date}
-                  </span>
-                  <h3 className="mt-2 text-lg font-bold text-slate-900">
-                    {news.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 line-clamp-3">
-                    {news.description}
-                  </p>
-                </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={newsPage}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="grid gap-6 md:grid-cols-3"
+            >
+              {displayedNewsItems.map((news) => (
+                <motion.div
+                  key={news.title}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between"
+                >
+                  <div>
+                    {news.imageSrc ? (
+                      <div className="mb-4 h-64 sm:h-72 md:h-80 rounded-xl overflow-hidden relative border border-slate-100 shadow-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={news.imageSrc} alt={news.title} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="mb-4 h-64 sm:h-72 md:h-80 rounded-xl bg-gradient-to-br from-[#173490] to-[#1e4bb8]" />
+                    )}
+                    <span className="text-xs font-semibold text-slate-500">
+                      {news.date}
+                    </span>
+                    <h3 className="mt-2 text-lg font-bold text-slate-900">
+                      {news.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-600 line-clamp-3">
+                      {news.description}
+                    </p>
+                  </div>
 
-                <div className="mt-4">
-                  {news.linkHref ? (
-                    <a
-                      href={news.linkHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]"
-                    >
-                      Read Full Article →
-                    </a>
-                  ) : (
-                    <button className="text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]">
-                      Read Full Article →
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <div className="mt-4">
+                    {news.linkHref ? (
+                      <a
+                        href={news.linkHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]"
+                      >
+                        Read Full Article →
+                      </a>
+                    ) : (
+                      <button className="text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]">
+                        Read Full Article →
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+
+          {totalNewsPages > 1 && (
+            <div className="mt-10 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setNewsPage((p) => Math.max(1, p - 1))}
+                      disabled={newsPage === 1}
+                      className={newsPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalNewsPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        isActive={page === newsPage}
+                        onClick={() => setNewsPage(page)}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setNewsPage((p) => Math.min(totalNewsPages, p + 1))}
+                      disabled={newsPage === totalNewsPages}
+                      className={newsPage === totalNewsPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </motion.section>
       </main>
     </GridShell>

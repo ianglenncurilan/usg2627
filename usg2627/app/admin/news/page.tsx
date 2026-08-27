@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AdminSidebar from "../../components/AdminSidebar";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const categories = ["NEWS", "PRESS RELEASE", "FEATURED STORY"];
 
@@ -21,6 +29,55 @@ export default function AdminNewsPage() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [newsList, setNewsList] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const filteredNews = newsList.filter((news) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (news.headline && news.headline.toLowerCase().includes(q)) ||
+      (news.summary && news.summary.toLowerCase().includes(q)) ||
+      (news.category && news.category.toLowerCase().includes(q))
+    );
+  });
+
+  const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
+  const displayedNewsList = filteredNews.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const [editingItem, setEditingItem] = useState<any | null>(null);
+
+  const openCreateModal = () => {
+    setEditingItem(null);
+    setFormData({
+      headline: "",
+      category: "NEWS",
+      summary: "",
+      link_url: "",
+    });
+    setFile(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (news: any) => {
+    setEditingItem(news);
+    setFormData({
+      headline: news.headline || "",
+      category: news.category || "NEWS",
+      summary: news.summary || "",
+      link_url: news.link_url || "",
+    });
+    setFile(null);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -76,7 +133,7 @@ export default function AdminNewsPage() {
     setUploading(true);
 
     try {
-      let imageUrl = null;
+      let imageUrl = editingItem ? editingItem.image_url : null;
 
       // Upload file to documents bucket if provided
       if (file) {
@@ -102,34 +159,57 @@ export default function AdminNewsPage() {
         imageUrl = publicUrl;
       }
 
-      // Insert news record
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error: insertError } = await supabase
-        .from("news")
-        .insert({
-          headline: formData.headline,
-          category: formData.category,
-          summary: formData.summary,
-          link_url: formData.link_url || null,
-          image_url: imageUrl,
-          created_by: user?.id,
-        });
+      if (editingItem) {
+        const { error: updateError } = await supabase
+          .from("news")
+          .update({
+            headline: formData.headline,
+            category: formData.category,
+            summary: formData.summary,
+            link_url: formData.link_url || null,
+            image_url: imageUrl,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingItem.id);
 
-      if (insertError) {
-        console.error("Error inserting news:", insertError);
-        alert("Error saving news article. Please try again.");
+        if (updateError) {
+          console.error("Error updating news:", updateError);
+          alert("Error updating news article. Please try again.");
+        } else {
+          alert("News publication updated successfully!");
+          setIsModalOpen(false);
+          setEditingItem(null);
+          fetchNews();
+        }
       } else {
-        alert("News publication created successfully!");
-        setFormData({
-          headline: "",
-          category: "NEWS",
-          summary: "",
-          link_url: "",
-        });
-        setFile(null);
-        setIsModalOpen(false);
-        fetchNews();
+        const { error: insertError } = await supabase
+          .from("news")
+          .insert({
+            headline: formData.headline,
+            category: formData.category,
+            summary: formData.summary,
+            link_url: formData.link_url || null,
+            image_url: imageUrl,
+            created_by: user?.id,
+          });
+
+        if (insertError) {
+          console.error("Error inserting news:", insertError);
+          alert("Error saving news article. Please try again.");
+        } else {
+          alert("News publication created successfully!");
+          setFormData({
+            headline: "",
+            category: "NEWS",
+            summary: "",
+            link_url: "",
+          });
+          setFile(null);
+          setIsModalOpen(false);
+          fetchNews();
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -180,7 +260,7 @@ export default function AdminNewsPage() {
               <p className="text-slate-600">Manage news publications, announcements, and featured stories</p>
             </div>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={openCreateModal}
               className="inline-flex items-center gap-2 rounded-lg bg-[#173490] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e4bb8] cursor-pointer"
             >
               <svg
@@ -255,7 +335,9 @@ CREATE POLICY "Authenticated users can manage news" ON news FOR ALL USING (auth.
                   </svg>
                 </button>
 
-                <h2 className="mb-4 text-lg font-bold text-slate-900">Upload News / Press Release</h2>
+                <h2 className="mb-4 text-lg font-bold text-slate-900">
+                  {editingItem ? "Edit News / Press Release" : "Upload News / Press Release"}
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
@@ -293,7 +375,7 @@ CREATE POLICY "Authenticated users can manage news" ON news FOR ALL USING (auth.
 
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Featured Image File
+                        {editingItem ? "Replace Image File (Optional)" : "Featured Image File"}
                       </label>
                       <input
                         type="file"
@@ -344,7 +426,7 @@ CREATE POLICY "Authenticated users can manage news" ON news FOR ALL USING (auth.
                       disabled={uploading}
                       className="rounded-lg bg-[#173490] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1e4bb8] disabled:opacity-50 cursor-pointer"
                     >
-                      {uploading ? "Uploading..." : "Publish News"}
+                      {uploading ? "Saving..." : editingItem ? "Update News" : "Publish News"}
                     </button>
                   </div>
                 </form>
@@ -354,77 +436,162 @@ CREATE POLICY "Authenticated users can manage news" ON news FOR ALL USING (auth.
 
           {/* News List */}
           <div className="rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">All News Publications</h2>
-
-            {newsList.length === 0 ? (
-              <p className="text-center text-slate-500 py-8">No news publications found</p>
-            ) : (
-              <div className="space-y-4">
-                {newsList.map((news) => (
-                  <div
-                    key={news.id}
-                    className="flex flex-col md:flex-row items-start gap-4 rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50"
-                  >
-                    {news.image_url ? (
-                      <div className="w-full md:w-32 h-20 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={news.image_url}
-                          alt={news.headline}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-full md:w-32 h-20 flex-shrink-0 bg-gradient-to-br from-[#173490] to-[#1e4bb8] rounded-lg flex items-center justify-center text-white text-xs font-bold">
-                        USG NEWS
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-[#173490]">
-                          {news.category}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {new Date(news.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <h3 className="mt-1.5 font-bold text-slate-900">{news.headline}</h3>
-                      <p className="mt-1 text-sm text-slate-600 line-clamp-2">{news.summary}</p>
-                      {news.link_url && (
-                        <a
-                          href={news.link_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 text-sm text-[#173490] hover:text-[#E7C609] font-medium"
-                        >
-                          Learn More →
-                        </a>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleDelete(news.id)}
-                      className="rounded bg-red-50 hover:bg-red-100 p-2 text-red-600 transition cursor-pointer"
-                      title="Delete News"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M3 6h18" />
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <h2 className="text-lg font-semibold text-slate-900">All News Publications</h2>
+              <div className="relative w-full sm:w-72">
+                <input
+                  type="text"
+                  placeholder="Search news..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 pl-9 pr-4 py-2 text-sm focus:border-[#173490] focus:outline-none"
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="absolute left-3 top-2.5 text-slate-400"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
               </div>
+            </div>
+
+            {filteredNews.length === 0 ? (
+              <p className="text-center text-slate-500 py-8">
+                {searchQuery ? `No news articles matching "${searchQuery}"` : "No news publications found"}
+              </p>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {displayedNewsList.map((news) => (
+                    <div
+                      key={news.id}
+                      className="flex flex-col md:flex-row items-start gap-4 rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50"
+                    >
+                      {news.image_url ? (
+                        <div className="w-full md:w-32 h-20 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={news.image_url}
+                            alt={news.headline}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full md:w-32 h-20 flex-shrink-0 bg-gradient-to-br from-[#173490] to-[#1e4bb8] rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                          USG NEWS
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-[#173490]">
+                            {news.category}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {new Date(news.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h3 className="mt-1.5 font-bold text-slate-900">{news.headline}</h3>
+                        <p className="mt-1 text-sm text-slate-600 line-clamp-2">{news.summary}</p>
+                        {news.link_url && (
+                          <a
+                            href={news.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-flex items-center gap-1 text-sm text-[#173490] hover:text-[#E7C609] font-medium"
+                          >
+                            Learn More →
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openEditModal(news)}
+                          className="rounded bg-blue-50 hover:bg-blue-100 p-2 text-[#173490] transition cursor-pointer"
+                          title="Edit News"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(news.id)}
+                          className="rounded bg-red-50 hover:bg-red-100 p-2 text-red-600 transition cursor-pointer"
+                          title="Delete News"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="mt-6 flex justify-center border-t border-slate-100 pt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className={currentPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              isActive={page === currentPage}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className={currentPage === totalPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

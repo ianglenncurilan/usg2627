@@ -8,7 +8,6 @@ import AdminSidebar from "../../components/AdminSidebar";
 const statusOptions = [
   "Completed",
   "In Progress",
-  "Audited",
   "Approved"
 ];
 
@@ -31,7 +30,7 @@ const initialMockItems = [
     description: "University-wide symposiums, counseling support booths, and wellness activity kits for students.",
     file_url: "https://example.com/mental_health_week",
     file_name: "Mental Health Week Disclosures",
-    status: "Audited",
+    status: "Approved",
     academic_year: "2025-2026",
     amount: 32500,
     created_at: "2026-08-10T14:30:00Z",
@@ -482,9 +481,9 @@ CREATE POLICY "Authenticated users can manage budgetary transparency" ON budgeta
               </p>
             </div>
             <div className="rounded-xl bg-white p-5 shadow-sm border border-slate-100">
-              <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Audited</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Approved</p>
               <p className="mt-2 text-2xl font-black text-emerald-600">
-                {budgetList.filter((i) => (i.status || "").toLowerCase().includes("audited")).length}
+                {budgetList.filter((i) => (i.status || "").toLowerCase().includes("approved")).length}
               </p>
             </div>
           </div>
@@ -518,7 +517,7 @@ CREATE POLICY "Authenticated users can manage budgetary transparency" ON budgeta
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-slate-500 uppercase">Filter Status:</span>
-              {["all", "Completed", "In Progress", "Audited", "Approved"].map((st) => (
+              {["all", "Completed", "In Progress", "Approved"].map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}

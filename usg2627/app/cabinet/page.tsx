@@ -220,7 +220,7 @@ export default function CabinetPage() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: false, margin: "-40px" }}
+          viewport={{ once: true }}
           className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3"
         >
           {departments.map((dept) => (
@@ -234,7 +234,7 @@ export default function CabinetPage() {
                 transition: { type: "spring", stiffness: 350, damping: 25 },
               }}
               whileTap={{ scale: 0.985 }}
-              className="group flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm transition-colors duration-300 hover:border-[#173490]/40 backdrop-blur-sm"
+              className="group flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-colors duration-300 hover:border-[#173490]/40"
             >
               <div>
                 {/* Centered Top Header: Logo, Acronym Badge, Member Count */}

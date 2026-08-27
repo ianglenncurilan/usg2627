@@ -124,14 +124,14 @@ export default function AboutPage() {
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, margin: "-40px" }}
+            viewport={{ once: true }}
             className="grid gap-8 lg:grid-cols-2"
           >
             {/* NATURE */}
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl"
+              className="rounded-3xl border border-slate-200/80 bg-white p-8 shadow-lg transition hover:shadow-xl"
             >
               <span className="text-xs font-black uppercase tracking-[0.25em] text-[#173490]">
                 Nature
@@ -148,7 +148,7 @@ export default function AboutPage() {
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="rounded-3xl border border-blue-200/80 bg-gradient-to-br from-white to-blue-50/60 p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl"
+              className="rounded-3xl border border-blue-200/80 bg-gradient-to-br from-white to-blue-50/60 p-8 shadow-lg transition hover:shadow-xl"
             >
               <span className="text-xs font-black uppercase tracking-[0.25em] text-[#173490]">
                 Jurisdiction
@@ -166,7 +166,7 @@ export default function AboutPage() {
           <motion.section
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-40px" }}
+            viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-lg"
           >
@@ -243,10 +243,10 @@ export default function AboutPage() {
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-40px" }}
+            viewport={{ once: true }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="rounded-3xl border border-slate-200/80 bg-white/90 p-6 sm:p-8 shadow-lg backdrop-blur-md transition hover:shadow-xl max-w-3xl mx-auto text-center"
+            className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-lg transition hover:shadow-xl max-w-3xl mx-auto text-center"
           >
             <span className="text-xs font-black uppercase tracking-[0.25em] text-[#173490]">
               Preamble
@@ -278,7 +278,7 @@ export default function AboutPage() {
                 key={chart.id}
                 initial={{ opacity: 0, y: 35 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, margin: "-40px" }}
+                viewport={{ once: true }}
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                 className="max-w-4xl mx-auto w-full rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xl overflow-hidden"
               >

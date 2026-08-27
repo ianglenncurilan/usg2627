@@ -4,7 +4,15 @@ import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
 import ProfileCard from "../components/ProfileCard";
 import { supabase } from "@/lib/supabase";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const seedMembers = [
   {
@@ -142,6 +150,8 @@ const itemVariants = {
 export default function LegislativePage() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const membersPerPage = 3;
 
   useEffect(() => {
     fetchMembers();
@@ -177,6 +187,9 @@ export default function LegislativePage() {
     }
   };
 
+  const totalPages = Math.ceil(members.length / membersPerPage);
+  const displayedMembers = members.slice((page - 1) * membersPerPage, page * membersPerPage);
+
   return (
     <GridShell>
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20">
@@ -205,19 +218,56 @@ export default function LegislativePage() {
             <div className="h-10 w-10 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, margin: "-40px" }}
-            className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          >
-            {members.map((member, index) => (
-              <motion.div key={member.id || index} variants={itemVariants}>
-                <ProfileCard {...member} />
+          <>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={page}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+              >
+                {displayedMembers.map((member, index) => (
+                  <div key={member.id || index}>
+                    <ProfileCard {...member} />
+                  </div>
+                ))}
               </motion.div>
-            ))}
-          </motion.div>
+            </AnimatePresence>
+
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        className={page === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          isActive={p === page}
+                          onClick={() => setPage(p)}
+                          className="cursor-pointer"
+                        >
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        className={page === totalPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
         )}
       </main>
     </GridShell>

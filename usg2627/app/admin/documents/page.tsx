@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AdminSidebar from "../../components/AdminSidebar";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const documentTypes = [
   "RESOLUTION",
@@ -30,8 +38,16 @@ export default function AdminDocumentsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("Admin");
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchQuery]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -212,10 +228,27 @@ export default function AdminDocumentsPage() {
     }
   };
 
-  const filteredDocuments = documents.filter(doc => {
-    if (filter === "all") return true;
-    return doc.status === filter;
+  const filteredDocuments = documents.filter((doc) => {
+    const matchesFilter = filter === "all" || doc.status === filter;
+    if (!matchesFilter) return false;
+    if (!searchQuery.trim()) return true;
+
+    const q = searchQuery.toLowerCase();
+    return (
+      (doc.title && doc.title.toLowerCase().includes(q)) ||
+      (doc.tracking_number && doc.tracking_number.toLowerCase().includes(q)) ||
+      (doc.type && doc.type.toLowerCase().includes(q)) ||
+      (doc.issuing_body && doc.issuing_body.toLowerCase().includes(q)) ||
+      (doc.author && doc.author.toLowerCase().includes(q)) ||
+      (doc.description && doc.description.toLowerCase().includes(q))
+    );
   });
+
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+  const displayedDocuments = filteredDocuments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -435,155 +468,210 @@ export default function AdminDocumentsPage() {
 
           {/* Documents List */}
           <div className="rounded-xl bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <h2 className="text-lg font-semibold text-slate-900">All Documents</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilter("all")}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                    filter === "all"
-                      ? "bg-[#173490] text-white"
-                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilter("pending")}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                    filter === "pending"
-                      ? "bg-[#173490] text-white"
-                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  Pending
-                </button>
-                <button
-                  onClick={() => setFilter("approved")}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                    filter === "approved"
-                      ? "bg-[#173490] text-white"
-                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  Approved
-                </button>
-                <button
-                  onClick={() => setFilter("published")}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                    filter === "published"
-                      ? "bg-[#173490] text-white"
-                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  Published
-                </button>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {/* Search Bar */}
+                <div className="relative w-full sm:w-64">
+                  <input
+                    type="text"
+                    placeholder="Search documents..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 pl-9 pr-4 py-1.5 text-sm focus:border-[#173490] focus:outline-none"
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="absolute left-3 top-2.5 text-slate-400"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                </div>
+
+                {/* Filter Tabs */}
+                <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200 shrink-0">
+                  {["all", "pending", "approved", "published"].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`rounded-md px-3 py-1 text-xs font-semibold capitalize transition cursor-pointer ${
+                        filter === f
+                          ? "bg-[#173490] text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {filteredDocuments.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">No documents found</p>
-              ) : (
-                filteredDocuments.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-start gap-4 rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50"
-                  >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#173490] text-xs font-bold text-white">
-                      {doc.type.slice(0, 3)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-[#173490]">
-                          {doc.type}
-                        </span>
-                        <span className="text-xs text-slate-500">{doc.tracking_number}</span>
-                      </div>
-                      <h3 className="mt-1 font-medium text-slate-900">{doc.title}</h3>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {doc.issuing_body} • {doc.author}
-                      </p>
-                      {doc.file_url && (
-                        <a
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 text-sm text-[#173490] hover:text-[#E7C609]"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <path d="M14 2v6h6" />
-                            <path d="M16 13H8" />
-                            <path d="M16 17H8" />
-                            <path d="M10 9H8" />
-                          </svg>
-                          View File
-                        </a>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusColor(doc.status)}`}
-                      >
-                        {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                      </span>
-                      <p className="text-xs text-slate-500">
-                        {new Date(doc.created_at).toLocaleDateString()}
-                      </p>
-                      <div className="flex gap-1">
-                        {doc.status === "pending" && (
-                          currentUserRole === "Admin" ? (
-                            <>
-                              <button
-                                onClick={() => handleApprove(doc.id)}
-                                className="rounded bg-[#173490] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700 cursor-pointer shadow-xs"
-                              >
-                                ✓ Approve
-                              </button>
-                              <button
-                                onClick={() => handleReject(doc.id)}
-                                className="rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700 cursor-pointer shadow-xs"
-                              >
-                                ✕ Reject
-                              </button>
-                            </>
-                          ) : (
-                            <span className="text-xs text-slate-500 font-semibold italic bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                              🔒 Pending Admin Review
+            {filteredDocuments.length === 0 ? (
+              <p className="text-center text-slate-500 py-8">
+                {searchQuery ? `No documents matching "${searchQuery}"` : "No documents found"}
+              </p>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {displayedDocuments.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-200 p-3.5 bg-white transition hover:bg-slate-50/80 shadow-xs"
+                    >
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#173490] text-[10px] font-black text-white shadow-xs">
+                          {doc.type.slice(0, 3)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[11px] font-bold tracking-wider uppercase text-[#173490] bg-[#173490]/5 px-2 py-0.5 rounded-md border border-[#173490]/10">
+                              {doc.type}
                             </span>
-                          )
-                        )}
-                        {doc.status === "approved" && (
-                          currentUserRole === "Admin" ? (
-                            <button
-                              onClick={() => handlePublish(doc.id)}
-                              className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700 cursor-pointer shadow-xs"
+                            {doc.tracking_number && (
+                              <span className="text-xs text-slate-500 font-mono font-medium">
+                                {doc.tracking_number}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="mt-1 font-bold text-slate-900 text-sm leading-snug break-words">
+                            {doc.title}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-slate-600 truncate">
+                            {[doc.issuing_body, doc.author].filter(Boolean).join(" • ")}
+                          </p>
+                          {doc.description && (
+                            <p className="mt-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                              {doc.description}
+                            </p>
+                          )}
+                          {doc.file_url && (
+                            <a
+                              href={doc.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#173490] hover:text-[#E7C609] transition"
                             >
-                              🚀 Publish
-                            </button>
-                          ) : (
-                            <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                              ✓ Approved by Admin
-                            </span>
-                          )
-                        )}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="13"
+                                height="13"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <path d="M14 2v6h6" />
+                                <path d="M16 13H8" />
+                                <path d="M16 17H8" />
+                                <path d="M10 9H8" />
+                              </svg>
+                              View File
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(doc.status)}`}
+                          >
+                            {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                          </span>
+                          <p className="text-xs text-slate-400">
+                            {new Date(doc.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-1.5">
+                          {doc.status === "pending" && (
+                            currentUserRole === "Admin" ? (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(doc.id)}
+                                  className="rounded bg-[#173490] px-2.5 py-1 text-xs font-bold text-white transition hover:bg-blue-700 cursor-pointer shadow-xs"
+                                >
+                                  ✓ Approve
+                                </button>
+                                <button
+                                  onClick={() => handleReject(doc.id)}
+                                  className="rounded bg-red-600 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-red-700 cursor-pointer shadow-xs"
+                                >
+                                  ✕ Reject
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-[11px] text-slate-500 font-semibold italic bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                                🔒 Pending Admin Review
+                              </span>
+                            )
+                          )}
+                          {doc.status === "approved" && (
+                            currentUserRole === "Admin" ? (
+                              <button
+                                onClick={() => handlePublish(doc.id)}
+                                className="rounded bg-emerald-600 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-emerald-700 cursor-pointer shadow-xs"
+                              >
+                                🚀 Publish
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                                ✓ Approved by Admin
+                              </span>
+                            )
+                          )}
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="mt-6 flex justify-center border-t border-slate-100 pt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className={currentPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              isActive={page === currentPage}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className={currentPage === totalPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
                   </div>
-                ))
-              )}
-            </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </main>

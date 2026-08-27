@@ -255,7 +255,7 @@ function DocumentsContent() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: false, margin: "-40px" }}
+          viewport={{ once: true }}
           className="mt-4 space-y-3"
         >
           <AnimatePresence mode="popLayout">

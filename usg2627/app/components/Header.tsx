@@ -119,10 +119,10 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={`sticky top-0 z-40 transition-all duration-300 ${
+      className={`sticky top-0 z-40 transition-all duration-200 ${
         isScrolled
-          ? "border-b border-blue-900/80 bg-[#173490]/95 backdrop-blur-md shadow-xl py-0.5"
-          : "border-b border-blue-900 bg-[#173490] shadow-md"
+          ? "border-b border-blue-900/80 bg-[#173490] shadow-xl py-0.5"
+          : "border-b border-blue-900 bg-[#173490] shadow-md py-0"
       } text-white`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4">

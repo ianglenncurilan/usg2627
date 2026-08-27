@@ -25,7 +25,7 @@ const fallbackBudgetData = [
     description: "University-wide symposiums, counseling support booths, and wellness activity kits for students.",
     file_url: "https://example.com/mental_health_week",
     file_name: "Mental Health Week Disclosures",
-    status: "Audited",
+    status: "Approved",
     academic_year: "2025-2026",
     amount: "32500",
     created_at: "2026-08-10T14:30:00Z",
@@ -47,7 +47,7 @@ const fallbackBudgetData = [
     description: "Student research grants, panel honoraria, conference logistics, and publication printing.",
     file_url: "https://example.com/research_congress",
     file_name: "Research Congress Budget",
-    status: "Audited",
+    status: "Approved",
     academic_year: "2025-2026",
     amount: "58000",
     created_at: "2026-07-20T11:00:00Z",
@@ -254,7 +254,7 @@ export default function BudgetaryTransparencyPage() {
 
             {/* Status Filter Buttons */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {["ALL", "Completed", "In Progress", "Audited", "Approved"].map((status) => (
+              {["ALL", "Completed", "In Progress", "Approved"].map((status) => (
                 <button
                   key={status}
                   onClick={() => setSelectedStatus(status)}
@@ -274,7 +274,7 @@ export default function BudgetaryTransparencyPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: "-40px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
@@ -542,7 +542,7 @@ export default function BudgetaryTransparencyPage() {
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: false, margin: "-40px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="mt-12 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 p-6 text-center"
         >

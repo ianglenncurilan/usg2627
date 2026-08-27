@@ -331,55 +331,7 @@ export default function AdminPage() {
             </div>
           </section>
 
-          <section className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-slate-900">
-              Recent Document & System Activity
-            </h2>
-            <div className="space-y-4">
-              {recentDocs.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">No recent document activity found</p>
-              ) : (
-                recentDocs.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-start gap-4 rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50"
-                  >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#173490] text-xs font-bold text-white">
-                      {doc.category.slice(0, 3)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-[#173490]">
-                          {doc.category}
-                        </span>
-                        <span className="text-xs text-slate-500">{doc.tracking}</span>
-                      </div>
-                      <h3 className="mt-1 font-medium text-slate-900">{doc.title}</h3>
-                      <p className="mt-1 text-sm text-slate-600">
-                        Submitted by {doc.author}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          doc.status === "Published"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : doc.status === "Approved"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {doc.status}
-                      </span>
-                      <p className="mt-2 text-xs text-slate-500">
-                        {getRelativeTime(doc.date)}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
+
 
         </div>
       </main>

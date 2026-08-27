@@ -388,7 +388,7 @@ export default function EventsPage() {
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, margin: "-40px" }}
+            viewport={{ once: true }}
             className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
           >
             <AnimatePresence mode="popLayout">
@@ -406,7 +406,7 @@ export default function EventsPage() {
                       transition: { type: "spring", stiffness: 350, damping: 25 },
                     }}
                     whileTap={{ scale: 0.985 }}
-                    className="group relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm hover:border-[#173490]/40 transition-colors backdrop-blur-sm"
+                    className="group relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:border-[#173490]/40 transition-colors"
                   >
                     <div>
                       {/* Badge & Location */}

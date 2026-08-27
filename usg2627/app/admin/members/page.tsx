@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import AdminSidebar from "../../components/AdminSidebar";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export const departmentOptions = [
   "Department of Students' Welfare and Development",
@@ -443,6 +451,13 @@ export default function AdminMembersPage() {
     setImageFile(null);
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, departmentFilter]);
+
   const filteredMembers = membersList.filter((item) => {
     const matchesSearch =
       searchQuery === "" ||
@@ -456,6 +471,12 @@ export default function AdminMembersPage() {
 
     return matchesSearch && matchesDept;
   });
+
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+  const displayedMembers = filteredMembers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (loading) {
     return (
@@ -646,7 +667,7 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredMembers.map((member) => (
+                    {displayedMembers.map((member) => (
                       <tr key={member.id} className="hover:bg-slate-50/70 transition">
                         
                         {/* Member Info */}
@@ -748,6 +769,39 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="mt-6 flex justify-center border-t border-slate-100 pt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className={currentPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          isActive={page === currentPage}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className={currentPage === totalPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </div>
