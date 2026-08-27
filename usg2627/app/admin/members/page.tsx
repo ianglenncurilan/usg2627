@@ -19,6 +19,40 @@ export const departmentOptions = [
   "Office of the Student Regent",
 ];
 
+export const roleOptions = [
+  "USG President",
+  "USG Vice President",
+  "USG Executive Secretary",
+  "USG Treasurer",
+  "USG Auditor",
+  "USG Senator",
+  "CAALSG Governor",
+  "CCISLSG Governor",
+  "CEdLSG Governor",
+  "CEGSLSG Governor",
+  "CFESLSG Governor",
+  "CHaSSLSG Governor",
+  "CMNSLSG Governor",
+  "USG Cabinet Secretary",
+  "USG Chief of Staff",
+  "USG Secretary for Records and Archives",
+  "USG DBM Secretary",
+  "USG DFT Secretary",
+  "USG DSWD Secretary",
+  "USG DILGSU Secretary",
+  "USG DASCAT Secretary",
+  "USG DENR Secretary",
+  "USG DHWS Secretary",
+  "USG DPICC Secretary",
+  "USG Undersecretary",
+  "USG Executive Assistant",
+  "USG Senate Secretary",
+  "USG House Secretary",
+  "USG Administrative Staff",
+  "USG COA Chief Commissioner",
+  "USG COMELEC Chairperson",
+];
+
 const initialSeedMembers = [
   {
     id: "seed-1",
@@ -465,7 +499,7 @@ export default function AdminMembersPage() {
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900">USG Members Management</h1>
+                <h1 className="text-2xl font-bold text-slate-900">USG Legislative Management</h1>
                 <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-[#173490]">
                   Legislative & Cabinet
                 </span>
@@ -770,16 +804,20 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
 
                     <div>
                       <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Position / Role *
+                        Position / Role (Dropdown) *
                       </label>
-                      <input
-                        type="text"
+                      <select
                         required
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-[#173490] focus:outline-none"
-                        placeholder="e.g. USG Senator / Cabinet Secretary"
-                      />
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none cursor-pointer bg-white"
+                      >
+                        {roleOptions.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -997,15 +1035,20 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
 
                     <div>
                       <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Position / Role *
+                        Position / Role (Dropdown) *
                       </label>
-                      <input
-                        type="text"
+                      <select
                         required
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-[#173490] focus:outline-none"
-                      />
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none cursor-pointer bg-white"
+                      >
+                        {roleOptions.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 

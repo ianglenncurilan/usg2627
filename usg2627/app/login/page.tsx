@@ -19,17 +19,52 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const cleanEmail = email.trim().toLowerCase();
+
+      // 1. Call auto-confirm & login endpoint
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password }),
       });
 
-      if (error) {
-        setError(error.message);
+      const json = await res.json();
+
+      if (json.success && json.session) {
+        await supabase.auth.setSession(json.session);
+        router.push("/admin");
         return;
       }
 
-      if (data.session) {
+      // 2. Fallback to direct client signInWithPassword
+      let { data, error: authErr } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+
+      if (authErr && authErr.message.toLowerCase().includes("not confirmed")) {
+        // Auto-confirm via PATCH and retry
+        await fetch("/api/admin/users", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: cleanEmail, is_verified: true }),
+        });
+
+        const retryRes = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
+
+        data = retryRes.data;
+        authErr = retryRes.error;
+      }
+
+      if (authErr) {
+        setError(json.error || authErr.message);
+        return;
+      }
+
+      if (data?.session) {
         router.push("/admin");
       }
     } catch (err) {

@@ -192,7 +192,7 @@ export default function AdminPage() {
             <h2 className="mb-4 text-lg font-semibold text-slate-900">
               Quick Operations
             </h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <Link
                 href="/admin/documents"
                 className="flex items-center justify-center gap-2 rounded-lg border-2 border-[#173490] bg-[#173490] px-4 py-3 font-semibold text-white transition hover:bg-[#102a72]"
@@ -259,7 +259,7 @@ export default function AdminPage() {
                   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
-                USG Members
+                Legislative Management
               </Link>
 
               <Link

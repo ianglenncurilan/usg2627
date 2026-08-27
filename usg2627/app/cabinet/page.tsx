@@ -192,7 +192,7 @@ export default function CabinetPage() {
 
   return (
     <GridShell>
-      <main className="mx-auto max-w-6xl px-6 py-20">
+      <main className="mx-auto max-w-6xl w-full px-4 sm:px-6 py-12 sm:py-20">
 
         {/* Page Header */}
         <motion.div

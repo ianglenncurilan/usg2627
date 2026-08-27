@@ -195,7 +195,7 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
 
       {/* Mobile Navigation Drawer & Backdrop */}
       <div
-        className={`fixed inset-0 z-50 md:hidden transition-[visibility] duration-300 ${mobileMenuOpen ? "visible pointer-events-auto" : "invisible pointer-events-none delay-300"
+        className={`fixed inset-0 z-50 md:hidden overflow-hidden transition-[visibility] duration-300 ${mobileMenuOpen ? "visible pointer-events-auto" : "invisible pointer-events-none delay-300"
           }`}
       >
         {/* Backdrop Overlay */}

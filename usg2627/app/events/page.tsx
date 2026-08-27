@@ -254,7 +254,7 @@ export default function EventsPage() {
   return (
     <GridShell>
       <main className="mx-auto max-w-6xl px-6 py-20">
-        
+
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -279,31 +279,28 @@ export default function EventsPage() {
           <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-slate-100 p-1.5 self-start">
             <button
               onClick={() => setActiveTab("all")}
-              className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${
-                activeTab === "all"
+              className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${activeTab === "all"
                   ? "bg-[#173490] text-white shadow-md"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               All Events ({events.length})
             </button>
             <button
               onClick={() => setActiveTab("upcoming")}
-              className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${
-                activeTab === "upcoming"
+              className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${activeTab === "upcoming"
                   ? "bg-[#173490] text-white shadow-md"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               Upcoming ({upcomingEvents.length})
             </button>
             <button
               onClick={() => setActiveTab("past")}
-              className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${
-                activeTab === "past"
+              className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${activeTab === "past"
                   ? "bg-[#173490] text-white shadow-md"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               Past ({pastEvents.length})
             </button>
@@ -415,11 +412,10 @@ export default function EventsPage() {
                       {/* Badge & Location */}
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${
-                            isUpcoming
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${isUpcoming
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
-                          }`}
+                            }`}
                         >
                           {isUpcoming && (
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />

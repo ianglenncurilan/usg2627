@@ -179,7 +179,7 @@ export default function LegislativePage() {
 
   return (
     <GridShell>
-      <main className="mx-auto max-w-6xl px-6 py-20">
+      <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -210,7 +210,7 @@ export default function LegislativePage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: false, margin: "-40px" }}
-            className="mt-10 grid gap-6 md:grid-cols-2"
+            className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
           >
             {members.map((member, index) => (
               <motion.div key={member.id || index} variants={itemVariants}>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "./components/GridShell";
 import { supabase } from "@/lib/supabase";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const topDocumentTypes = [
   {
@@ -193,11 +193,12 @@ export default function Home() {
           .from("documents")
           .select("*")
           .eq("status", "published")
-          .order("published_at", { ascending: false });
+          .order("created_at", { ascending: false });
 
         if (error) {
           console.error("Error fetching documents:", error);
         } else if (data) {
+          // Strictly display only the 4 most recent publications
           setRecentPublications(data.slice(0, 4));
 
           const counts: Record<string, number> = {
@@ -240,11 +241,7 @@ export default function Home() {
     if (featuredStories.length <= 1) return;
 
     const interval = setInterval(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % featuredStories.length);
-        setIsTransitioning(false);
-      }, 300);
+      setCurrentIndex((prev) => (prev + 1) % featuredStories.length);
     }, 5000);
 
     return () => clearInterval(interval);
@@ -325,123 +322,126 @@ export default function Home() {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="mt-16 py-12"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12">
-              <div className={`lg:w-[42%] transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-                <div className="mb-5 flex items-center gap-3">
-                  <span className="rounded-full bg-[#173490]/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#173490]">
-                    {currentStory.type}
-                  </span>
-                  <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                    Featured Story
-                  </span>
-                </div>
-                <h2 className="text-3xl font-black leading-tight text-slate-900 md:text-4xl lg:text-5xl">
-                  {currentStory.title}
-                </h2>
-                <p className="mt-5 text-lg text-slate-600">
-                  {currentStory.description}
-                </p>
+            <div className="overflow-hidden min-h-[480px] flex items-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, x: 35 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -35 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12"
+                >
+                  <div className="lg:w-[42%]">
+                    <div className="mb-5 flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        {currentStory.type && !currentStory.type.toLowerCase().includes("featured")
+                          ? `Featured Story • ${currentStory.type}`
+                          : "Featured Story"}
+                      </span>
+                    </div>
+                    <h2 className="text-3xl font-black leading-tight text-slate-900 md:text-4xl lg:text-5xl">
+                      {currentStory.title}
+                    </h2>
+                    <p className="mt-5 text-lg text-slate-600">
+                      {currentStory.description}
+                    </p>
 
-                {currentStory.date && (
-                  <div className="mt-5 flex items-center gap-2 text-sm text-slate-500 font-semibold">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                      <line x1="16" x2="16" y1="2" y2="6" />
-                      <line x1="8" x2="8" y1="2" y2="6" />
-                      <line x1="3" x2="21" y1="10" y2="10" />
-                    </svg>
-                    <span>{currentStory.date}</span>
-                  </div>
-                )}
+                    {currentStory.date && (
+                      <div className="mt-5 flex items-center gap-2 text-sm text-slate-500 font-semibold">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                          <line x1="16" x2="16" y1="2" y2="6" />
+                          <line x1="8" x2="8" y1="2" y2="6" />
+                          <line x1="3" x2="21" y1="10" y2="10" />
+                        </svg>
+                        <span>{currentStory.date}</span>
+                      </div>
+                    )}
 
-                <div className="mt-8 flex gap-4">
-                  <Link
-                    href={currentStory.readHref}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#E7C609] px-7 py-3.5 text-base font-bold text-[#173490] transition hover:bg-yellow-400"
-                  >
-                    Read Order
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                      <polyline points="15 3 21 3 21 9" />
-                      <line x1="10" x2="21" y1="14" y2="3" />
-                    </svg>
-                  </Link>
-                  <Link
-                    href="/documents"
-                    className="inline-flex items-center rounded-full border border-slate-300 px-7 py-3.5 text-base font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                  >
-                    All Publications
-                  </Link>
-                </div>
-              </div>
-              <div className={`lg:w-[55%] transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-                {currentStory.imageSrc && !currentStory.imageSrc.includes("/images/") ? (
-                  <div className="relative h-[300px] lg:h-[480px] rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={currentStory.imageSrc}
-                      alt={currentStory.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="relative h-[300px] lg:h-[480px] rounded-3xl bg-gradient-to-br from-[#1e4bb8] to-[#173490] shadow-lg flex items-center justify-center">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="96"
-                        height="96"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="1"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="opacity-30"
+                    <div className="mt-8 flex gap-4">
+                      <Link
+                        href={currentStory.readHref}
+                        className="inline-flex items-center gap-2 rounded-full bg-[#E7C609] px-7 py-3.5 text-base font-bold text-[#173490] transition hover:bg-yellow-400"
                       >
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <path d="M3 9h18" />
-                        <path d="M9 21V9" />
-                      </svg>
+                        Read Order
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" x2="21" y1="14" y2="3" />
+                        </svg>
+                      </Link>
+                      <Link
+                        href="/documents"
+                        className="inline-flex items-center rounded-full border border-slate-300 px-7 py-3.5 text-base font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                      >
+                        All Publications
+                      </Link>
                     </div>
                   </div>
-                )}
-              </div>
+                  <div className="lg:w-[55%]">
+                    {currentStory.imageSrc && !currentStory.imageSrc.includes("/images/") ? (
+                      <div className="relative h-[300px] lg:h-[480px] rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={currentStory.imageSrc}
+                          alt={currentStory.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative h-[300px] lg:h-[480px] rounded-3xl bg-gradient-to-br from-[#1e4bb8] to-[#173490] shadow-lg flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="96"
+                            height="96"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="1"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="opacity-30"
+                          >
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <path d="M3 9h18" />
+                            <path d="M9 21V9" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
             <div className="mt-6 flex justify-center gap-2">
               {featuredStories.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => {
-                    setIsTransitioning(true);
-                    setTimeout(() => {
-                      setCurrentIndex(index);
-                      setIsTransitioning(false);
-                    }, 300);
-                  }}
-                  className={`h-2 rounded-full transition-all ${
-                    index === currentIndex ? 'w-8 bg-[#173490]' : 'w-2 bg-slate-300 hover:bg-slate-400'
-                  }`}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${index === currentIndex ? 'w-8 bg-[#173490]' : 'w-2 bg-slate-300 hover:bg-slate-400'
+                    }`}
                   aria-label={`Go to story ${index + 1}`}
                 />
               ))}
@@ -552,7 +552,7 @@ export default function Home() {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                Recent Publications
+                Recent Documents
               </h2>
               <p className="mt-2 text-slate-600">
                 Latest official documents and releases

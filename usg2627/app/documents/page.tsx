@@ -140,6 +140,15 @@ function DocumentsContent() {
   return (
     <GridShell>
       <main className="mx-auto max-w-7xl px-6 py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#173490]/20 bg-[#173490]/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#173490]"
+        >
+          <span className="h-2 w-2 rounded-full bg-[#E7C609]" />
+          Official Repository
+        </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
@@ -322,11 +331,10 @@ function DocumentsContent() {
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                      currentPage === pageNum
+                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${currentPage === pageNum
                         ? "bg-[#173490] text-white"
                         : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     {pageNum}
                   </button>

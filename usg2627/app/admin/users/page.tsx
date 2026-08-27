@@ -20,7 +20,7 @@ const initialSeedUsers = [
     full_name: "Student Legislative Staff",
     email: "user@carsu.edu.ph",
     role: "User",
-    is_verified: false,
+    is_verified: true,
     created_at: "2026-08-05T10:00:00Z",
   },
 ];
@@ -258,7 +258,7 @@ export default function AdminUsersPage() {
     if (!deletingUser) return;
 
     try {
-      const res = await fetch(`/api/admin/users?id=${deletingUser.id}`, {
+      const res = await fetch(`/api/admin/users?id=${deletingUser.id}&email=${encodeURIComponent(deletingUser.email || "")}`, {
         method: "DELETE",
       });
 

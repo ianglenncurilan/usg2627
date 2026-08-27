@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export default function GridShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen w-full bg-[#f8fafc] text-slate-900">
+    <div className="relative min-h-screen w-full max-w-full overflow-x-hidden bg-[#f8fafc] text-slate-900">
       <div
         className="absolute inset-0 z-0"
         style={{
