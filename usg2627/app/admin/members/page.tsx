@@ -68,7 +68,7 @@ const initialSeedMembers = [
     role: "USG Senator",
     department: "Department of Public Information and Creative Communications",
     profile_url: "/usg.jpg",
-    phone_number: "(632) 552-6601 loc. 5301",
+    phone_number: "0917 552 6601",
     email: "cresencio.ablan@carsu.edu.ph",
     facebook_url: "https://facebook.com",
     filed_bills: [
@@ -91,7 +91,7 @@ const initialSeedMembers = [
     role: "Legislative President",
     department: "Department of Students' Welfare and Development",
     profile_url: "/usg.jpg",
-    phone_number: "(632) 552-6601 loc. 5301",
+    phone_number: "0917 552 6602",
     email: "win.gatchalian@carsu.edu.ph",
     facebook_url: "https://facebook.com",
     filed_bills: [
@@ -918,7 +918,7 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                         value={formData.phone_number}
                         onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                         className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-[#173490] focus:outline-none"
-                        placeholder="(632) 552-6601 loc. 5301"
+                        placeholder="0917 123 4567"
                       />
                     </div>
 

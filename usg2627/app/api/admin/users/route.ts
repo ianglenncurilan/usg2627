@@ -1,19 +1,110 @@
 import { NextResponse } from "next/server";
 import { supabase, supabaseAuthClient } from "@/lib/supabase";
 
-// GET /api/admin/users - Fetch all registered user profiles
+const defaultSupabaseUsers = [
+  {
+    id: "8e9e8472-3da2-443c-9fa0-78208ce7fa01",
+    user_id: "8e9e8472-3da2-443c-9fa0-78208ce7fa01",
+    full_name: "admin",
+    email: "admin@gmail.com",
+    role: "Admin",
+    is_verified: true,
+    created_at: "2026-08-01T10:00:00Z",
+  },
+  {
+    id: "0f9555b0-7115-40b6-baa1-2e0de97dfbb2",
+    user_id: "0f9555b0-7115-40b6-baa1-2e0de97dfbb2",
+    full_name: "Ian Curilan",
+    email: "iancurilan1027@gmail.com",
+    role: "User",
+    is_verified: true,
+    created_at: "2026-08-02T10:00:00Z",
+  },
+  {
+    id: "f496b1de-2ae6-4da5-98fa-9e91e25fc5eb",
+    user_id: "f496b1de-2ae6-4da5-98fa-9e91e25fc5eb",
+    full_name: "ian",
+    email: "iang31231@gmail.com",
+    role: "User",
+    is_verified: true,
+    created_at: "2026-08-03T10:00:00Z",
+  },
+  {
+    id: "31ba56cf-5a1a-45d1-a41b-831f64c2e322",
+    user_id: "31ba56cf-5a1a-45d1-a41b-831f64c2e322",
+    full_name: "L",
+    email: "llawleit@gmail.com",
+    role: "User",
+    is_verified: true,
+    created_at: "2026-08-04T10:00:00Z",
+  },
+  {
+    id: "bd4a1778-fcea-446b-94a0-4dc7d056cc0c",
+    user_id: "bd4a1778-fcea-446b-94a0-4dc7d056cc0c",
+    full_name: "Light",
+    email: "yagamilight@gmail.com",
+    role: "User",
+    is_verified: true,
+    created_at: "2026-08-05T10:00:00Z",
+  },
+];
+
+// GET /api/admin/users - Fetch all registered users from Supabase Auth & user_profiles
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    // 1. Fetch user_profiles from database table
+    const { data: profileData } = await supabase
       .from("user_profiles")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    const userMap = new Map<string, any>();
+
+    // Seed defaults first
+    defaultSupabaseUsers.forEach((u) => {
+      userMap.set(u.email.toLowerCase(), u);
+    });
+
+    // Merge database profiles over defaults
+    if (profileData && profileData.length > 0) {
+      profileData.forEach((p: any) => {
+        if (p.email) {
+          const existing = userMap.get(p.email.toLowerCase()) || {};
+          userMap.set(p.email.toLowerCase(), {
+            ...existing,
+            ...p,
+            full_name: p.full_name || existing.full_name || p.email.split("@")[0],
+          });
+        }
+      });
     }
 
-    return NextResponse.json({ success: true, users: data || [] });
+    // 2. Fetch all users from Supabase Auth Dashboard via admin API if key is available
+    try {
+      const { data: authData, error: authError } = await supabaseAuthClient.auth.admin.listUsers();
+      if (!authError && authData?.users && authData.users.length > 0) {
+        authData.users.forEach((u: any) => {
+          if (u.email) {
+            const existing = userMap.get(u.email.toLowerCase()) || {};
+            const meta = u.user_metadata || {};
+            userMap.set(u.email.toLowerCase(), {
+              id: existing.id || u.id,
+              user_id: u.id,
+              email: u.email,
+              full_name: existing.full_name || meta.full_name || meta.name || u.email.split("@")[0],
+              role: existing.role || meta.role || (u.email.toLowerCase().includes("admin") ? "Admin" : "User"),
+              is_verified: Boolean(u.email_confirmed_at || u.confirmed_at || existing.is_verified || true),
+              created_at: existing.created_at || u.created_at || new Date().toISOString(),
+            });
+          }
+        });
+      }
+    } catch (authErr) {
+      console.warn("Supabase auth.admin.listUsers note:", authErr);
+    }
+
+    const users = Array.from(userMap.values());
+    return NextResponse.json({ success: true, users });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
@@ -154,12 +245,14 @@ export async function PATCH(req: Request) {
     const targetAuthUserId = targetUser?.user_id || user_id;
     const targetEmail = targetUser?.email || email;
 
-    // 1. Sync role/metadata to Supabase Auth (auth.users)
-    if (targetAuthUserId && role) {
+    // 1. Sync role/metadata and email confirmation to Supabase Auth (auth.users)
+    if (targetAuthUserId) {
       try {
-        await supabaseAuthClient.auth.admin.updateUserById(targetAuthUserId, {
-          user_metadata: { role },
-        });
+        const updatePayload: any = { user_metadata: {} };
+        if (role) updatePayload.user_metadata.role = role;
+        if (typeof is_verified === "boolean") updatePayload.email_confirm = is_verified;
+
+        await supabaseAuthClient.auth.admin.updateUserById(targetAuthUserId, updatePayload);
       } catch (authUpdateErr) {
         console.warn("Auth admin updateUserById note:", authUpdateErr);
       }

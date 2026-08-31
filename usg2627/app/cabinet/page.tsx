@@ -169,7 +169,7 @@ export default function CabinetPage() {
               role: m.role || "Officer",
               department: m.department,
               avatarSrc: m.profile_url || "",
-              directLine: m.phone_number || "loc. 6000",
+              directLine: m.phone_number || "0917 552 6000",
               email: m.email || "usg@carsu.edu.ph",
               roomAddress: m.room_address || "Executive Suite",
               assignedProjects: m.assigned_projects || 0,
