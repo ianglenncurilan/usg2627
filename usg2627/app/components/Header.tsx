@@ -119,19 +119,18 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={`sticky top-0 z-40 transition-all duration-200 ${
-        isScrolled
-          ? "border-b border-blue-900/80 bg-[#173490] shadow-xl py-0.5"
-          : "border-b border-blue-900 bg-[#173490] shadow-md py-0"
-      } text-white`}
+      className={`sticky top-0 z-40 transition-all duration-200 ${isScrolled
+        ? "border-b border-blue-900/80 bg-[#02076C] shadow-xl py-0.5"
+        : "border-b border-blue-900 bg-[#02076C] shadow-md py-0"
+        } text-white`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0 pr-2">
           <img
-            src="/usg.jpg"
+            src="/usgwhite.png"
             alt="USG Logo"
-            className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover shrink-0 shadow-md border border-white/20 transition-transform duration-200 group-hover:scale-105"
+            className="h-10 w-auto sm:h-12 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
           />
           <div className="min-w-0">
             <p className="text-sm sm:text-base font-bold text-white leading-tight truncate">
@@ -208,16 +207,16 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
 
         {/* Sliding Drawer Panel */}
         <div
-          className={`fixed inset-y-0 right-0 z-50 flex h-full max-h-[100dvh] w-80 max-w-[85vw] flex-col bg-[#173490] text-white shadow-2xl border-l border-white/15 transition-transform duration-300 ease-out will-change-transform ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          className={`fixed inset-y-0 right-0 z-50 flex h-full max-h-[100dvh] w-80 max-w-[85vw] flex-col bg-[#02076C] text-white shadow-2xl border-l border-white/15 transition-transform duration-300 ease-out will-change-transform ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"
             }`}
         >
           {/* Drawer Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/15 shrink-0 bg-[#142e80]">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/15 shrink-0 bg-[#010554]">
             <div className="flex items-center gap-3">
               <img
-                src="/usg.jpg"
+                src="/usgwhite.png"
                 alt="USG Logo"
-                className="h-9 w-9 rounded-full object-cover border border-white/20 shadow"
+                className="h-9 w-auto object-contain"
               />
               <div>
                 <span className="font-bold text-sm text-white block leading-tight">USG Portal</span>
@@ -256,18 +255,18 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition ${isActive
-                        ? "bg-[#E7C609] text-[#173490] font-bold shadow-md shadow-amber-500/20"
+                        ? "bg-[#E7C609] text-[#02076C] font-bold shadow-md shadow-amber-500/20"
                         : "text-slate-100 hover:bg-white/10 hover:text-white"
                         }`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className={isActive ? "text-[#173490]" : "text-[#E7C609]"}>
+                        <span className={isActive ? "text-[#02076C]" : "text-[#E7C609]"}>
                           {item.icon}
                         </span>
                         <span>{item.name}</span>
                       </div>
                       <svg
-                        className={`h-4 w-4 shrink-0 ${isActive ? "text-[#173490]" : "text-white/40"}`}
+                        className={`h-4 w-4 shrink-0 ${isActive ? "text-[#02076C]" : "text-white/40"}`}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -283,7 +282,7 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
           </nav>
 
           {/* Drawer Footer */}
-          <div className="border-t border-white/15 p-4 space-y-3 shrink-0 bg-[#122973]">
+          <div className="border-t border-white/15 p-4 space-y-3 shrink-0 bg-[#01054d]">
             <p className="text-center text-[11px] text-slate-300">
               Caraga State University • USG
             </p>

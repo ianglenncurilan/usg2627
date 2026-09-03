@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
+import AbstractCircles from "./AbstractCircles";
 
-export default function GridShell({ children }: { children: ReactNode }) {
+export default function GridShell({
+  children,
+  showCircles = false,
+}: {
+  children: ReactNode;
+  showCircles?: boolean;
+}) {
   return (
     <div className="relative min-h-screen w-full max-w-full overflow-x-hidden bg-[#f8fafc] text-slate-900">
       <div
@@ -18,8 +25,9 @@ export default function GridShell({ children }: { children: ReactNode }) {
             "radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)",
         }}
       />
+      {showCircles && <AbstractCircles />}
 
-      <div className="relative">{children}</div>
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }

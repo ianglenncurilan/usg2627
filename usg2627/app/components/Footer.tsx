@@ -4,16 +4,29 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#173490] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-12">
+    <footer
+      className="relative bg-[#02076C] text-white bg-cover bg-center bg-no-repeat overflow-hidden"
+      style={{ backgroundImage: `url('/bot.png')` }}
+    >
+      {/* Dark overlay to ensure contrast and readability over nav.png */}
+      <div className="absolute inset-0 bg-[#02076C]/85 pointer-events-none" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-12">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Logo and Description */}
           <div className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-xl font-bold">USG PORTAL</p>
-              <p className="text-xs uppercase tracking-widest text-slate-300">
-                Official Records & Publications
-              </p>
+            <div className="flex items-center gap-3">
+              <img
+                src="/usg.jpg"
+                alt="USG Logo"
+                className="h-10 w-10 sm:h-11 sm:w-11 object-contain shrink-0"
+              />
+              <div className="space-y-0.5">
+                <p className="text-xl font-bold leading-tight">USG PORTAL</p>
+                <p className="text-xs uppercase tracking-widest text-slate-300">
+                  Official Records & Publications
+                </p>
+              </div>
             </div>
             <p className="text-sm text-slate-300 leading-relaxed">
               Providing transparency, legislative accessibility, and official executive action tracking for the entire undergraduate and graduate student body.
@@ -155,7 +168,7 @@ export default function Footer() {
               {/* Admin Login */}
               <Link
                 href="/login"
-                className="rounded-full bg-[#E7C609] px-4 py-2 text-xs font-bold text-[#173490] transition hover:brightness-95"
+                className="rounded-full bg-[#E7C609] px-4 py-2 text-xs font-bold text-[#02076C] transition hover:brightness-95"
               >
                 Admin Login
               </Link>

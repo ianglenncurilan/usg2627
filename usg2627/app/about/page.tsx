@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
+import FeedbackForm from "../components/FeedbackForm";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
@@ -84,36 +85,24 @@ export default function AboutPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative overflow-hidden bg-gradient-to-b from-[#173490] via-[#1b3da8] to-[#0f2466] py-20 text-white shadow-xl"
+          className="relative overflow-hidden bg-[#02076C] py-20 text-white shadow-xl"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-blue-400/20 via-transparent to-transparent"></div>
+          <div className="relative z-10 mx-auto max-w-7xl px-6 text-center">
+            {/* Gold Top Subhead */}
+            <p className="text-sm sm:text-base md:text-lg font-bold uppercase tracking-wider text-[#E7C609]">
+              Caraga State University - Main Campus
+            </p>
 
-          <div className="relative mx-auto max-w-7xl px-6 text-center">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest text-[#E7C609] backdrop-blur-md border border-white/15">
-              Caraga State University • Main Campus
-            </span>
-
-            <h1 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+            {/* White Bold Title */}
+            <h1 className="mt-3 text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-white leading-tight">
               University Student Government
             </h1>
-            <p className="mt-3 text-lg sm:text-xl font-medium text-blue-100 max-w-3xl mx-auto">
+
+            <p className="mt-4 text-base sm:text-lg font-medium text-blue-100 max-w-3xl mx-auto">
               USG 2627 — Official Student Governing Body
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <span className="rounded-xl bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white border border-white/20">
-                Responsiveness
-              </span>
-              <span className="rounded-xl bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white border border-white/20">
-                Innovation
-              </span>
-              <span className="rounded-xl bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white border border-white/20">
-                Sustainability
-              </span>
-              <span className="rounded-xl bg-[#E7C609] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#173490] shadow-md">
-                Excellence (RISE)
-              </span>
-            </div>
+
           </div>
         </motion.section>
 
@@ -328,6 +317,8 @@ export default function AboutPage() {
             ))}
           </div>
 
+          {/* Suggestions, Feedback & Comments Section for USG, COA, COMELEC */}
+          <FeedbackForm />
         </div>
 
         {/* FULLSCREEN IMAGE MODAL PREVIEW */}

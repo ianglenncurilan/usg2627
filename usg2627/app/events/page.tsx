@@ -192,25 +192,37 @@ export default function EventsPage() {
           .select("*")
           .order("event_date", { ascending: false });
 
-        if (error || !data || data.length === 0) {
+        if (error) {
+          console.error("Error fetching events:", error);
           setEvents(seedEvents);
+        } else if (data && data.length > 0) {
+          setEvents(data);
         } else {
-          // Merge database events with seed events if database has few events
-          const combined = [...data];
-          seedEvents.forEach((se) => {
-            if (!combined.some((d) => d.title.trim().toLowerCase() === se.title.trim().toLowerCase())) {
-              combined.push(se);
-            }
-          });
-          setEvents(combined);
+          setEvents(seedEvents);
         }
-      } catch {
+      } catch (err) {
+        console.error("Fetch events catch error:", err);
         setEvents(seedEvents);
       } finally {
         setLoading(false);
       }
     }
     fetchEvents();
+
+    const channel = supabase
+      .channel("realtime-events")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "events" },
+        () => {
+          fetchEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const now = useMemo(() => new Date(), []);

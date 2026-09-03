@@ -283,7 +283,7 @@ export default function Home() {
     : null;
 
   return (
-    <GridShell>
+    <GridShell showCircles>
 
 
       <main className="mx-auto max-w-7xl px-6 py-20">
@@ -292,54 +292,71 @@ export default function Home() {
           initial={{ opacity: 0, y: 35 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          className="flex min-h-[calc(100vh-120px)] flex-col items-center justify-center text-center"
+          className="flex min-h-[calc(80vh-100px)] flex-col items-center justify-center text-center py-12"
         >
+          {/* Institutional Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-8 inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-[0_6px_20px_rgba(15,23,42,0.04)] backdrop-blur-sm"
+            className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-blue-900/15 bg-white/90 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#02076C] shadow-[0_4px_16px_rgba(2,7,108,0.06)] backdrop-blur-sm"
           >
-            <span className="h-3 w-3 rounded-full bg-[#5ab07d] shadow-[0_0_0_4px_rgba(90,176,125,0.15)]" />
-            <span>Official Student Portal</span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Caraga State University • Official Portal</span>
           </motion.div>
 
+          {/* Hero Title */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-5xl text-5xl font-black tracking-[-0.06em] text-slate-900 md:text-7xl"
+            className="max-w-5xl text-4xl font-extrabold tracking-tight text-[#02076C] sm:text-6xl lg:text-7xl uppercase"
           >
             University Student Government
           </motion.h1>
 
+          {/* Gold Accent Divider */}
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="my-5 h-1 w-24 rounded-full bg-gradient-to-r from-[#E7C609] via-amber-400 to-[#E7C609]"
+          />
+
+          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 max-w-3xl text-xl leading-8 text-slate-600 md:text-2xl"
+            className="max-w-2xl text-base sm:text-lg md:text-xl leading-relaxed text-slate-600 font-normal"
           >
-            Public service, student accountability, and governance across campus
-            leadership, documents, and events.
+            Public service, student accountability, and governance across campus leadership, documents, and events.
           </motion.p>
 
+          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+            className="mt-8 flex flex-wrap items-center justify-center gap-4"
           >
             <Link
               href="/about"
-              className="rounded-full bg-[#E7C609] px-6 py-3 text-sm font-bold text-[#173490] shadow-sm transition hover:brightness-95 hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#02076C] px-7 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-950/20 transition hover:bg-[#173490] hover:scale-105 active:scale-95"
             >
-              Learn More
+              <span>Learn More</span>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </Link>
             <Link
               href="/documents"
-              className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50 hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-800 shadow-sm transition hover:bg-slate-50 hover:border-slate-400 hover:scale-105 active:scale-95"
             >
-              View Documents
+              <span>View Documents</span>
             </Link>
           </motion.div>
         </motion.section>
