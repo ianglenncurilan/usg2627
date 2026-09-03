@@ -6,54 +6,6 @@ import { supabase } from "@/lib/supabase";
 import AdminSidebar from "../../components/AdminSidebar";
 import Modal from "../../components/Modal";
 
-const initialSeedUsers = [
-  {
-    id: "8e9e8472-3da2-443c-9fa0-78208ce7fa01",
-    user_id: "8e9e8472-3da2-443c-9fa0-78208ce7fa01",
-    full_name: "admin",
-    email: "admin@gmail.com",
-    role: "Admin",
-    is_verified: true,
-    created_at: "2026-08-01T10:00:00Z",
-  },
-  {
-    id: "0f9555b0-7115-40b6-baa1-2e0de97dfbb2",
-    user_id: "0f9555b0-7115-40b6-baa1-2e0de97dfbb2",
-    full_name: "Ian Curilan",
-    email: "iancurilan1027@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-02T10:00:00Z",
-  },
-  {
-    id: "f496b1de-2ae6-4da5-98fa-9e91e25fc5eb",
-    user_id: "f496b1de-2ae6-4da5-98fa-9e91e25fc5eb",
-    full_name: "ian",
-    email: "iang31231@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-03T10:00:00Z",
-  },
-  {
-    id: "31ba56cf-5a1a-45d1-a41b-831f64c2e322",
-    user_id: "31ba56cf-5a1a-45d1-a41b-831f64c2e322",
-    full_name: "L",
-    email: "llawleit@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-04T10:00:00Z",
-  },
-  {
-    id: "bd4a1778-fcea-446b-94a0-4dc7d056cc0c",
-    user_id: "bd4a1778-fcea-446b-94a0-4dc7d056cc0c",
-    full_name: "Light",
-    email: "yagamilight@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-05T10:00:00Z",
-  },
-];
-
 export default function AdminUsersPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -70,6 +22,8 @@ export default function AdminUsersPage() {
 
   // Password Visibility Toggle State
   const [showPassword, setShowPassword] = useState(false);
+  const [autoConfirm, setAutoConfirm] = useState(true);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Form State using Email
   const [formData, setFormData] = useState({
@@ -113,61 +67,45 @@ export default function AdminUsersPage() {
       const res = await fetch("/api/admin/users");
       const json = await res.json();
 
-      if (json.success && json.users && json.users.length > 0) {
+      if (json.success && json.users && Array.isArray(json.users)) {
         setUsersList(json.users);
       } else {
-        // Fallback to direct Supabase fetch
+        // Fallback to direct Supabase fetch from user_profiles table
         const { data } = await supabase
           .from("user_profiles")
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (data && data.length > 0) {
-          setUsersList(data);
-        } else {
-          setUsersList(initialSeedUsers);
-        }
+        setUsersList(data || []);
       }
     } catch (err) {
       console.error("fetchUsers error:", err);
-      setUsersList(initialSeedUsers);
+      setUsersList([]);
     }
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setModalError(null);
 
     try {
       const cleanEmail = formData.email.trim().toLowerCase();
       const cleanName = formData.full_name.trim();
 
-      if (!cleanEmail || !formData.password || !cleanName) {
+      if (!cleanEmail || !formData.password) {
         setSaving(false);
-        setErrorMessageModal("Please fill out all required fields.");
-        return;
-      }
-
-      // Check if email already exists in local state
-      const isDuplicate = usersList.some(
-        (u) => u.email?.toLowerCase().trim() === cleanEmail
-      );
-
-      if (isDuplicate) {
-        setSaving(false);
-        setErrorMessageModal(
-          `The email address "${cleanEmail}" is already registered. Please enter a unique email address.`
-        );
+        setModalError("Please fill out required fields (Email Address and Password).");
         return;
       }
 
       if (formData.password.length < 6) {
         setSaving(false);
-        setErrorMessageModal("Password must be at least 6 characters long for Supabase Auth.");
+        setModalError("Password must be at least 6 characters long.");
         return;
       }
 
-      // Send creation request to Next.js API route (/api/admin/users)
+      // Send creation request to Next.js API route (/api/admin/users) with auto-confirmation flag
       const response = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,6 +114,7 @@ export default function AdminUsersPage() {
           password: formData.password,
           full_name: cleanName,
           role: formData.role,
+          email_confirm: autoConfirm,
         }),
       });
 
@@ -183,7 +122,7 @@ export default function AdminUsersPage() {
 
       if (!result.success) {
         setSaving(false);
-        setErrorMessageModal(result.error || "Failed to create user in Supabase Authentication.");
+        setModalError(result.error || "Failed to create user in Supabase Authentication.");
         return;
       }
 
@@ -203,10 +142,12 @@ export default function AdminUsersPage() {
         password: "",
         role: "User",
       });
+      setAutoConfirm(true);
+      setModalError(null);
       setIsAddModalOpen(false);
     } catch (err: any) {
       console.error("Error creating user:", err);
-      setErrorMessageModal(`An error occurred while creating user: ${err.message || "Unknown error"}`);
+      setModalError(`An error occurred while creating user: ${err.message || "Unknown error"}`);
     } finally {
       setSaving(false);
     }
@@ -287,24 +228,33 @@ export default function AdminUsersPage() {
     if (!deletingUser) return;
 
     try {
-      const res = await fetch(`/api/admin/users?id=${deletingUser.id}&email=${encodeURIComponent(deletingUser.email || "")}`, {
-        method: "DELETE",
-      });
+      // 1. Call API route to delete from Supabase Auth (auth.users) & user_profiles
+      const res = await fetch(
+        `/api/admin/users?id=${deletingUser.id}&email=${encodeURIComponent(deletingUser.email || "")}`,
+        { method: "DELETE" }
+      );
 
-      const json = await res.json();
-
-      if (!json.success) {
-        await supabase
-          .from("user_profiles")
-          .delete()
-          .eq("id", deletingUser.id);
+      // 2. Direct RPC fallback call to permanently delete from auth.users database
+      try {
+        await supabase.rpc("delete_supabase_user", {
+          target_email: deletingUser.email || "",
+          target_user_id: deletingUser.user_id || deletingUser.id || null,
+        });
+      } catch (rpcErr) {
+        console.warn("delete_supabase_user client fallback note:", rpcErr);
       }
 
-      setUsersList((prev) => prev.filter((u) => u.id !== deletingUser.id));
-      showToast("User account deleted successfully!");
+      // 3. Delete from public.user_profiles table
+      await supabase
+        .from("user_profiles")
+        .delete()
+        .or(`id.eq.${deletingUser.id},email.eq.${deletingUser.email}`);
+
+      setUsersList((prev) => prev.filter((u) => u.id !== deletingUser.id && u.email !== deletingUser.email));
+      showToast(`User account (${deletingUser.email || deletingUser.full_name}) deleted from Supabase Auth & system!`);
     } catch (err: any) {
       console.error("Delete error:", err);
-      setErrorMessageModal("An unexpected error occurred while deleting user.");
+      setErrorMessageModal(`An error occurred while deleting user: ${err.message || "Unknown error"}`);
     } finally {
       setDeletingUser(null);
     }
@@ -366,12 +316,10 @@ export default function AdminUsersPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-                <span className="rounded bg-indigo-100 px-2.5 py-0.5 text-xs font-bold text-indigo-700">
-                  Supabase Auth & RBAC
-                </span>
+
               </div>
               <p className="text-slate-600 mt-1">
-                Create & manage accounts in <strong>Supabase Authentication</strong> with assigned roles (<strong>Admin</strong> vs <strong>User</strong>).
+                Create & manage accounts with assigned roles (<strong>Admin</strong> or <strong>User</strong>).
               </p>
             </div>
 
@@ -399,36 +347,7 @@ export default function AdminUsersPage() {
             </button>
           </div>
 
-          {/* Role Breakdown Cards */}
-          <div className="mb-8 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 p-5 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#173490] text-white font-bold text-xs uppercase tracking-wider">
-                  ADM
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900">Admin Role Privileges</h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Can create, edit, delete portal items, check pending documents, and <strong>Approve or Reject</strong> uploads.
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-wider border border-slate-200">
-                  USR
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900">User Role Privileges</h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Can submit document uploads to the repository for review, but <strong>cannot approve or reject</strong> pending submissions.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Search & Filter Toolbar */}
           <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-sm border border-slate-100">
@@ -489,7 +408,6 @@ export default function AdminUsersPage() {
                       <th className="px-6 py-4">User Details</th>
                       <th className="px-6 py-4">Email Address</th>
                       <th className="px-6 py-4">System Role</th>
-                      <th className="px-6 py-4">Superadmin Verification</th>
                       <th className="px-6 py-4">Permissions</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
@@ -497,7 +415,7 @@ export default function AdminUsersPage() {
                   <tbody className="divide-y divide-slate-100">
                     {filteredUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-slate-50/70 transition">
-                        
+
                         {/* User Details */}
                         <td className="px-6 py-4 align-middle">
                           <div className="flex items-center gap-3">
@@ -533,44 +451,12 @@ export default function AdminUsersPage() {
                           )}
                         </td>
 
-                        {/* Superadmin Verification Direct Control */}
-                        <td className="px-6 py-4 align-middle">
-                          <div className="flex items-center gap-2">
-                            {user.is_verified ? (
-                              <>
-                                <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">
-                                  Verified
-                                </span>
-                                <button
-                                  onClick={() => handleToggleVerification(user)}
-                                  className="text-xs font-semibold text-slate-400 hover:text-red-600 hover:underline cursor-pointer"
-                                  title="Unverify Account"
-                                >
-                                  Unverify
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 border border-amber-200">
-                                  Unverified
-                                </span>
-                                <button
-                                  onClick={() => handleToggleVerification(user)}
-                                  className="rounded-lg bg-[#173490] px-3 py-1 text-xs font-bold text-white transition hover:bg-blue-700 cursor-pointer shadow-xs"
-                                >
-                                  Verify Account
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-
                         {/* Permissions */}
                         <td className="px-6 py-4 align-middle text-xs">
                           {user.role === "Admin" ? (
                             <span className="font-bold text-emerald-700">Full Access + Approval Authority</span>
                           ) : (
-                            <span className="font-medium text-slate-600">Upload Only (Pending Approval)</span>
+                            <span className="font-medium text-slate-600">Upload Only</span>
                           )}
                         </td>
 
@@ -617,15 +503,21 @@ export default function AdminUsersPage() {
             )}
           </div>
 
-          {/* ADD USER MODAL */}
+          {/* SUPABASE DASHBOARD STYLE: CREATE A NEW USER MODAL */}
           <Modal
             isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            className="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 relative"
+            onClose={() => {
+              setIsAddModalOpen(false);
+              setModalError(null);
+            }}
+            className="w-full max-w-lg overflow-hidden rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-200/80 relative"
           >
             <button
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute right-5 top-5 rounded-full bg-slate-100 p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition cursor-pointer"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setModalError(null);
+              }}
+              className="absolute right-5 top-5 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -643,23 +535,50 @@ export default function AdminUsersPage() {
               </svg>
             </button>
 
-            <h2 className="text-xl font-bold text-slate-900 mb-1">Add System User</h2>
-            <p className="text-xs text-slate-500 mb-6">Create a user account in <strong>Supabase Authentication</strong> with assigned role</p>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-slate-900">Create a new user</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Create a user account in <strong>Supabase Authentication</strong>
+              </p>
+            </div>
+
+            {modalError && (
+              <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3.5 text-xs text-red-700 font-medium flex items-start gap-2.5">
+                <svg className="h-4 w-4 text-red-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>{modalError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleAddUser} className="space-y-4">
               {/* Full Name */}
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Full Name *
+                  Full Name
                 </label>
                 <input
                   type="text"
-                  required
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-[#173490] focus:outline-none"
                   placeholder="e.g. Juan Dela Cruz"
                 />
+              </div>
+
+              {/* System Role */}
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  System Role
+                </label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none cursor-pointer bg-white"
+                >
+                  <option value="User">User — Can upload documents (Pending Approval)</option>
+                  <option value="Admin">Admin — Full privileges (Add/Edit/Delete & Approve/Reject)</option>
+                </select>
               </div>
 
               {/* Email Address */}
@@ -673,14 +592,14 @@ export default function AdminUsersPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-[#173490] focus:outline-none"
-                  placeholder="e.g. juan.delacruz@carsu.edu.ph"
+                  placeholder="user@example.com"
                 />
               </div>
 
-              {/* Password with Eye Icon Toggle */}
+              {/* User Password */}
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Password *
+                  User Password *
                 </label>
                 <div className="relative">
                   <input
@@ -690,7 +609,7 @@ export default function AdminUsersPage() {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 pr-10 text-sm focus:border-[#173490] focus:outline-none"
-                    placeholder="Set initial password (min. 6 chars)"
+                    placeholder="Set user password (min. 6 chars)"
                   />
                   <button
                     type="button"
@@ -699,34 +618,14 @@ export default function AdminUsersPage() {
                     title={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
                         <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
                         <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
                         <line x1="2" x2="22" y1="2" y2="22" />
                       </svg>
                     ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
@@ -735,50 +634,48 @@ export default function AdminUsersPage() {
                 </div>
               </div>
 
-              {/* Role Dropdown */}
-              <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  System Role (Permissions) *
+              {/* Checkbox: Auto confirm user? */}
+              <div className="pt-2">
+                <label className="flex items-start gap-2.5 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={autoConfirm}
+                    onChange={(e) => setAutoConfirm(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#173490] focus:ring-[#173490]/20 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-[#173490] transition">
+                      Auto confirm user?
+                    </span>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                      A confirmation email will not be sent when creating a user via this form.
+                    </p>
+                  </div>
                 </label>
-                <select
-                  required
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none cursor-pointer bg-white"
-                >
-                  <option value="User">User — Can upload documents (Pending Approval)</option>
-                  <option value="Admin">Admin — Full privileges (Add/Edit/Delete & Approve/Reject)</option>
-                </select>
               </div>
 
-              {/* Role Info Box */}
-              <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 text-xs text-slate-600">
-                {formData.role === "Admin" ? (
-                  <p className="font-medium text-purple-900">
-                    <strong>Admin Role:</strong> Has full control to manage content, edit users, check pending documents, and approve or reject submissions.
-                  </p>
-                ) : (
-                  <p className="font-medium text-blue-900">
-                    <strong>User Role:</strong> Can log in and upload documents to the repository. Uploads will remain pending until reviewed by an Admin.
-                  </p>
-                )}
-              </div>
-
-              {/* Buttons */}
-              <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
+              {/* Action Buttons */}
+              <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer"
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setModalError(null);
+                  }}
+                  disabled={saving}
+                  className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-[#173490] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#1e4bb8] disabled:opacity-50 cursor-pointer shadow-md"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#173490] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#1e4bb8] disabled:opacity-50 cursor-pointer shadow-md"
                 >
-                  {saving ? "Creating Account in Supabase Auth..." : "Create Account"}
+                  {saving && (
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {saving ? "Creating user..." : "Create user"}
                 </button>
               </div>
             </form>

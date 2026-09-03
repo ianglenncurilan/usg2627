@@ -1,100 +1,26 @@
 import { NextResponse } from "next/server";
 import { supabase, supabaseAuthClient } from "@/lib/supabase";
 
-const defaultSupabaseUsers = [
-  {
-    id: "8e9e8472-3da2-443c-9fa0-78208ce7fa01",
-    user_id: "8e9e8472-3da2-443c-9fa0-78208ce7fa01",
-    full_name: "admin",
-    email: "admin@gmail.com",
-    role: "Admin",
-    is_verified: true,
-    created_at: "2026-08-01T10:00:00Z",
-  },
-  {
-    id: "0f9555b0-7115-40b6-baa1-2e0de97dfbb2",
-    user_id: "0f9555b0-7115-40b6-baa1-2e0de97dfbb2",
-    full_name: "Ian Curilan",
-    email: "iancurilan1027@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-02T10:00:00Z",
-  },
-  {
-    id: "f496b1de-2ae6-4da5-98fa-9e91e25fc5eb",
-    user_id: "f496b1de-2ae6-4da5-98fa-9e91e25fc5eb",
-    full_name: "ian",
-    email: "iang31231@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-03T10:00:00Z",
-  },
-  {
-    id: "31ba56cf-5a1a-45d1-a41b-831f64c2e322",
-    user_id: "31ba56cf-5a1a-45d1-a41b-831f64c2e322",
-    full_name: "L",
-    email: "llawleit@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-04T10:00:00Z",
-  },
-  {
-    id: "bd4a1778-fcea-446b-94a0-4dc7d056cc0c",
-    user_id: "bd4a1778-fcea-446b-94a0-4dc7d056cc0c",
-    full_name: "Light",
-    email: "yagamilight@gmail.com",
-    role: "User",
-    is_verified: true,
-    created_at: "2026-08-05T10:00:00Z",
-  },
-];
-
-// GET /api/admin/users - Fetch all registered users from Supabase Auth & user_profiles
+// GET /api/admin/users - Fetch all registered users directly from Supabase Auth & user_profiles table
 export async function GET() {
   try {
-    // 1. Fetch user_profiles from database table
-    const { data: profileData } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-
     const userMap = new Map<string, any>();
 
-    // Seed defaults first
-    defaultSupabaseUsers.forEach((u) => {
-      userMap.set(u.email.toLowerCase(), u);
-    });
-
-    // Merge database profiles over defaults
-    if (profileData && profileData.length > 0) {
-      profileData.forEach((p: any) => {
-        if (p.email) {
-          const existing = userMap.get(p.email.toLowerCase()) || {};
-          userMap.set(p.email.toLowerCase(), {
-            ...existing,
-            ...p,
-            full_name: p.full_name || existing.full_name || p.email.split("@")[0],
-          });
-        }
-      });
-    }
-
-    // 2. Fetch all users from Supabase Auth Dashboard via admin API if key is available
+    // 1. Fetch real users directly from Supabase Auth (auth.users)
     try {
       const { data: authData, error: authError } = await supabaseAuthClient.auth.admin.listUsers();
       if (!authError && authData?.users && authData.users.length > 0) {
         authData.users.forEach((u: any) => {
           if (u.email) {
-            const existing = userMap.get(u.email.toLowerCase()) || {};
             const meta = u.user_metadata || {};
             userMap.set(u.email.toLowerCase(), {
-              id: existing.id || u.id,
+              id: u.id,
               user_id: u.id,
               email: u.email,
-              full_name: existing.full_name || meta.full_name || meta.name || u.email.split("@")[0],
-              role: existing.role || meta.role || (u.email.toLowerCase().includes("admin") ? "Admin" : "User"),
-              is_verified: Boolean(u.email_confirmed_at || u.confirmed_at || existing.is_verified || true),
-              created_at: existing.created_at || u.created_at || new Date().toISOString(),
+              full_name: meta.full_name || meta.name || u.email.split("@")[0],
+              role: meta.role || (u.email.toLowerCase().includes("admin") ? "Admin" : "User"),
+              is_verified: Boolean(u.email_confirmed_at || u.confirmed_at),
+              created_at: u.created_at || new Date().toISOString(),
             });
           }
         });
@@ -103,26 +29,60 @@ export async function GET() {
       console.warn("Supabase auth.admin.listUsers note:", authErr);
     }
 
+    // 2. Merge with user_profiles table from database
+    const { data: profileData } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (profileData && profileData.length > 0) {
+      profileData.forEach((p: any) => {
+        if (p.email) {
+          const existing = userMap.get(p.email.toLowerCase()) || {};
+          userMap.set(p.email.toLowerCase(), {
+            id: p.id || existing.id || p.user_id,
+            user_id: p.user_id || existing.user_id || p.id,
+            email: p.email,
+            full_name: p.full_name || existing.full_name || p.email.split("@")[0],
+            role: p.role || existing.role || "User",
+            is_verified: typeof p.is_verified === "boolean" ? p.is_verified : existing.is_verified ?? true,
+            created_at: p.created_at || existing.created_at || new Date().toISOString(),
+          });
+        }
+      });
+    }
+
     const users = Array.from(userMap.values());
+
     return NextResponse.json({ success: true, users });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
-// POST /api/admin/users - Create new user in Supabase Auth & user_profiles table
+// POST /api/admin/users - Secure Admin Endpoint to create a new user account with auto-confirmation
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password, full_name, role } = body;
+    const { email, password, full_name, role, email_confirm = true } = body;
 
     const cleanEmail = email?.trim().toLowerCase();
-    const cleanName = full_name?.trim();
+    const cleanName = full_name?.trim() || cleanEmail?.split("@")[0] || "USG User";
     const userRole = role || "User";
+    const autoConfirm = Boolean(email_confirm);
 
-    if (!cleanEmail || !password || !cleanName) {
+    if (!cleanEmail || !password) {
       return NextResponse.json(
-        { success: false, error: "Please fill out all required fields (Full Name, Email, and Password)." },
+        { success: false, error: "Email Address and Password are required." },
+        { status: 400 }
+      );
+    }
+
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return NextResponse.json(
+        { success: false, error: "Please enter a valid email address." },
         { status: 400 }
       );
     }
@@ -134,29 +94,39 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Create user in Supabase Cloud Authentication with email_confirm: true (Auto Confirm User)
-    let createdAuthUserId: string | null = null;
+    // 1. Create user in Supabase Authentication (Admin API if service role key configured, else signUp fallback)
+    let authUserId: string | null = null;
+    let adminAuthError: any = null;
 
-    try {
-      const { data: adminAuthData, error: adminAuthError } = await supabaseAuthClient.auth.admin.createUser({
-        email: cleanEmail,
-        password: password,
-        email_confirm: true, // Auto Confirm User enabled
-        user_metadata: {
-          full_name: cleanName,
-          role: userRole,
-        },
-      });
+    const hasServiceRoleKey = Boolean(
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
+    );
 
-      if (!adminAuthError && adminAuthData?.user) {
-        createdAuthUserId = adminAuthData.user.id;
+    if (hasServiceRoleKey) {
+      try {
+        const { data: adminData, error: adminErr } = await supabaseAuthClient.auth.admin.createUser({
+          email: cleanEmail,
+          password: password,
+          email_confirm: autoConfirm,
+          user_metadata: {
+            full_name: cleanName,
+            role: userRole,
+          },
+        });
+
+        if (!adminErr && adminData?.user) {
+          authUserId = adminData.user.id;
+        } else {
+          adminAuthError = adminErr;
+        }
+      } catch (err) {
+        adminAuthError = err;
       }
-    } catch (adminErr) {
-      console.warn("Admin createUser fallback to signUp:", adminErr);
     }
 
-    if (!createdAuthUserId) {
-      const { data: authData, error: authError } = await supabaseAuthClient.auth.signUp({
+    // Fallback if Service Role Key is not configured or admin API returned unauthorized error
+    if (!authUserId) {
+      const { data: signUpData, error: signUpErr } = await supabaseAuthClient.auth.signUp({
         email: cleanEmail,
         password: password,
         options: {
@@ -167,60 +137,66 @@ export async function POST(req: Request) {
         },
       });
 
-      if (authError) {
-        let message = authError.message;
-        if (message.toLowerCase().includes("already registered") || message.toLowerCase().includes("already exists")) {
-          message = `The email address "${cleanEmail}" is already registered in Supabase Authentication.`;
+      if (signUpErr) {
+        let friendlyError = signUpErr.message;
+        if (
+          friendlyError.toLowerCase().includes("already registered") ||
+          friendlyError.toLowerCase().includes("already exists")
+        ) {
+          friendlyError = `A user with email "${cleanEmail}" is already registered in Supabase Authentication.`;
+        } else if (adminAuthError?.message && !adminAuthError.message.includes("Bearer token")) {
+          friendlyError = adminAuthError.message;
         }
-        return NextResponse.json({ success: false, error: message }, { status: 400 });
+        return NextResponse.json({ success: false, error: friendlyError }, { status: 400 });
       }
 
-      createdAuthUserId = authData?.user?.id || null;
+      authUserId = signUpData?.user?.id || null;
     }
 
-    // 2. Insert or update user profile record in public.user_profiles with auto-verified status
+    // 2. Insert or update user profile record in public.user_profiles
     const profilePayload = {
-      user_id: createdAuthUserId,
+      user_id: authUserId,
       email: cleanEmail,
       full_name: cleanName,
       role: userRole,
-      is_verified: true, // Auto-confirm on creation
+      is_verified: autoConfirm,
       updated_at: new Date().toISOString(),
     };
-
-    // 3. Auto-confirm user in Supabase Auth via RPC
-    try {
-      await supabase.rpc("verify_supabase_user", {
-        target_email: cleanEmail,
-        target_user_id: createdAuthUserId,
-      });
-    } catch (rpcErr) {
-      console.warn("Auto-confirm RPC note:", rpcErr);
-    }
 
     const { data: profileData, error: profileError } = await supabase
       .from("user_profiles")
       .upsert(profilePayload, { onConflict: "email" })
       .select();
 
-    if (profileError) {
-      console.warn("User profile insert note:", profileError.message);
+    // 3. Auto-confirm user in Supabase auth.users via RPC verify_supabase_user
+    if (autoConfirm) {
+      try {
+        await supabase.rpc("verify_supabase_user", {
+          target_email: cleanEmail,
+          target_user_id: authUserId,
+        });
+      } catch (rpcErr) {
+        console.warn("verify_supabase_user RPC note:", rpcErr);
+      }
     }
 
     const createdUser = (profileData && profileData[0]) || {
-      id: `usr-${Date.now()}`,
+      id: authUserId || `usr-${Date.now()}`,
       ...profilePayload,
       created_at: new Date().toISOString(),
     };
 
     return NextResponse.json({
       success: true,
-      message: `User account (${cleanEmail}) created in Supabase Auth successfully!`,
+      message: `User account (${cleanEmail}) created successfully!`,
       user: createdUser,
     });
   } catch (err: any) {
     console.error("Create User API Error:", err);
-    return NextResponse.json({ success: false, error: err.message || "Failed to create user." }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: err.message || "An unexpected error occurred while creating user." },
+      { status: 500 }
+    );
   }
 }
 

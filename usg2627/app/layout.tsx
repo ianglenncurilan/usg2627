@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Roboto_Condensed, Lora, Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import NavigationLayout from "./components/NavigationLayout";
 
 const robotoCondensed = Roboto_Condensed({
   subsets: ["latin"],
@@ -55,9 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       )}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-slate-50 text-slate-900 w-full max-w-full overflow-x-hidden">
-        <Header />
-        <main className="flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
-        <Footer />
+        <NavigationLayout>{children}</NavigationLayout>
       </body>
     </html>
   );
