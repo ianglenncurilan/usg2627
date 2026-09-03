@@ -111,6 +111,7 @@ export default function FeedbackForm({
                     <button
                       type="button"
                       key={item.id}
+                      suppressHydrationWarning
                       onClick={() => setRecipient(item.id as any)}
                       className={`flex flex-col items-center justify-center rounded-2xl border p-4 text-center transition ${isSelected
                         ? "border-[#173490] bg-[#173490]/5 text-[#173490] ring-2 ring-[#173490]"
@@ -135,6 +136,7 @@ export default function FeedbackForm({
                   <button
                     type="button"
                     key={type}
+                    suppressHydrationWarning
                     onClick={() => setFeedbackType(type)}
                     className={`rounded-full px-4 py-2 text-xs font-bold transition ${feedbackType === type
                       ? "bg-[#173490] text-white shadow-sm"
@@ -247,6 +249,7 @@ export default function FeedbackForm({
               </p>
               <button
                 type="submit"
+                suppressHydrationWarning
                 disabled={status === "submitting"}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#173490] px-8 py-3 text-sm font-bold text-white transition hover:bg-[#122870] focus:outline-none focus:ring-2 focus:ring-[#173490]/40 disabled:opacity-50 shadow-md"
               >

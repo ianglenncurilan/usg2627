@@ -6,30 +6,6 @@ import FeedbackForm from "../components/FeedbackForm";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
-const initialOrgCharts = [
-  {
-    id: "org1",
-    title: "USG Organizational Structure",
-    subtitle: "Overall Student Government Tree Hierarchy & Governance Diagram",
-    image: "/org1.png",
-    badge: "Main Overall Structure",
-  },
-  {
-    id: "org2",
-    title: "The USG President's Cabinet Officials",
-    subtitle: "Executive Office & Cabinet Officials Roster",
-    image: "/org2.png",
-    badge: "Cabinet Officials",
-  },
-  {
-    id: "org3",
-    title: "The USG Executive Branch Cabinet Structure",
-    subtitle: "Executive Departments & Departmental Crests Hierarchy",
-    image: "/org3.png",
-    badge: "Executive Departments",
-  },
-];
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -52,28 +28,100 @@ const itemVariants = {
   },
 };
 
+const defaultChartTemplates = [
+  {
+    chart_key: "org1",
+    title: "USG Organizational Structure",
+    subtitle: "Overall Student Government Tree Hierarchy & Governance Diagram",
+    image_url: "/2.png",
+    badge: "Main Overall Structure",
+  },
+  {
+    chart_key: "org2",
+    title: "The USG President's Cabinet Officials",
+    subtitle: "Executive Office & Cabinet Officials Roster",
+    image_url: "/3.png",
+    badge: "Cabinet Officials",
+  },
+  {
+    chart_key: "org3",
+    title: "The USG Executive Branch Cabinet Structure",
+    subtitle: "Executive Departments & Departmental Crests Hierarchy",
+    image_url: "/org3.png",
+    badge: "Executive Departments",
+  },
+];
+
 export default function AboutPage() {
   const [selectedModalChart, setSelectedModalChart] = useState<any | null>(null);
-  const [orgCharts, setOrgCharts] = useState(initialOrgCharts);
+  const [orgCharts, setOrgCharts] = useState<any[]>(
+    defaultChartTemplates.map((t) => ({
+      id: t.chart_key,
+      title: t.title,
+      subtitle: t.subtitle,
+      image: t.image_url,
+      badge: t.badge,
+    }))
+  );
 
   useEffect(() => {
-    const fetchOrgCharts = async () => {
+    const loadCharts = async () => {
       try {
-        const { data, error } = await supabase.from("org_charts").select("*");
-        if (!error && data && data.length > 0) {
-          setOrgCharts((prev) =>
-            prev.map((item) => {
-              const dbRecord = data.find((d: any) => d.chart_key === item.id);
-              return dbRecord ? { ...item, image: dbRecord.image_url || item.image } : item;
-            })
-          );
-        }
+        // Read local storage cache for instant update
+        let localCache: Record<string, string> = {};
+        try {
+          const stored = localStorage.getItem("usg_org_charts_store");
+          if (stored) localCache = JSON.parse(stored);
+        } catch { }
+
+        // Fetch live database records from Supabase org_charts table
+        const { data, error } = await supabase
+          .from("org_charts")
+          .select("*")
+          .order("chart_key", { ascending: true });
+
+        const merged = defaultChartTemplates.map((template) => {
+          const dbFound = data?.find((d: any) => d.chart_key === template.chart_key);
+          const updatedImage = dbFound?.image_url || localCache[template.chart_key] || template.image_url;
+          return {
+            id: template.chart_key,
+            title: dbFound?.title || template.title,
+            subtitle: dbFound?.subtitle || template.subtitle,
+            image: updatedImage,
+            badge: template.badge,
+          };
+        });
+
+        setOrgCharts(merged);
       } catch (err) {
         console.error("Fetch org_charts error:", err);
       }
     };
 
-    fetchOrgCharts();
+    loadCharts();
+
+    // 3. Listen for custom window event & storage event across tabs/pages
+    const handleCustomUpdate = () => loadCharts();
+    window.addEventListener("usg_org_charts_updated", handleCustomUpdate);
+    window.addEventListener("storage", handleCustomUpdate);
+
+    // 4. Supabase Realtime postgres_changes subscription
+    const channel = supabase
+      .channel("realtime-org-charts")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "org_charts" },
+        () => {
+          loadCharts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener("usg_org_charts_updated", handleCustomUpdate);
+      window.removeEventListener("storage", handleCustomUpdate);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -273,14 +321,16 @@ export default function AboutPage() {
               >
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
                   <div>
-                    <span className="rounded-md bg-[#E7C609] px-2.5 py-0.5 text-[11px] font-black uppercase text-[#173490] mr-2">
+                    <span className="inline-block rounded-md bg-[#E7C609] px-2.5 py-0.5 text-[11px] font-black uppercase text-[#173490] mb-2">
                       {chart.badge}
                     </span>
-                    <h3 className="inline-block font-bold text-xl sm:text-2xl text-slate-900">{chart.title}</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">{chart.title}</h3>
                     <p className="text-xs text-slate-500 mt-1">{chart.subtitle}</p>
                   </div>
 
                   <button
+                    type="button"
+                    suppressHydrationWarning
                     onClick={() => setSelectedModalChart(chart)}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#173490] px-4 py-2 text-xs font-bold text-white hover:bg-[#1e4bb8] transition cursor-pointer shadow-sm shrink-0"
                   >

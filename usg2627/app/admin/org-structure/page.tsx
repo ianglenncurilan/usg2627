@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import AdminSidebar from "../../components/AdminSidebar";
 import Modal from "../../components/Modal";
 
-const initialCharts = [
+const defaultChartTemplates = [
   {
     chart_key: "org1",
     title: "USG Organizational Structure",
@@ -34,7 +34,7 @@ export default function AdminOrgStructurePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [charts, setCharts] = useState<any[]>(initialCharts);
+  const [charts, setCharts] = useState<any[]>(defaultChartTemplates);
 
   // Modals & Feedback
   const [updatingChart, setUpdatingChart] = useState<any | null>(null);
@@ -74,22 +74,31 @@ export default function AdminOrgStructurePage() {
 
   const fetchCharts = async () => {
     try {
+      let localCache: Record<string, string> = {};
+      try {
+        const stored = localStorage.getItem("usg_org_charts_store");
+        if (stored) localCache = JSON.parse(stored);
+      } catch {}
+
       const { data, error } = await supabase
         .from("org_charts")
-        .select("*");
+        .select("*")
+        .order("chart_key", { ascending: true });
 
-      if (error || !data || data.length === 0) {
-        setCharts(initialCharts);
-      } else {
-        const merged = initialCharts.map((init) => {
-          const found = data.find((d: any) => d.chart_key === init.chart_key);
-          return found ? { ...init, ...found } : init;
-        });
-        setCharts(merged);
-      }
+      const merged = defaultChartTemplates.map((template) => {
+        const dbFound = data?.find((d: any) => d.chart_key === template.chart_key);
+        const updatedImage = dbFound?.image_url || localCache[template.chart_key] || template.image_url;
+        return {
+          ...template,
+          ...(dbFound || {}),
+          image_url: updatedImage,
+        };
+      });
+
+      setCharts(merged);
     } catch (err) {
-      console.error(err);
-      setCharts(initialCharts);
+      console.error("fetchCharts error:", err);
+      setCharts(defaultChartTemplates);
     }
   };
 
@@ -117,11 +126,14 @@ export default function AdminOrgStructurePage() {
     setSaving(true);
 
     try {
+      const finalImageUrl = newImageInput;
+
+      // 1. Upsert into Supabase database org_charts table
       const updatedItem = {
         chart_key: updatingChart.chart_key,
         title: updatingChart.title,
         subtitle: updatingChart.subtitle,
-        image_url: newImageInput,
+        image_url: finalImageUrl,
         updated_at: new Date().toISOString(),
       };
 
@@ -129,10 +141,23 @@ export default function AdminOrgStructurePage() {
         .from("org_charts")
         .upsert(updatedItem, { onConflict: "chart_key" });
 
-      if (error) console.warn("Supabase upsert note:", error.message);
+      if (error) console.warn("Supabase org_charts upsert note:", error.message);
+
+      // 2. Sync to localStorage for instant local reactivity across tabs/pages
+      try {
+        const local = localStorage.getItem("usg_org_charts_store");
+        const existingMap = local ? JSON.parse(local) : {};
+        existingMap[updatingChart.chart_key] = finalImageUrl;
+        localStorage.setItem("usg_org_charts_store", JSON.stringify(existingMap));
+      } catch (lErr) {
+        console.warn("localStorage sync note:", lErr);
+      }
+
+      // 3. Dispatch global custom event for instant UI update
+      window.dispatchEvent(new Event("usg_org_charts_updated"));
 
       setCharts((prev) =>
-        prev.map((c) => (c.chart_key === updatingChart.chart_key ? { ...c, image_url: newImageInput } : c))
+        prev.map((c) => (c.chart_key === updatingChart.chart_key ? { ...c, image_url: finalImageUrl } : c))
       );
 
       showToast(`Chart "${updatingChart.title}" updated successfully!`);
@@ -141,7 +166,7 @@ export default function AdminOrgStructurePage() {
       setPreviewImage(null);
     } catch (err: any) {
       console.error(err);
-      setErrorMessageModal(`Failed to update image chart: ${err.message}`);
+      setErrorMessageModal(`Failed to update image chart: ${err.message || "Unknown error"}`);
     } finally {
       setSaving(false);
     }
@@ -223,11 +248,21 @@ export default function AdminOrgStructurePage() {
 
                   {/* High-Res Graphic Image Preview */}
                   <div className="relative aspect-video w-full overflow-hidden rounded-2xl border-2 border-slate-200 bg-slate-950 p-2 shadow-inner group">
-                    <img
-                      src={chart.image_url}
-                      alt={chart.title}
-                      className="h-full w-full object-contain transition duration-300 group-hover:scale-102"
-                    />
+                    {chart.image_url ? (
+                      <img
+                        src={chart.image_url}
+                        alt={chart.title}
+                        className="h-full w-full object-contain transition duration-300 group-hover:scale-102"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full flex-col items-center justify-center rounded-xl bg-slate-900/60 p-6 text-center text-slate-400">
+                        <svg className="mb-2 h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-xs font-semibold">No Image Uploaded Yet</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Click "Update Image" below to upload chart</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

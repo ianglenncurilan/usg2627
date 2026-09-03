@@ -279,7 +279,7 @@ export default function AdminDocumentsPage() {
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-slate-100">
       <AdminSidebar />
-      
+
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -288,11 +288,11 @@ export default function AdminDocumentsPage() {
                 <h1 className="text-2xl font-bold text-slate-900">Documents Management</h1>
                 {currentUserRole === "Admin" ? (
                   <span className="rounded bg-purple-100 px-2.5 py-0.5 text-xs font-black uppercase text-purple-800">
-                    👑 Admin (Full Control)
+                    Admin (Full Control)
                   </span>
                 ) : (
                   <span className="rounded bg-blue-100 px-2.5 py-0.5 text-xs font-bold uppercase text-blue-700">
-                    👤 User (Upload Only)
+                    User (Upload Only)
                   </span>
                 )}
               </div>
@@ -323,7 +323,7 @@ export default function AdminDocumentsPage() {
           {/* Upload Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
-              <div 
+              <div
                 className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl border border-slate-100 animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -349,7 +349,7 @@ export default function AdminDocumentsPage() {
                 </button>
 
                 <h2 className="mb-4 text-lg font-bold text-slate-900">Upload New Document</h2>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
@@ -504,11 +504,10 @@ export default function AdminDocumentsPage() {
                     <button
                       key={f}
                       onClick={() => setFilter(f)}
-                      className={`rounded-md px-3 py-1 text-xs font-semibold capitalize transition cursor-pointer ${
-                        filter === f
-                          ? "bg-[#173490] text-white shadow-xs"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                      }`}
+                      className={`rounded-md px-3 py-1 text-xs font-semibold capitalize transition cursor-pointer ${filter === f
+                        ? "bg-[#173490] text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                        }`}
                     >
                       {f}
                     </button>
