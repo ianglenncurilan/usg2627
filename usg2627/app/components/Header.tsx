@@ -119,10 +119,11 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={`sticky top-0 z-40 transition-all duration-200 ${isScrolled
-        ? "border-b border-blue-900/80 bg-[#02076C] shadow-xl py-0.5"
-        : "border-b border-blue-900 bg-[#02076C] shadow-md py-0"
-        } text-white`}
+      className={`sticky top-0 z-40 transition-all duration-300 ${
+        isScrolled
+          ? "border-b border-blue-900/80 bg-gradient-to-r from-[#01054d] via-[#02076C] to-[#0a2370] backdrop-blur-md shadow-xl py-0.5"
+          : "border-b border-blue-900/60 bg-gradient-to-r from-[#01054d] via-[#02076C] to-[#0e2c84] shadow-md py-0"
+      } text-white`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4">
         {/* Brand / Logo */}

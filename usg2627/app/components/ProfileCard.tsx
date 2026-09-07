@@ -19,6 +19,34 @@ export interface ProfileCardProps {
   avatarSrc?: string;
   filedBills?: FiledBill[];
   initiatives?: string[];
+  facebookUrl?: string;
+  xUrl?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
+}
+
+function toTitleCase(str: string): string {
+  if (!str) return "";
+  return str
+    .trim()
+    .split(/\s+/)
+    .map((word) => {
+      if (!word) return "";
+      if (/^(iii|ii|iv|v|vi|vii|viii|ix|x)$/i.test(word)) {
+        return word.toUpperCase();
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+function formatPhoneNumber(phone?: string): string {
+  if (!phone) return "";
+  const cleaned = phone.replace(/[^0-9]/g, "");
+  if (cleaned.length === 11 && cleaned.startsWith("09")) {
+    return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+  }
+  return phone;
 }
 
 export default function ProfileCard({
@@ -27,10 +55,16 @@ export default function ProfileCard({
   department = "University Student Government",
   directLine,
   email,
+  roomAddress = "Room 502, Legislative Building",
   avatarSrc,
   filedBills,
+  facebookUrl = "#",
+  xUrl = "#",
+  instagramUrl = "#",
+  websiteUrl = "#",
 }: ProfileCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const formattedName = toTitleCase(name);
 
   // Default sample filed bills if none provided
   const activeFiledBills: FiledBill[] = filedBills || [
@@ -50,147 +84,156 @@ export default function ProfileCard({
     <>
       <motion.div
         whileHover={{
-          y: -6,
-          scale: 1.015,
+          y: -5,
           boxShadow: "0 20px 30px -10px rgba(23,52,144,0.12)",
           transition: { type: "spring", stiffness: 350, damping: 25 },
         }}
         whileTap={{ scale: 0.99 }}
-        className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors duration-300 hover:border-[#173490]/40 flex flex-col justify-between"
+        className="group overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-[#173490]/40 flex flex-col sm:flex-row h-full min-h-[260px]"
       >
-        <div>
-          <div className="flex gap-4 items-start">
-            {/* Avatar Container with Motion */}
-            <motion.div
-              whileHover={{ scale: 1.08 }}
-              transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              className="flex-shrink-0"
-            >
-              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-[#173490] to-[#1e4bb8] ring-4 ring-[#173490]/10 overflow-hidden shadow-md">
-                {avatarSrc ? (
-                  <img
-                    src={avatarSrc}
-                    alt={name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-white">
-                    {name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)}
-                  </div>
-                )}
-              </div>
-            </motion.div>
+        {/* Left Side: Full-height Portrait Photo */}
+        <div className="relative w-full sm:w-2/5 md:w-5/12 flex-shrink-0 bg-slate-100 min-h-[220px] sm:min-h-full overflow-hidden">
+          {avatarSrc ? (
+            <img
+              src={avatarSrc}
+              alt={formattedName}
+              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full min-h-[220px] items-center justify-center bg-gradient-to-br from-[#173490] to-[#1e4bb8] text-3xl font-extrabold text-white">
+              {formattedName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)}
+            </div>
+          )}
+        </div>
 
-            {/* Member Info */}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#173490] transition truncate">
-                {name}
-              </h3>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                <span className="inline-block rounded-full bg-[#173490]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#173490] group-hover:bg-[#173490] group-hover:text-white transition-colors duration-200">
-                  {role}
-                </span>
-              </div>
-              <p className="mt-2 text-xs font-semibold text-slate-500 flex items-center gap-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-[#173490] flex-shrink-0"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                <span className="truncate">{department}</span>
-              </p>
+        {/* Right Side: Details & Actions */}
+        <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-w-0">
+          <div>
+            {/* Member Name */}
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight group-hover:text-[#173490] transition line-clamp-2">
+              {formattedName}
+            </h3>
+
+            {/* Role Badge */}
+            <div className="mt-2 inline-block">
+              <span className="inline-block rounded-full bg-blue-50 px-3.5 py-1 text-xs font-semibold text-[#173490] border border-blue-100/80">
+                {role}
+              </span>
+            </div>
+
+            {/* Divider Line */}
+            <div className="my-3 border-t border-slate-100" />
+
+            {/* Contact Information List */}
+            <div className="space-y-3 text-sm text-slate-800 font-sans">
+              {department && (
+                <div className="flex items-start gap-2.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-[#173490] flex-shrink-0 mt-0.5"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  <div className="leading-snug">
+                    <span className="font-bold text-slate-900">Department: </span>
+                    <span className="text-slate-700 font-medium">{department}</span>
+                  </div>
+                </div>
+              )}
+
+              {directLine && (
+                <div className="flex items-start gap-2.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-[#173490] flex-shrink-0 mt-0.5"
+                  >
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <div className="leading-snug">
+                    <span className="font-bold text-slate-900">Phone Number: </span>
+                    <span className="font-medium">{formatPhoneNumber(directLine)}</span>
+                  </div>
+                </div>
+              )}
+
+              {email && (
+                <div className="flex items-start gap-2.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-[#173490] flex-shrink-0 mt-0.5"
+                  >
+                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                  <div className="leading-snug truncate">
+                    <span className="text-[#173490] font-bold hover:underline cursor-pointer">
+                      {email}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Contact Line */}
-          <div className="mt-5 space-y-2 border-t border-slate-100 pt-4">
-            {directLine && (
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-600">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-[#173490] flex-shrink-0"
-                >
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+          {/* Footer Section: Social Icons & View Profile Button */}
+          <div className="mt-4 pt-3 border-t border-slate-100 space-y-3">
+            {/* Social Media Buttons Row */}
+            <div className="flex items-center justify-center">
+              <a
+                href={facebookUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#173490] text-white hover:bg-[#1e4bb8] shadow-xs transition"
+                aria-label="Facebook Profile"
+              >
+                <svg className="h-4 w-4 fill-currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
-                <span>Phone Number: {directLine}</span>
-              </div>
-            )}
-            {email && (
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-600">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-[#173490] flex-shrink-0"
-                >
-                  <rect width="20" height="16" x="2" y="4" rx="2" />
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                </svg>
-                <span className="truncate">{email}</span>
-              </div>
-            )}
-          </div>
-        </div>
+              </a>
+            </div>
 
-        {/* Action Bar: Social Icon & View Profile Modal Trigger */}
-        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-          <motion.a
-            href="#"
-            whileHover={{ scale: 1.12, rotate: 4 }}
-            whileTap={{ scale: 0.9 }}
-            className="rounded-full bg-[#1877F2] p-2 text-white shadow-sm transition hover:bg-[#166fe5]"
-            aria-label="Facebook Profile"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="currentColor"
+            {/* View Profile Pill Outline Button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsModalOpen(true)}
+              className="w-full flex items-center justify-center gap-1.5 rounded-full border-2 border-[#173490] bg-white px-5 py-2 text-xs sm:text-sm font-bold text-[#173490] hover:bg-[#173490] hover:text-white transition-colors duration-200 cursor-pointer shadow-2xs group/btn"
             >
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-            </svg>
-          </motion.a>
-
-          <motion.button
-            whileHover={{ x: 2 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-[#173490] hover:text-[#E7C609] transition cursor-pointer group/btn"
-          >
-            <span>View Profile</span>
-            <span className="transition-transform group-hover/btn:translate-x-1">→</span>
-          </motion.button>
+              <span>View Profile</span>
+              <span className="text-base leading-none transition-transform group-hover/btn:translate-x-1">›</span>
+            </motion.button>
+          </div>
         </div>
       </motion.div>
 
@@ -260,8 +303,8 @@ export default function ProfileCard({
                   {/* Member Title Banner Pill */}
                   <div className="flex-1 text-center sm:text-left">
                     <div className="inline-block rounded-2xl bg-white/80 backdrop-blur-sm px-5 py-3 shadow-xs border border-sky-200/80">
-                      <h2 className="text-2xl sm:text-3xl font-black tracking-wide text-slate-900 uppercase">
-                        {name}
+                      <h2 className="text-2xl sm:text-3xl font-black tracking-wide text-slate-900">
+                        {formattedName}
                       </h2>
                       <p className="mt-1 text-sm sm:text-base font-bold italic text-[#173490]">
                         {role}

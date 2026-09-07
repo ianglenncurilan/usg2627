@@ -171,6 +171,22 @@ const seedMembers = [
       },
     ],
   },
+  {
+    id: "seed-10",
+    name: "Christian James Macalolot",
+    role: "USG Senator",
+    department: "Department of Environment and Natural Resources",
+    avatarSrc: "/usg.jpg",
+    directLine: "0910 468 7215",
+    email: "christian.macalolot@carsu.edu.ph",
+    roomAddress: "Room 510, Legislative Building",
+    filedBills: [
+      {
+        number: "Senate Bill No. 2627-026",
+        title: "AN ACT ESTABLISHING CAMPUS ECOLOGICAL WASTE MANAGEMENT AND GREEN INITIATIVES",
+      },
+    ],
+  },
 ];
 
 const containerVariants = {
@@ -253,7 +269,7 @@ export default function LegislativePage() {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("ALL");
-  const membersPerPage = 9;
+  const membersPerPage = 10;
 
   useEffect(() => {
     fetchMembers();
@@ -510,7 +526,7 @@ export default function LegislativePage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
-                className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-2"
               >
                 {displayedMembers.map((member, index) => (
                   <div key={member.id || index}>

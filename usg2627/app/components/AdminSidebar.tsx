@@ -196,7 +196,7 @@ export default function AdminSidebar() {
   return (
     <>
       {/* 1. Mobile Top Bar (Visible only on < md) */}
-      <div className="sticky top-0 z-30 flex md:hidden items-center justify-between bg-[#173490] px-4 py-3 text-white border-b border-blue-900 shadow-md">
+      <div className="sticky top-0 z-30 flex md:hidden items-center justify-between bg-gradient-to-r from-[#01054d] via-[#173490] to-[#0e2c84] px-4 py-3 text-white border-b border-blue-900 shadow-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileOpen(true)}
