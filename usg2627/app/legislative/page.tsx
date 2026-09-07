@@ -195,6 +195,58 @@ const itemVariants = {
   },
 };
 
+const DEPARTMENT_RANK_MAP: Record<string, number> = {
+  "office of the student regent": 1,
+  "osr": 1,
+  "office of the vice president": 2,
+  "ovp": 2,
+  "office of the president": 3,
+  "op": 3,
+  "department of the secretariat": 4,
+  "ds": 4,
+  "department of students' welfare and development": 5,
+  "dswd": 5,
+  "department of public information and creative communications": 6,
+  "dpicc": 6,
+  "department of interior, local governance and subordinate units": 7,
+  "dilg": 7,
+  "dilgsu": 7,
+  "department of finance and treasury": 8,
+  "dft": 8,
+  "department of environment and natural resources": 9,
+  "denr": 9,
+  "department of budget and management": 10,
+  "dbm": 10,
+  "department of academics, sports, culture, arts and technology": 11,
+  "dascat": 11,
+};
+
+const getDepartmentRank = (member: any): number => {
+  const dept = (member.department || "").toLowerCase().trim();
+  const role = (member.role || "").toLowerCase().trim();
+
+  if (DEPARTMENT_RANK_MAP[dept] !== undefined) {
+    return DEPARTMENT_RANK_MAP[dept];
+  }
+
+  if (dept.includes("student regent") || dept.includes("osr")) return 1;
+  if (dept.includes("vice president") || dept.includes("ovp")) return 2;
+  if (dept.includes("office of the president") || dept === "op") return 3;
+  if (dept.includes("secretariat") || dept.includes("ds")) return 4;
+  if (dept.includes("welfare") || dept.includes("dswd")) return 5;
+  if (dept.includes("public information") || dept.includes("dpicc")) return 6;
+  if (dept.includes("interior") || dept.includes("dilg")) return 7;
+  if (dept.includes("finance") || dept.includes("dft")) return 8;
+  if (dept.includes("environment") || dept.includes("denr")) return 9;
+  if (dept.includes("budget") || dept.includes("dbm")) return 10;
+  if (dept.includes("academics") || dept.includes("dascat")) return 11;
+
+  if (role.includes("student regent") || role.includes("osr")) return 1;
+  if ((role.includes("vice president") && !role.includes("pro tempore")) || role.includes("ovp")) return 2;
+
+  return 99;
+};
+
 export default function LegislativePage() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -244,21 +296,35 @@ export default function LegislativePage() {
 
   const departments = Array.from(
     new Set(members.map((m) => m.department).filter(Boolean))
-  );
-
-  const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      !searchQuery.trim() ||
-      member.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesDepartment =
-      selectedDepartment === "ALL" || member.department === selectedDepartment;
-
-    return matchesSearch && matchesDepartment;
+  ).sort((a: any, b: any) => {
+    const rankA = getDepartmentRank({ department: a });
+    const rankB = getDepartmentRank({ department: b });
+    if (rankA !== rankB) return rankA - rankB;
+    return a.localeCompare(b);
   });
+
+  const filteredMembers = members
+    .filter((member) => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        member.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.email?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesDepartment =
+        selectedDepartment === "ALL" || member.department === selectedDepartment;
+
+      return matchesSearch && matchesDepartment;
+    })
+    .sort((a, b) => {
+      const rankA = getDepartmentRank(a);
+      const rankB = getDepartmentRank(b);
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      return (a.name || "").localeCompare(b.name || "");
+    });
 
   const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
   const displayedMembers = filteredMembers.slice(
