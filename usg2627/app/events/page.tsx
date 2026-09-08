@@ -292,8 +292,8 @@ export default function EventsPage() {
             <button
               onClick={() => setActiveTab("all")}
               className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${activeTab === "all"
-                  ? "bg-[#173490] text-white shadow-md"
-                  : "text-slate-600 hover:text-slate-900"
+                ? "bg-[#173490] text-white shadow-md"
+                : "text-slate-600 hover:text-slate-900"
                 }`}
             >
               All Events ({events.length})
@@ -301,8 +301,8 @@ export default function EventsPage() {
             <button
               onClick={() => setActiveTab("upcoming")}
               className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${activeTab === "upcoming"
-                  ? "bg-[#173490] text-white shadow-md"
-                  : "text-slate-600 hover:text-slate-900"
+                ? "bg-[#173490] text-white shadow-md"
+                : "text-slate-600 hover:text-slate-900"
                 }`}
             >
               Upcoming ({upcomingEvents.length})
@@ -310,8 +310,8 @@ export default function EventsPage() {
             <button
               onClick={() => setActiveTab("past")}
               className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition cursor-pointer ${activeTab === "past"
-                  ? "bg-[#173490] text-white shadow-md"
-                  : "text-slate-600 hover:text-slate-900"
+                ? "bg-[#173490] text-white shadow-md"
+                : "text-slate-600 hover:text-slate-900"
                 }`}
             >
               Past ({pastEvents.length})
@@ -425,8 +425,8 @@ export default function EventsPage() {
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${isUpcoming
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-slate-100 text-slate-600 border border-slate-200"
                             }`}
                         >
                           {isUpcoming && (

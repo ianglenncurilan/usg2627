@@ -332,8 +332,8 @@ function DocumentsContent() {
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${currentPage === pageNum
-                        ? "bg-[#173490] text-white"
-                        : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                      ? "bg-[#173490] text-white"
+                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
                       }`}
                   >
                     {pageNum}
