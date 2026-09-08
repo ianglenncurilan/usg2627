@@ -34,7 +34,7 @@ export default function AbstractCircles({ className = "" }: AbstractCirclesProps
       {sideSpots.map((spot, index) => (
         <div
           key={index}
-          className="absolute pointer-events-none transition-all duration-700 animate-pulse"
+          className={`absolute pointer-events-none transition-all duration-700 ${index % 2 === 0 ? "animate-ambient-float-slow" : "animate-ambient-float-reverse"}`}
           style={{
             top: spot.top,
             left: spot.left !== "auto" ? spot.left : undefined,

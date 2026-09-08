@@ -211,54 +211,70 @@ const itemVariants = {
   },
 };
 
-const DEPARTMENT_RANK_MAP: Record<string, number> = {
-  "office of the student regent": 1,
-  "osr": 1,
-  "office of the vice president": 2,
-  "ovp": 2,
-  "office of the president": 3,
-  "op": 3,
-  "department of the secretariat": 4,
-  "ds": 4,
-  "department of students' welfare and development": 5,
-  "dswd": 5,
-  "department of public information and creative communications": 6,
-  "dpicc": 6,
-  "department of interior, local governance and subordinate units": 7,
-  "dilg": 7,
-  "dilgsu": 7,
-  "department of finance and treasury": 8,
-  "dft": 8,
-  "department of environment and natural resources": 9,
-  "denr": 9,
-  "department of budget and management": 10,
-  "dbm": 10,
-  "department of academics, sports, culture, arts and technology": 11,
-  "dascat": 11,
-};
+const ROLE_PRIORITY_ORDER: string[] = [
+  "usg president",
+  "president",
+  "usg vice president",
+  "vice president",
+  "usg executive secretary",
+  "executive secretary",
+  "usg treasurer",
+  "treasurer",
+  "usg auditor",
+  "auditor",
+  "usg senator",
+  "senator",
+  "caalsg governor",
+  "ccislsg governor",
+  "cedlsg governor",
+  "cegslsg governor",
+  "cfeslsg governor",
+  "chasslsg governor",
+  "cmnslsg governor",
+  "governor",
+  "usg cabinet secretary",
+  "usg chief of staff",
+  "usg secretary for records and archives",
+  "usg dbm secretary",
+  "usg dft secretary",
+  "usg dswd secretary",
+  "usg dilgsu secretary",
+  "usg dascat secretary",
+  "usg denr secretary",
+  "usg dhws secretary",
+  "usg dpicc secretary",
+  "usg undersecretary",
+  "usg executive assistant",
+  "usg senate secretary",
+  "usg house secretary",
+  "usg administrative staff",
+  "usg coa chief commissioner",
+  "usg comelec chairperson",
+];
 
-const getDepartmentRank = (member: any): number => {
-  const dept = (member.department || "").toLowerCase().trim();
+const getRoleRank = (member: any): number => {
   const role = (member.role || "").toLowerCase().trim();
 
-  if (DEPARTMENT_RANK_MAP[dept] !== undefined) {
-    return DEPARTMENT_RANK_MAP[dept];
+  // Check exact index match first
+  for (let i = 0; i < ROLE_PRIORITY_ORDER.length; i++) {
+    const key = ROLE_PRIORITY_ORDER[i];
+    if (role === key) {
+      return i + 1;
+    }
   }
 
-  if (dept.includes("student regent") || dept.includes("osr")) return 1;
-  if (dept.includes("vice president") || dept.includes("ovp")) return 2;
-  if (dept.includes("office of the president") || dept === "op") return 3;
-  if (dept.includes("secretariat") || dept.includes("ds")) return 4;
-  if (dept.includes("welfare") || dept.includes("dswd")) return 5;
-  if (dept.includes("public information") || dept.includes("dpicc")) return 6;
-  if (dept.includes("interior") || dept.includes("dilg")) return 7;
-  if (dept.includes("finance") || dept.includes("dft")) return 8;
-  if (dept.includes("environment") || dept.includes("denr")) return 9;
-  if (dept.includes("budget") || dept.includes("dbm")) return 10;
-  if (dept.includes("academics") || dept.includes("dascat")) return 11;
-
-  if (role.includes("student regent") || role.includes("osr")) return 1;
-  if ((role.includes("vice president") && !role.includes("pro tempore")) || role.includes("ovp")) return 2;
+  // Soft inclusion matches
+  if (role.includes("president") && !role.includes("vice")) return 1;
+  if (role.includes("vice president") || role.includes("vice pres") || role.includes("vp")) return 2;
+  if (role.includes("executive secretary")) return 3;
+  if (role.includes("treasurer")) return 4;
+  if (role.includes("auditor")) return 5;
+  if (role.includes("senator")) return 6;
+  if (role.includes("governor")) return 7;
+  if (role.includes("cabinet secretary")) return 15;
+  if (role.includes("chief of staff")) return 16;
+  if (role.includes("records")) return 17;
+  if (role.includes("secretary")) return 20;
 
   return 99;
 };
@@ -312,12 +328,7 @@ export default function LegislativePage() {
 
   const departments = Array.from(
     new Set(members.map((m) => m.department).filter(Boolean))
-  ).sort((a: any, b: any) => {
-    const rankA = getDepartmentRank({ department: a });
-    const rankB = getDepartmentRank({ department: b });
-    if (rankA !== rankB) return rankA - rankB;
-    return a.localeCompare(b);
-  });
+  ).sort((a: any, b: any) => a.localeCompare(b));
 
   const filteredMembers = members
     .filter((member) => {
@@ -334,8 +345,8 @@ export default function LegislativePage() {
       return matchesSearch && matchesDepartment;
     })
     .sort((a, b) => {
-      const rankA = getDepartmentRank(a);
-      const rankB = getDepartmentRank(b);
+      const rankA = getRoleRank(a);
+      const rankB = getRoleRank(b);
       if (rankA !== rankB) {
         return rankA - rankB;
       }
@@ -528,11 +539,28 @@ export default function LegislativePage() {
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-2"
               >
-                {displayedMembers.map((member, index) => (
-                  <div key={member.id || index}>
-                    <ProfileCard {...member} />
-                  </div>
-                ))}
+                {displayedMembers.map((member, index) => {
+                  const roleLower = (member.role || "").toLowerCase().trim();
+                  const isExecutive =
+                    roleLower === "usg president" ||
+                    roleLower === "president" ||
+                    roleLower === "usg vice president" ||
+                    roleLower === "vice president" ||
+                    roleLower === "usg executive secretary" ||
+                    roleLower === "executive secretary" ||
+                    roleLower === "usg treasurer" ||
+                    roleLower === "treasurer" ||
+                    roleLower === "usg auditor" ||
+                    roleLower === "auditor";
+
+                  const label = isExecutive ? "USG Executive" : "Legislative Member";
+
+                  return (
+                    <div key={member.id || index}>
+                      <ProfileCard {...member} sectionLabel={label} />
+                    </div>
+                  );
+                })}
               </motion.div>
             </AnimatePresence>
 

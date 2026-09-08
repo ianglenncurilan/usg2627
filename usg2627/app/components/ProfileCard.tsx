@@ -13,6 +13,7 @@ export interface ProfileCardProps {
   name: string;
   role: string;
   department?: string;
+  sectionLabel?: string;
   directLine?: string;
   email?: string;
   roomAddress?: string;
@@ -53,6 +54,7 @@ export default function ProfileCard({
   name,
   role,
   department = "University Student Government",
+  sectionLabel,
   directLine,
   email,
   roomAddress = "Room 502, Legislative Building",
@@ -65,6 +67,23 @@ export default function ProfileCard({
 }: ProfileCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const formattedName = toTitleCase(name);
+
+  // Compute upper right section label automatically if not explicitly provided
+  const roleLower = (role || "").toLowerCase().trim();
+  const isExecutive =
+    roleLower === "usg president" ||
+    roleLower === "president" ||
+    roleLower === "usg vice president" ||
+    roleLower === "vice president" ||
+    roleLower === "usg executive secretary" ||
+    roleLower === "executive secretary" ||
+    roleLower === "usg treasurer" ||
+    roleLower === "treasurer" ||
+    roleLower === "usg auditor" ||
+    roleLower === "auditor";
+
+  const computedSectionLabel =
+    sectionLabel || (isExecutive ? "USG Executive" : "Legislative Member");
 
   // Default sample filed bills if none provided
   const activeFiledBills: FiledBill[] = filedBills || [
@@ -89,7 +108,7 @@ export default function ProfileCard({
           transition: { type: "spring", stiffness: 350, damping: 25 },
         }}
         whileTap={{ scale: 0.99 }}
-        className="group overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-[#173490]/40 flex flex-col sm:flex-row h-full min-h-[260px]"
+        className="group overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-[#173490]/40 flex flex-col sm:flex-row h-full min-h-[260px] relative"
       >
         {/* Left Side: Full-height Portrait Photo */}
         <div className="relative w-full sm:w-2/5 md:w-5/12 flex-shrink-0 bg-slate-100 min-h-[220px] sm:min-h-full overflow-hidden">
@@ -113,10 +132,16 @@ export default function ProfileCard({
         {/* Right Side: Details & Actions */}
         <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-w-0">
           <div>
-            {/* Member Name */}
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight group-hover:text-[#173490] transition line-clamp-2">
-              {formattedName}
-            </h3>
+            {/* Top Right Section Badge & Name Row */}
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight group-hover:text-[#173490] transition line-clamp-2">
+                {formattedName}
+              </h3>
+              <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-[#173490]/10 border border-[#173490]/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#173490] shadow-2xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#E7C609]" />
+                {computedSectionLabel}
+              </span>
+            </div>
 
             {/* Role Badge */}
             <div className="mt-2 inline-block">

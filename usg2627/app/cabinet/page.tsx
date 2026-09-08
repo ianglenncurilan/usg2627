@@ -215,26 +215,26 @@ export default function CabinetPage() {
           </div>
         </motion.div>
 
-        {/* Departments Grid */}
+        {/* Departments Grid (Centered Rows) */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+          className="mt-10 flex flex-wrap justify-center gap-6"
         >
           {departments.map((dept) => (
             <motion.div
               key={dept.name}
               variants={itemVariants}
               whileHover={{
-                y: -7,
-                scale: 1.015,
-                boxShadow: "0 22px 35px -10px rgba(23, 52, 144, 0.14)",
+                y: -8,
+                scale: 1.02,
+                boxShadow: "0 28px 50px -12px rgba(23, 52, 144, 0.24)",
                 transition: { type: "spring", stiffness: 350, damping: 25 },
               }}
               whileTap={{ scale: 0.985 }}
-              className="group flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-colors duration-300 hover:border-[#173490]/40"
+              className="group flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-lg shadow-slate-200/70 hover:shadow-2xl transition-all duration-300 hover:border-[#173490]/50 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-[360px]"
             >
               <div>
                 {/* Centered Top Header: Logo, Acronym Badge, Member Count */}
@@ -250,7 +250,7 @@ export default function CabinetPage() {
                       onError={(e) => {
                         e.currentTarget.src = "/usg.jpg";
                       }}
-                      className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-[#173490]/20 transition-transform duration-300 group-hover:scale-105 mx-auto"
+                      className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-lg ring-2 ring-[#173490]/25 transition-transform duration-300 group-hover:scale-105 mx-auto"
                     />
                   </motion.div>
                   <div className="mt-3 flex flex-col items-center gap-1">

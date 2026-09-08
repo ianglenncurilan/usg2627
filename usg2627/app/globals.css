@@ -282,3 +282,45 @@ p,
     animation: none !important;
   }
 }
+
+/* Ambient Floating Background Animations */
+@keyframes ambientFloatSlow {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(50px, 35px) scale(1.12);
+  }
+}
+
+@keyframes ambientFloatReverse {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-50px, -40px) scale(1.15);
+  }
+}
+
+@keyframes ambientPulseGlow {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.1);
+  }
+}
+
+.animate-ambient-float-slow {
+  animation: ambientFloatSlow 14s ease-in-out infinite;
+}
+
+.animate-ambient-float-reverse {
+  animation: ambientFloatReverse 18s ease-in-out infinite;
+}
+
+.animate-ambient-pulse-glow {
+  animation: ambientPulseGlow 10s ease-in-out infinite;
+}
