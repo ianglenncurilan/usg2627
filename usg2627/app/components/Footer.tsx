@@ -15,11 +15,21 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Logo and Description */}
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <img
                 src="/usg.jpg"
                 alt="USG Logo"
-                className="h-10 w-10 sm:h-11 sm:w-11 object-contain shrink-0"
+                className="h-10 w-10 sm:h-12 sm:w-12 object-contain shrink-0 rounded-full"
+              />
+              <img
+                src="/osr.png"
+                alt="OSR Logo"
+                className="h-10 sm:h-12 w-auto object-contain shrink-0 rounded-xl"
+              />
+              <img
+                src="/rise-logo.png"
+                alt="RISE Logo"
+                className="h-10 sm:h-12 w-auto object-contain shrink-0 rounded-xl"
               />
               <div className="space-y-0.5">
                 <p className="text-xl font-bold leading-tight">USG PORTAL</p>
@@ -90,7 +100,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-slate-300">
               <li>
                 <Link href="/cabinet" className="transition hover:text-white">
-                  Cabinet
+                  Executive Branch
                 </Link>
               </li>
               <li>
@@ -137,6 +147,7 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
+
           </div>
         </div>
 

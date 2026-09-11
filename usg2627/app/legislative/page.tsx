@@ -551,9 +551,10 @@ export default function LegislativePage() {
                     roleLower === "usg treasurer" ||
                     roleLower === "treasurer" ||
                     roleLower === "usg auditor" ||
-                    roleLower === "auditor";
+                    roleLower === "auditor" ||
+                    roleLower.includes("governor");
 
-                  const label = isExecutive ? "USG Executive" : "Legislative Member";
+                  const label = isExecutive ? "USG EXECUTIVE" : "Legislative Member";
 
                   return (
                     <div key={member.id || index}>

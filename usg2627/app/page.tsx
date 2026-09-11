@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "./components/GridShell";
+import SectionHeader from "./components/SectionHeader";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -287,12 +288,12 @@ export default function Home() {
 
 
       <main className="mx-auto max-w-7xl px-6 py-20">
-        {/* Hero Section */}
+        {/* Hero Section (Full Viewport Height above the fold) */}
         <motion.section
           initial={{ opacity: 0, y: 35 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          className="flex min-h-[calc(80vh-100px)] flex-col items-center justify-center text-center py-12"
+          className="flex min-h-[calc(100vh-160px)] flex-shrink-0 flex-col items-center justify-center text-center py-12"
         >
           {/* Institutional Badge */}
           <motion.div
@@ -318,13 +319,7 @@ export default function Home() {
             University Student Government
           </motion.h1>
 
-          {/* Gold Accent Divider */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="my-5 h-1 w-24 rounded-full bg-gradient-to-r from-[#E7C609] via-amber-400 to-[#E7C609]"
-          />
+
 
           {/* Subtitle */}
           <motion.p
@@ -361,89 +356,93 @@ export default function Home() {
           </motion.div>
         </motion.section>
 
-        {/* Latest Official Publication */}
+        {/* Featured Story Carousel (Fixed Height Container to guarantee ZERO layout movement) */}
         {currentStory && (
           <motion.section
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-16 py-12"
+            className="mt-12 mb-12 sm:mb-16 shrink-0"
           >
-            <div className="overflow-hidden min-h-[480px] flex items-center">
-              <AnimatePresence mode="wait">
+            <div className="relative w-full h-[720px] sm:h-[640px] lg:h-[540px] overflow-hidden">
+              <AnimatePresence initial={false}>
                 <motion.div
                   key={currentIndex}
-                  initial={{ opacity: 0, x: 35 }}
+                  initial={{ opacity: 0, x: 40 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -35 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12"
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0 w-full h-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-12"
                 >
-                  <div className="lg:w-[42%]">
-                    <div className="mb-5 flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                        {currentStory.type && !currentStory.type.toLowerCase().includes("featured")
-                          ? `Featured Story • ${currentStory.type}`
-                          : "Featured Story"}
-                      </span>
-                    </div>
-                    <h2 className="text-3xl font-black leading-tight text-slate-900 md:text-4xl lg:text-5xl">
-                      {currentStory.title}
-                    </h2>
-                    <p className="mt-5 text-lg text-slate-600">
-                      {currentStory.description}
-                    </p>
-
-                    {currentStory.date && (
-                      <div className="mt-5 flex items-center gap-2 text-sm text-slate-500 font-semibold">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                          <line x1="16" x2="16" y1="2" y2="6" />
-                          <line x1="8" x2="8" y1="2" y2="6" />
-                          <line x1="3" x2="21" y1="10" y2="10" />
-                        </svg>
-                        <span>{currentStory.date}</span>
+                  <div className="lg:w-[42%] flex flex-col justify-between h-full py-2">
+                    <div>
+                      <div className="mb-4 flex items-center gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {currentStory.type && !currentStory.type.toLowerCase().includes("featured")
+                            ? `Featured Story • ${currentStory.type}`
+                            : "Featured Story"}
+                        </span>
                       </div>
-                    )}
+                      <h2 className="text-3xl font-black leading-tight text-slate-900 md:text-4xl lg:text-5xl">
+                        {currentStory.title}
+                      </h2>
+                      <p className="mt-4 text-base sm:text-lg text-slate-600 line-clamp-4 leading-relaxed">
+                        {currentStory.description}
+                      </p>
+                    </div>
 
-                    <div className="mt-8 flex gap-4">
-                      <Link
-                        href={currentStory.readHref}
-                        className="inline-flex items-center gap-2 rounded-full bg-[#E7C609] px-7 py-3.5 text-base font-bold text-[#173490] transition hover:bg-yellow-400"
-                      >
-                        Read Order
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                    <div>
+                      {currentStory.date && (
+                        <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 font-semibold">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                            <line x1="16" x2="16" y1="2" y2="6" />
+                            <line x1="8" x2="8" y1="2" y2="6" />
+                            <line x1="3" x2="21" y1="10" y2="10" />
+                          </svg>
+                          <span>{currentStory.date}</span>
+                        </div>
+                      )}
+
+                      <div className="mt-6 flex gap-4">
+                        <Link
+                          href={currentStory.readHref}
+                          className="inline-flex items-center gap-2 rounded-full bg-[#E7C609] px-7 py-3.5 text-base font-bold text-[#173490] transition hover:bg-yellow-400"
                         >
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                          <polyline points="15 3 21 3 21 9" />
-                          <line x1="10" x2="21" y1="14" y2="3" />
-                        </svg>
-                      </Link>
+                          Read Order
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" x2="21" y1="14" y2="3" />
+                          </svg>
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                  <div className="lg:w-[55%]">
+                  <div className="lg:w-[55%] h-[340px] sm:h-[420px] lg:h-full">
                     {currentStory.imageSrc && !currentStory.imageSrc.includes("/images/") ? (
-                      <div className="relative h-[360px] lg:h-[540px] rounded-3xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50">
+                      <div className="relative w-full h-full rounded-3xl overflow-hidden border border-slate-200 shadow-xl bg-slate-50">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={currentStory.imageSrc}
@@ -452,7 +451,7 @@ export default function Home() {
                         />
                       </div>
                     ) : (
-                      <div className="relative h-[360px] lg:h-[540px] rounded-3xl bg-gradient-to-br from-[#1e4bb8] to-[#173490] shadow-lg flex items-center justify-center">
+                      <div className="relative w-full h-full rounded-3xl bg-gradient-to-br from-[#1e4bb8] to-[#173490] shadow-xl flex items-center justify-center">
                         <div className="absolute inset-0 flex items-center justify-center">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -477,7 +476,7 @@ export default function Home() {
                 </motion.div>
               </AnimatePresence>
             </div>
-            <div className="mt-6 flex justify-center gap-2">
+            <div className="mt-8 flex justify-center gap-2">
               {featuredStories.map((_, index) => (
                 <button
                   key={index}
@@ -497,16 +496,12 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-20"
+          className="mt-8 sm:mt-12"
         >
-          <div className="mb-8">
-            <h2 className="text-3xl font-black tracking-tight text-slate-900">
-              Quick Access Document Portal
-            </h2>
-            <p className="mt-2 text-slate-600">
-              Browse official USG documents by category
-            </p>
-          </div>
+          <SectionHeader
+            title="Quick Access Document Portal"
+            subtitle="Browse official USG documents by category"
+          />
 
           <div className="space-y-6">
             {/* Top Row: 4 Cards */}
@@ -591,22 +586,11 @@ export default function Home() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mt-20"
         >
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                Recent Documents
-              </h2>
-              <p className="mt-2 text-slate-600">
-                Latest official documents and releases
-              </p>
-            </div>
-            <Link
-              href="/documents"
-              className="text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]"
-            >
-              View Archive →
-            </Link>
-          </div>
+          <SectionHeader
+            title="Recent Documents"
+            subtitle="Latest official documents and releases"
+            action={{ label: "View Archive", href: "/documents" }}
+          />
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -683,14 +667,10 @@ export default function Home() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mt-20"
         >
-          <div className="mb-8">
-            <h2 className="text-3xl font-black tracking-tight text-slate-900">
-              News & Press Releases
-            </h2>
-            <p className="mt-2 text-slate-600">
-              Latest updates and announcements from USG
-            </p>
-          </div>
+          <SectionHeader
+            title="News & Press Releases"
+            subtitle="Latest updates and announcements from USG"
+          />
           <AnimatePresence mode="wait">
             <motion.div
               key={newsPage}

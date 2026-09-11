@@ -207,7 +207,7 @@ export default function CabinetPage() {
               Executive Branch Directory
             </div>
             <h1 className="text-4xl font-black tracking-[-0.06em] text-slate-900 sm:text-5xl">
-              USG Departments
+              USG Cabinet
             </h1>
             <p className="mt-4 text-slate-600 max-w-3xl text-base sm:text-lg leading-relaxed">
               Executive secretaries, directors, and departments tasked with implementing USG policies, student welfare programs, and university-wide services.

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
+import SectionHeader from "../components/SectionHeader";
 import FeedbackForm from "../components/FeedbackForm";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
@@ -126,7 +127,7 @@ export default function AboutPage() {
 
   return (
     <GridShell>
-      <div className="bg-slate-50 min-h-screen pb-24">
+      <div className="min-h-screen pb-24">
 
         {/* HERO HEADER */}
         <motion.section
@@ -185,7 +186,7 @@ export default function AboutPage() {
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="rounded-3xl border border-blue-200/80 bg-gradient-to-br from-white to-blue-50/60 p-8 shadow-lg transition hover:shadow-xl"
+              className="rounded-3xl border border-slate-200/80 bg-white p-8 shadow-lg transition hover:shadow-xl"
             >
               <span className="text-xs font-black uppercase tracking-[0.25em] text-[#173490]">
                 Jurisdiction
@@ -368,7 +369,13 @@ export default function AboutPage() {
           </div>
 
           {/* Suggestions, Feedback & Comments Section for USG, COA, COMELEC */}
-          <FeedbackForm />
+          <div>
+            <SectionHeader
+              title="Suggestions, Feedback & Comments"
+              subtitle="Official feedback, suggestions, and inquiry portal for USG Judicial Branch, USG COA, USG COMELEC, and USG"
+            />
+            <FeedbackForm />
+          </div>
         </div>
 
         {/* FULLSCREEN IMAGE MODAL PREVIEW */}

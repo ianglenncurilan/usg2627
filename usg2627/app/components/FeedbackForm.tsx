@@ -7,10 +7,12 @@ interface FeedbackFormProps {
   accessKey?: string;
 }
 
+export type RecipientType = "USG Judicial Branch" | "USG COA" | "USG COMELEC" | "USG";
+
 export default function FeedbackForm({
   accessKey = "b53f2636-00a8-4f65-8626-8e6d1eef3552",
 }: FeedbackFormProps) {
-  const [recipient, setRecipient] = useState<"USG" | "COA" | "COMELEC">("USG");
+  const [recipient, setRecipient] = useState<RecipientType>("USG Judicial Branch");
   const [feedbackType, setFeedbackType] = useState<"Suggestion" | "Feedback" | "Comment" | "Inquiry">("Suggestion");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [name, setName] = useState("");
@@ -19,7 +21,7 @@ export default function FeedbackForm({
   const [message, setMessage] = useState("");
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [lastSubmittedRecipient, setLastSubmittedRecipient] = useState<"USG" | "COA" | "COMELEC">("USG");
+  const [lastSubmittedRecipient, setLastSubmittedRecipient] = useState<RecipientType>("USG Judicial Branch");
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -73,24 +75,9 @@ export default function FeedbackForm({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-20 w-full"
+        className="w-full"
         id="feedback-section"
       >
-        {/* Section Header (Outside the Card) */}
-        <div className="max-w-3xl mb-6 px-1">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#173490]/10 px-3 py-1 text-xs font-bold text-[#173490] mb-3">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-            Student Feedback Form
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Suggestions, Feedback & Comments
-          </h2>
-          <p className="mt-2 text-slate-600 text-base">
-            Directly send your insights, proposals, or concerns to institutional bodies. Your voice matters in shaping student governance.
-          </p>
-        </div>
 
         {/* Main Form Card Container */}
         <div className="rounded-3xl border border-slate-200 bg-white/90 backdrop-blur-md p-6 sm:p-10 shadow-lg relative overflow-hidden">
@@ -100,29 +87,34 @@ export default function FeedbackForm({
               <label className="block text-sm font-bold text-slate-800 mb-2">
                 Select Recipient Body <span className="text-rose-500">*</span>
               </label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: "USG", label: "USG", sub: "University Student Government" },
-                  { id: "COA", label: "COA", sub: "Commission on Audit" },
-                  { id: "COMELEC", label: "COMELEC", sub: "Commission on Elections" },
-                ].map((item) => {
-                  const isSelected = recipient === item.id;
-                  return (
-                    <button
-                      type="button"
-                      key={item.id}
-                      suppressHydrationWarning
-                      onClick={() => setRecipient(item.id as any)}
-                      className={`flex flex-col items-center justify-center rounded-2xl border p-4 text-center transition ${isSelected
-                        ? "border-[#173490] bg-[#173490]/5 text-[#173490] ring-2 ring-[#173490]"
-                        : "border-slate-200 bg-slate-50/50 text-slate-600 hover:border-slate-300 hover:bg-slate-100/50"
-                        }`}
-                    >
-                      <span className="text-lg font-black">{item.label}</span>
-                      <span className="text-[11px] font-medium text-slate-500 mt-0.5">{item.sub}</span>
-                    </button>
-                  );
-                })}
+              <div className="space-y-3">
+                {/* Top Row: USG Judicial Branch, USG COA, USG COMELEC */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: "USG Judicial Branch", label: "USG JB", sub: "USG Judiciary Branch" },
+                    { id: "USG COA", label: "USG COA", sub: "USG Commission on Audit" },
+                    { id: "USG COMELEC", label: "USG COMELEC", sub: "USG Commission on Elections" },
+                  ].map((item) => {
+                    const isSelected = recipient === item.id;
+                    return (
+                      <button
+                        type="button"
+                        key={item.id}
+                        suppressHydrationWarning
+                        onClick={() => setRecipient(item.id as RecipientType)}
+                        className={`flex flex-col items-center justify-center rounded-2xl border p-4 text-center transition ${isSelected
+                          ? "border-[#173490] bg-[#173490]/5 text-[#173490] ring-2 ring-[#173490]"
+                          : "border-slate-200 bg-slate-50/50 text-slate-600 hover:border-slate-300 hover:bg-slate-100/50"
+                          }`}
+                      >
+                        <span className="text-base font-black">{item.label}</span>
+                        <span className="text-[11px] font-medium text-slate-500 mt-0.5">{item.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+
               </div>
             </div>
 
