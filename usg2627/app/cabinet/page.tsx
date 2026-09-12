@@ -2,8 +2,18 @@
 
 import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
+import ProfileCard from "../components/ProfileCard";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,6 +36,202 @@ const itemVariants = {
     },
   },
 };
+
+// Executive Seed Members for fallback
+const seedExecutiveMembers = [
+  {
+    id: "exec-1",
+    name: "Rene Antonio S. Moreno",
+    role: "USG President",
+    department: "Office of the President",
+    avatarSrc: "/usg.jpg",
+    directLine: "0917 552 6001",
+    email: "rene.moreno@carsu.edu.ph",
+    roomAddress: "Room 501, Executive Building",
+    filedBills: [
+      {
+        number: "Executive Directives No. 2026-001",
+        title: "DIRECTING THE COMPREHENSIVE DIGITALIZATION OF STUDENT GOVERNMENT SERVICES AND TRANSPARENCY PORTAL",
+      },
+    ],
+  },
+  {
+    id: "exec-2",
+    name: "Kyla Marie L. Santos",
+    role: "USG Vice President",
+    department: "Office of the Vice President",
+    avatarSrc: "/ovp.png",
+    directLine: "0917 552 6002",
+    email: "kyla.santos@carsu.edu.ph",
+    roomAddress: "Room 502, Executive Building",
+    filedBills: [
+      {
+        number: "Executive Order No. 2026-002",
+        title: "ESTABLISHING THE ANNUAL STUDENT LEADERSHIP ACADEMY AND CAMPUS INITIATIVE INCENTIVES",
+      },
+    ],
+  },
+  {
+    id: "exec-3",
+    name: "Joshua Emanuel V. Cruz",
+    role: "USG Executive Secretary",
+    department: "Department of the Secretariat",
+    avatarSrc: "/dhsw.png",
+    directLine: "0917 552 6003",
+    email: "joshua.cruz@carsu.edu.ph",
+    roomAddress: "Room 503, Executive Building",
+    filedBills: [
+      {
+        number: "Directive No. 2026-003",
+        title: "STANDARDIZING EXECUTIVE COMMUNICATIONS, RECORDS ARCHIVING, AND PUBLIC NOTICES",
+      },
+    ],
+  },
+  {
+    id: "exec-4",
+    name: "Samantha Mae R. Alonzo",
+    role: "USG Treasurer",
+    department: "Department of Finance and Treasury",
+    avatarSrc: "/dft.png",
+    directLine: "0917 552 6004",
+    email: "samantha.alonzo@carsu.edu.ph",
+    roomAddress: "Room 504, Executive Building",
+    filedBills: [
+      {
+        number: "Financial Directive No. 2026-001",
+        title: "IMPLEMENTING REAL-TIME LIQUIDATION AUDITS AND OPEN BUDGET TRANSPARENCY DASHBOARDS",
+      },
+    ],
+  },
+  {
+    id: "exec-5",
+    name: "Derrick Vance G. Ramos",
+    role: "USG Auditor",
+    department: "Department of Budget and Management",
+    avatarSrc: "/dbm.png",
+    directLine: "0917 552 6005",
+    email: "derrick.ramos@carsu.edu.ph",
+    roomAddress: "Room 505, Executive Building",
+    filedBills: [
+      {
+        number: "Audit Directive No. 2026-002",
+        title: "MANDATING FISCAL INTEGRITY AND QUARTERLY EXPENDITURE AUDITS FOR ALL USG DEPARTMENTS",
+      },
+    ],
+  },
+  {
+    id: "exec-6",
+    name: "Janine Erika C. Dela Cruz",
+    role: "CAALSG Governor",
+    department: "Department of Interior, Local Governance and Subordinate Units",
+    avatarSrc: "/dilgsu.png",
+    directLine: "0917 552 6007",
+    email: "janine.delacruz@carsu.edu.ph",
+    roomAddress: "Room 101, Agriculture Building",
+    filedBills: [
+      {
+        number: "Local Resolution No. 2026-001",
+        title: "ESTABLISHING COLLEGE AGRI-INNOVATION GRANTS AND SUSTAINABILITY LABS",
+      },
+    ],
+  },
+  {
+    id: "exec-7",
+    name: "Marcus Aurelius T. Lim",
+    role: "CCISLSG Governor",
+    department: "Department of Academics, Sports, Culture, Arts and Technology",
+    avatarSrc: "/dascat.png",
+    directLine: "0917 552 6008",
+    email: "marcus.lim@carsu.edu.ph",
+    roomAddress: "Room 202, CCIS Building",
+    filedBills: [
+      {
+        number: "Local Resolution No. 2026-002",
+        title: "EXPANDING STUDENT HACKATHONS AND DIGITAL INFRASTRUCTURE IN CCIS LABORATORIES",
+      },
+    ],
+  },
+  {
+    id: "exec-8",
+    name: "Alyssa Nicole B. Garcia",
+    role: "CEdLSG Governor",
+    department: "Department of Students' Welfare and Development",
+    avatarSrc: "/dswd.png",
+    directLine: "0917 552 6009",
+    email: "alyssa.garcia@carsu.edu.ph",
+    roomAddress: "Room 303, CEd Building",
+    filedBills: [
+      {
+        number: "Local Resolution No. 2026-003",
+        title: "PROVIDING MENTORSHIP AND TEACHING ASSISTANTSHIP SUBSIDIES FOR EDUCATION MAJORS",
+      },
+    ],
+  },
+  {
+    id: "exec-9",
+    name: "Gabriel Ryan M. Torralba",
+    role: "CEGSLSG Governor",
+    department: "Department of Environment and Natural Resources",
+    avatarSrc: "/denr.png",
+    directLine: "0917 552 6010",
+    email: "gabriel.torralba@carsu.edu.ph",
+    roomAddress: "Room 404, CEGS Building",
+    filedBills: [
+      {
+        number: "Local Resolution No. 2026-004",
+        title: "PROMOTING GREEN CAMPUS ENGINEERING AND ZERO-WASTE RECYCLING STATIONS",
+      },
+    ],
+  },
+  {
+    id: "exec-10",
+    name: "Sofia Isabela N. Valenzuela",
+    role: "CFESLSG Governor",
+    department: "Department of Environment and Natural Resources",
+    avatarSrc: "/denr.png",
+    directLine: "0917 552 6011",
+    email: "sofia.valenzuela@carsu.edu.ph",
+    roomAddress: "Room 105, CFES Building",
+    filedBills: [
+      {
+        number: "Local Resolution No. 2026-005",
+        title: "ADVANCING FORESTRY CONSERVATION AND ECO-TOURISM ADVOCACY CAMPAIGNS",
+      },
+    ],
+  },
+  {
+    id: "exec-11",
+    name: "Tristan Dominic P. Mercado",
+    role: "CHaSSLSG Governor",
+    department: "Department of Public Information and Creative Communications",
+    avatarSrc: "/dpicc.png",
+    directLine: "0917 552 6012",
+    email: "tristan.mercado@carsu.edu.ph",
+    roomAddress: "Room 208, CHaSS Building",
+    filedBills: [
+      {
+        number: "Local Resolution No. 2026-006",
+        title: "PROMOTING HUMANITIES CULTURAL FELLOWSHIPS AND STUDENT ARTS EXPOSITIONS",
+      },
+    ],
+  },
+  {
+    id: "exec-12",
+    name: "Chloe Annalise R. Mendoza",
+    role: "CMNSLSG Governor",
+    department: "Department of Academics, Sports, Culture, Arts and Technology",
+    avatarSrc: "/dascat.png",
+    directLine: "0917 552 6013",
+    email: "chloe.mendoza@carsu.edu.ph",
+    roomAddress: "Room 304, CMNS Building",
+    filedBills: [
+      {
+        number: "Local Resolution No. 2026-007",
+        title: "ESTABLISHING NATURAL SCIENCE RESEARCH GRANTS AND INTER-COLLEGIATE SCIENCE QUIZ BEES",
+      },
+    ],
+  },
+];
 
 interface CabinetMember {
   name: string;
@@ -141,13 +347,85 @@ const initialCabinetDepartments: CabinetDepartment[] = [
   },
 ];
 
+const ROLE_PRIORITY_ORDER: string[] = [
+  "usg president",
+  "president",
+  "usg vice president",
+  "vice president",
+  "usg executive secretary",
+  "executive secretary",
+  "usg treasurer",
+  "treasurer",
+  "usg auditor",
+  "auditor",
+  "caalsg governor",
+  "ccislsg governor",
+  "cedlsg governor",
+  "cegslsg governor",
+  "cfeslsg governor",
+  "chasslsg governor",
+  "cmnslsg governor",
+  "governor",
+];
+
+const isExecutiveRole = (role: string = "") => {
+  const roleLower = (role || "").toLowerCase().trim();
+  if (!roleLower) return false;
+
+  return (
+    roleLower === "usg president" ||
+    roleLower === "president" ||
+    roleLower === "usg vice president" ||
+    roleLower === "vice president" ||
+    roleLower === "usg executive secretary" ||
+    roleLower === "executive secretary" ||
+    roleLower === "usg treasurer" ||
+    roleLower === "treasurer" ||
+    roleLower === "usg auditor" ||
+    roleLower === "auditor" ||
+    roleLower.includes("governor")
+  );
+};
+
+const getRoleRank = (member: any): number => {
+  const role = (member.role || "").toLowerCase().trim();
+
+  for (let i = 0; i < ROLE_PRIORITY_ORDER.length; i++) {
+    const key = ROLE_PRIORITY_ORDER[i];
+    if (role === key) {
+      return i + 1;
+    }
+  }
+
+  if (role.includes("president") && !role.includes("vice")) return 1;
+  if (role.includes("vice president") || role.includes("vp")) return 2;
+  if (role.includes("executive secretary")) return 3;
+  if (role.includes("treasurer")) return 4;
+  if (role.includes("auditor")) return 5;
+  if (role.includes("governor")) return 6;
+
+  return 99;
+};
+
 export default function CabinetPage() {
   const [selectedDept, setSelectedDept] = useState<CabinetDepartment | null>(null);
   const [departments, setDepartments] = useState<CabinetDepartment[]>(initialCabinetDepartments);
 
+  // Executive Profiling State
+  const [execMembers, setExecMembers] = useState<any[]>([]);
+  const [loadingExec, setLoadingExec] = useState(true);
+  const [execPage, setExecPage] = useState(1);
+  const [execSearchQuery, setExecSearchQuery] = useState("");
+  const [cabinetSelectedDept, setCabinetSelectedDept] = useState("ALL");
+  const execMembersPerPage = 8;
+
   useEffect(() => {
     fetchDynamicMembers();
   }, []);
+
+  useEffect(() => {
+    setExecPage(1);
+  }, [execSearchQuery]);
 
   const fetchDynamicMembers = async () => {
     try {
@@ -156,8 +434,30 @@ export default function CabinetPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        const updated = initialCabinetDepartments.map((dept) => {
+      if (!error && data && data.length > 0) {
+        // 1. Process Executive Profiling Members
+        const mappedData = data.map((m: any) => ({
+          id: m.id,
+          name: m.name || m.full_name || "USG Member",
+          role: m.role || "Executive Officer",
+          department: m.department || "Executive Branch",
+          avatarSrc: m.profile_url || "/usg.jpg",
+          directLine: m.phone_number || "0917 552 6001",
+          email: m.email || "usg@carsu.edu.ph",
+          roomAddress: m.room_address || "Room 501, Executive Building",
+          filedBills: m.filed_bills || [],
+        }));
+
+        const executiveOnly = mappedData.filter((m: any) => isExecutiveRole(m.role));
+
+        if (executiveOnly.length > 0) {
+          setExecMembers(executiveOnly);
+        } else {
+          setExecMembers(seedExecutiveMembers);
+        }
+
+        // 2. Process Cabinet Departments Appointed Members
+        const updatedDepts = initialCabinetDepartments.map((dept) => {
           const matchingDbMembers = data
             .filter(
               (m: any) =>
@@ -183,16 +483,56 @@ export default function CabinetPage() {
           };
         });
 
-        setDepartments(updated);
+        setDepartments(updatedDepts);
+      } else {
+        setExecMembers(seedExecutiveMembers);
       }
     } catch (err) {
       console.error("Error fetching dynamic members:", err);
+      setExecMembers(seedExecutiveMembers);
+    } finally {
+      setLoadingExec(false);
     }
   };
 
+  const execDepartmentsList = Array.from(
+    new Set(execMembers.map((m) => m.department).filter(Boolean))
+  ).sort((a: any, b: any) => a.localeCompare(b));
+
+  const filteredCabinetDepartments = departments.filter((dept) =>
+    cabinetSelectedDept === "ALL" ||
+    dept.name.toLowerCase() === cabinetSelectedDept.toLowerCase() ||
+    dept.acronym.toLowerCase() === cabinetSelectedDept.toLowerCase()
+  );
+
+  const filteredExecMembers = execMembers
+    .filter((member) => {
+      return (
+        !execSearchQuery.trim() ||
+        member.name?.toLowerCase().includes(execSearchQuery.toLowerCase()) ||
+        member.role?.toLowerCase().includes(execSearchQuery.toLowerCase()) ||
+        member.department?.toLowerCase().includes(execSearchQuery.toLowerCase()) ||
+        member.email?.toLowerCase().includes(execSearchQuery.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      const rankA = getRoleRank(a);
+      const rankB = getRoleRank(b);
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      return (a.name || "").localeCompare(b.name || "");
+    });
+
+  const execTotalPages = Math.ceil(filteredExecMembers.length / execMembersPerPage);
+  const displayedExecMembers = filteredExecMembers.slice(
+    (execPage - 1) * execMembersPerPage,
+    execPage * execMembersPerPage
+  );
+
   return (
     <GridShell>
-      <main className="mx-auto max-w-6xl w-full px-4 sm:px-6 py-12 sm:py-20">
+      <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-12 sm:py-20">
 
         {/* Page Header */}
         <motion.div
@@ -207,128 +547,294 @@ export default function CabinetPage() {
               Executive Branch Directory
             </div>
             <h1 className="text-4xl font-black tracking-[-0.06em] text-slate-900 sm:text-5xl">
-              USG Cabinet
+              USG Executive Branch
             </h1>
             <p className="mt-4 text-slate-600 max-w-3xl text-base sm:text-lg leading-relaxed">
-              Executive secretaries, directors, and departments tasked with implementing USG policies, student welfare programs, and university-wide services.
+              The chief executive officers, cabinet secretaries, and departments tasked with executing policy measures, student welfare programs, and university administration.
             </p>
           </div>
         </motion.div>
 
-        {/* Departments Grid (Centered Rows) */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="mt-10 flex flex-wrap justify-center gap-6"
-        >
-          {departments.map((dept) => (
-            <motion.div
-              key={dept.name}
-              variants={itemVariants}
-              whileHover={{
-                y: -8,
-                scale: 1.02,
-                boxShadow: "0 28px 50px -12px rgba(23, 52, 144, 0.24)",
-                transition: { type: "spring", stiffness: 350, damping: 25 },
-              }}
-              whileTap={{ scale: 0.985 }}
-              className="group flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-lg shadow-slate-200/70 hover:shadow-2xl transition-all duration-300 hover:border-[#173490]/50 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-[360px]"
-            >
-              <div>
-                {/* Centered Top Header: Logo, Acronym Badge, Member Count */}
-                <div className="flex flex-col items-center text-center">
-                  <motion.div
-                    whileHover={{ scale: 1.08 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                    className="relative"
-                  >
-                    <img
-                      src={dept.logoSrc || "/usg.jpg"}
-                      alt={`${dept.name} Logo`}
-                      onError={(e) => {
-                        e.currentTarget.src = "/usg.jpg";
-                      }}
-                      className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-lg ring-2 ring-[#173490]/25 transition-transform duration-300 group-hover:scale-105 mx-auto"
-                    />
-                  </motion.div>
-                  <div className="mt-3 flex flex-col items-center gap-1">
-                    <span className="inline-block rounded-full bg-[#173490]/10 px-4 py-1 text-xs font-black uppercase tracking-widest text-[#173490] group-hover:bg-[#173490] group-hover:text-white transition-colors duration-200">
-                      {dept.acronym}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">
-                      {dept.members.length} Appointed Member{dept.members.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                </div>
+        {/* SECTION 1: USG EXECUTIVES (EXECUTIVE PROFILING) */}
+        <section className="mt-8">
+          {/* Results Counter & Search */}
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium min-h-[40px]">
+            <span>
+              Showing {filteredExecMembers.length > 0 ? (execPage - 1) * execMembersPerPage + 1 : 0} -{" "}
+              {Math.min(execPage * execMembersPerPage, filteredExecMembers.length)} of {filteredExecMembers.length} executive profile
+              {filteredExecMembers.length === 1 ? "" : "s"}
+            </span>
 
-                {/* Department Name */}
-                <h2 className="mt-4 text-xl font-bold text-slate-900 group-hover:text-[#173490] transition leading-snug text-center">
-                  {dept.name}
-                </h2>
+            <div className="flex justify-end">
+              <ExpandableSearchBar
+                expandDirection="left"
+                width={220}
+                placeholder="Search executive..."
+                value={execSearchQuery}
+                onSearch={(q) => setExecSearchQuery(q)}
+              />
+            </div>
+          </div>
 
-                {/* Summary Description */}
-                <p className="mt-3 text-sm leading-relaxed text-slate-600 line-clamp-3 text-center">
-                  {dept.description}
-                </p>
-              </div>
-
-              {/* Bottom Row: See More Action & Avatar Previews */}
-              <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between min-h-[44px]">
-                <div className="flex -space-x-2 overflow-hidden items-center">
-                  {dept.members.length > 0 ? (
-                    dept.members.slice(0, 3).map((m, idx) =>
-                      m.avatarSrc ? (
-                        <img
-                          key={idx}
-                          src={m.avatarSrc}
-                          alt={m.name}
-                          className="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover shadow-xs"
-                        />
-                      ) : (
-                        <div
-                          key={idx}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#173490] text-[10px] font-bold text-white ring-2 ring-white shadow-xs"
-                        >
-                          {m.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </div>
-                      )
-                    )
-                  ) : null}
-                </div>
-
-                <motion.button
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setSelectedDept(dept)}
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[#173490] hover:text-[#E7C609] transition cursor-pointer group/btn"
+          {loadingExec ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="h-10 w-10 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : filteredExecMembers.length === 0 ? (
+            <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#173490]/10 text-[#173490]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <span>See More</span>
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">No executive profiles found</h3>
+              <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
+                We couldn't find any executive members matching your criteria. Try adjusting your search query or department filter.
+              </p>
+              <button
+                onClick={() => setExecSearchQuery("")}
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#173490] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1e4bb8] cursor-pointer shadow-sm"
+              >
+                Clear Search
+              </button>
+            </div>
+          ) : (
+            <>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${execPage}-${execSearchQuery}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-2"
+                >
+                  {displayedExecMembers.map((member, index) => (
+                    <div key={member.id || index}>
+                      <ProfileCard {...member} sectionLabel="USG EXECUTIVE" />
+                    </div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+
+              {execTotalPages > 1 && (
+                <div className="mt-10 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setExecPage((p) => Math.max(1, p - 1))}
+                          className={execPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: execTotalPages }, (_, i) => i + 1).map((p) => (
+                        <PaginationItem key={p}>
+                          <PaginationLink
+                            isActive={p === execPage}
+                            onClick={() => setExecPage(p)}
+                            className="cursor-pointer"
+                          >
+                            {p}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setExecPage((p) => Math.min(execTotalPages, p + 1))}
+                          className={execPage === execTotalPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* SECTION 2: USG CABINETS (DEPARTMENTS DIRECTORY GRID) */}
+        <section className="mt-16 border-t border-slate-200/80 pt-12">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+            <div>
+
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-[-0.04em]">
+                USG Cabinets
+              </h2>
+              <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#173490]/10 px-3 py-1 text-xs font-bold text-[#173490]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#173490]" />
+                Cabinet Departments & Mandates
+              </div>
+            </div>
+
+            {/* Department Filtering in Section II */}
+            <div className="flex items-center gap-3 self-start sm:self-auto mt-2 sm:mt-0">
+              <div className="relative min-w-[200px] sm:min-w-[230px]">
+                <select
+                  value={cabinetSelectedDept}
+                  onChange={(e) => setCabinetSelectedDept(e.target.value)}
+                  className="w-full appearance-none bg-white border border-slate-200 py-2 pl-3.5 pr-9 rounded-full text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#173490] focus:border-transparent transition cursor-pointer shadow-xs hover:border-[#173490]/40"
+                >
+                  <option value="ALL">All Cabinet Departments</option>
+                  {departments.map((dept) => (
+                    <option key={dept.name} value={dept.name}>
+                      {dept.name} ({dept.acronym})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth={2.5}
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="transition-transform group-hover/btn:translate-x-1"
                   >
-                    <path d="M5 12h14" />
-                    <path d="m12 5 7 7-7 7" />
+                    <path d="m6 9 6 6 6-6" />
                   </svg>
-                </motion.button>
+                </div>
               </div>
-            </motion.div>
-          ))}
-        </motion.div>
+
+              {cabinetSelectedDept !== "ALL" && (
+                <button
+                  onClick={() => setCabinetSelectedDept("ALL")}
+                  className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-[#173490] bg-[#173490]/10 hover:bg-[#173490] hover:text-white rounded-full transition cursor-pointer"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Departments Grid */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="mt-8 flex flex-wrap justify-center gap-6"
+          >
+            {filteredCabinetDepartments.map((dept) => (
+              <motion.div
+                key={dept.name}
+                variants={itemVariants}
+                whileHover={{
+                  y: -8,
+                  scale: 1.02,
+                  boxShadow: "0 28px 50px -12px rgba(23, 52, 144, 0.24)",
+                  transition: { type: "spring", stiffness: 350, damping: 25 },
+                }}
+                whileTap={{ scale: 0.985 }}
+                className="group flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-lg shadow-slate-200/70 hover:shadow-2xl transition-all duration-300 hover:border-[#173490]/50 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-[360px]"
+              >
+                <div>
+                  {/* Centered Top Header */}
+                  <div className="flex flex-col items-center text-center">
+                    <motion.div
+                      whileHover={{ scale: 1.08 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      className="relative"
+                    >
+                      <img
+                        src={dept.logoSrc || "/usg.jpg"}
+                        alt={`${dept.name} Logo`}
+                        onError={(e) => {
+                          e.currentTarget.src = "/usg.jpg";
+                        }}
+                        className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-lg ring-2 ring-[#173490]/25 transition-transform duration-300 group-hover:scale-105 mx-auto"
+                      />
+                    </motion.div>
+                    <div className="mt-3 flex flex-col items-center gap-1">
+                      <span className="inline-block rounded-full bg-[#173490]/10 px-4 py-1 text-xs font-black uppercase tracking-widest text-[#173490] group-hover:bg-[#173490] group-hover:text-white transition-colors duration-200">
+                        {dept.acronym}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500">
+                        {dept.members.length} Appointed Member{dept.members.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Department Name */}
+                  <h3 className="mt-4 text-xl font-bold text-slate-900 group-hover:text-[#173490] transition leading-snug text-center">
+                    {dept.name}
+                  </h3>
+
+                  {/* Summary Description */}
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600 line-clamp-3 text-center">
+                    {dept.description}
+                  </p>
+                </div>
+
+                {/* Bottom Row: See More Action & Avatar Previews */}
+                <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between min-h-[44px]">
+                  <div className="flex -space-x-2 overflow-hidden items-center">
+                    {dept.members.length > 0 ? (
+                      dept.members.slice(0, 3).map((m, idx) =>
+                        m.avatarSrc ? (
+                          <img
+                            key={idx}
+                            src={m.avatarSrc}
+                            alt={m.name}
+                            className="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover shadow-xs"
+                          />
+                        ) : (
+                          <div
+                            key={idx}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#173490] text-[10px] font-bold text-white ring-2 ring-white shadow-xs"
+                          >
+                            {m.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)}
+                          </div>
+                        )
+                      )
+                    ) : null}
+                  </div>
+
+                  <motion.button
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedDept(dept)}
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-[#173490] hover:text-[#E7C609] transition cursor-pointer group/btn"
+                  >
+                    <span>See More</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="transition-transform group-hover/btn:translate-x-1"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="m12 5 7 7-7 7" />
+                    </svg>
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
 
         {/* Modal: Department Member Profiling with Framer Motion AnimatePresence */}
         <AnimatePresence>
@@ -441,7 +947,6 @@ export default function CabinetPage() {
                     <span>Appointed Department Officers</span>
                   </h3>
 
-                  {/* Empty State or Member Profiles Grid */}
                   {selectedDept.members.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#173490]/10 text-[#173490]">
@@ -478,7 +983,6 @@ export default function CabinetPage() {
                           className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:border-[#173490]/40 hover:shadow-md transition"
                         >
                           <div>
-                            {/* Member Avatar & Role */}
                             <div className="flex items-start gap-3">
                               <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-full border-2 border-slate-100 bg-gradient-to-br from-[#173490] to-[#1e4bb8] shadow-sm">
                                 {member.avatarSrc ? (
@@ -527,7 +1031,6 @@ export default function CabinetPage() {
                               </div>
                             </div>
 
-                            {/* Contact & Location */}
                             <div className="mt-4 space-y-1.5 border-t border-slate-100 pt-3 text-xs text-slate-600">
                               {member.email && (
                                 <div className="flex items-center gap-2 truncate">
@@ -571,7 +1074,6 @@ export default function CabinetPage() {
                               )}
                             </div>
 
-                            {/* Compact Stats */}
                             <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2.5 text-center">
                               <div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -592,7 +1094,6 @@ export default function CabinetPage() {
                             </div>
                           </div>
 
-                          {/* Social / Direct Action */}
                           <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                             <span className="text-[10px] font-semibold text-slate-400">
                               AY {member.term || "2026-2027"}
@@ -611,7 +1112,6 @@ export default function CabinetPage() {
                   )}
                 </div>
 
-                {/* Close Action in Footer */}
                 <div className="mt-8 flex justify-end border-t border-slate-100 pt-4">
                   <motion.button
                     whileHover={{ scale: 1.03 }}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import GridShell from "./components/GridShell";
 import SectionHeader from "./components/SectionHeader";
 import { supabase } from "@/lib/supabase";
@@ -284,77 +285,90 @@ export default function Home() {
     : null;
 
   return (
-    <GridShell showCircles>
+    <GridShell showCircles={false}>
+      {/* Hero Banner Section with usg_background1.png (Fits full viewport height below header) */}
+      <div className="relative w-full overflow-hidden h-[calc(100vh-76px)] min-h-[500px] max-h-[880px] flex flex-col justify-center items-center">
+        {/* Background Image (Spans full width and height) */}
+        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+          <Image
+            src="/usg_background1.png"
+            alt="USG Background"
+            fill
+            priority
+            className="object-cover object-center"
+          />
+        </div>
 
-
-      <main className="mx-auto max-w-7xl px-6 py-20">
-        {/* Hero Section (Full Viewport Height above the fold) */}
-        <motion.section
-          initial={{ opacity: 0, y: 35 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          className="flex min-h-[calc(100vh-160px)] flex-shrink-0 flex-col items-center justify-center text-center py-12"
-        >
-          {/* Institutional Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-blue-900/15 bg-white/90 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#02076C] shadow-[0_4px_16px_rgba(2,7,108,0.06)] backdrop-blur-sm"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span>Caraga State University • Official Portal</span>
-          </motion.div>
-
-          {/* Hero Title */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 w-full flex flex-col justify-center items-center text-center py-4">
+          {/* Hero Section */}
+          <motion.section
+            initial={{ opacity: 0, y: 35 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-5xl text-4xl font-extrabold tracking-tight text-[#02076C] sm:text-6xl lg:text-7xl uppercase"
+            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-shrink-0 flex-col items-center justify-center text-center"
           >
-            University Student Government
-          </motion.h1>
-
-
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-2xl text-base sm:text-lg md:text-xl leading-relaxed text-slate-600 font-normal"
-          >
-            Public service, student accountability, and governance across campus leadership, documents, and events.
-          </motion.p>
-
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-4"
-          >
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#02076C] px-7 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-950/20 transition hover:bg-[#173490] hover:scale-105 active:scale-95"
+            {/* Institutional Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-900/15 bg-white/90 px-3.5 py-1 text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#02076C] shadow-[0_4px_16px_rgba(2,7,108,0.06)] backdrop-blur-sm"
             >
-              <span>Learn More</span>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </Link>
-            <Link
-              href="/documents"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-800 shadow-sm transition hover:bg-slate-50 hover:border-slate-400 hover:scale-105 active:scale-95"
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Caraga State University • Official Portal</span>
+            </motion.div>
+
+            {/* Hero Title */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-3xl text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#02076C] uppercase leading-tight drop-shadow-sm"
             >
-              <span>View Documents</span>
-            </Link>
-          </motion.div>
-        </motion.section>
+              University Student Government
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-xl text-xs sm:text-sm md:text-base leading-relaxed text-slate-600 font-normal mt-3"
+            >
+              Public service, student accountability, and governance across campus leadership, documents, and events.
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-6 flex flex-wrap items-center justify-center gap-3"
+            >
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#02076C] px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-950/20 transition hover:bg-[#173490] hover:scale-105 active:scale-95"
+              >
+                <span>Learn More</span>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </Link>
+              <Link
+                href="/documents"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-800 shadow-sm transition hover:bg-slate-50 hover:border-slate-400 hover:scale-105 active:scale-95"
+              >
+                <span>View Documents</span>
+              </Link>
+            </motion.div>
+          </motion.section>
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-7xl px-6 py-12">
 
         {/* Featured Story Carousel (Fixed Height Container to guarantee ZERO layout movement) */}
         {currentStory && (

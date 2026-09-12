@@ -5,6 +5,7 @@ import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
+import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
 // Pre-seeded fallback data if database is empty or not yet migrated
 const fallbackBudgetData = [
@@ -225,34 +226,19 @@ export default function BudgetaryTransparencyPage() {
           transition={{ duration: 0.65, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
           className="mt-10 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            {/* Search */}
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Search event name, project activity, or description..."
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Expandable Search Bar (Left, Expanding Right) */}
+            <div className="flex justify-start">
+              <ExpandableSearchBar
+                expandDirection="right"
+                width={260}
+                placeholder="Search budget item..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                onSearch={(q) => setSearchQuery(q)}
               />
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
             </div>
 
-            {/* Status Filter Buttons */}
+            {/* Status Filter Buttons (Right) */}
             <div className="flex flex-wrap items-center gap-1.5">
               {["ALL", "Completed", "In Progress", "Approved"].map((status) => (
                 <button

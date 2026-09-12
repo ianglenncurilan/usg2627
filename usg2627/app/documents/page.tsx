@@ -7,6 +7,7 @@ import GridShell from "../components/GridShell";
 import { DropdownMenuSelect } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
+import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
 const documentTypes = [
   "All",
@@ -65,6 +66,64 @@ const getTypeColor = (type: string) => {
   }
 };
 
+const seedPublicDocuments = [
+  {
+    id: "doc-seed-1",
+    title: "Executive Order No. 2026-001: Comprehensive Digitalization of Student Government Services",
+    type: "EXECUTIVE ORDER",
+    tracking_number: "RES-2026-15",
+    issuing_body: "Office of the USG President",
+    status: "published",
+    academic_year: "2025-2026",
+    published_at: "2026-08-27T10:00:00Z",
+    created_at: "2026-08-27T10:00:00Z",
+  },
+  {
+    id: "doc-seed-2",
+    title: "Memorandum No. RES-321-3124: Institutional Records Archiving and Transparency Standards",
+    type: "MEMORANDUM",
+    tracking_number: "RES-321-3124",
+    issuing_body: "Department of Interior, Local Governance and Subordinate Units",
+    status: "published",
+    academic_year: "2025-2026",
+    published_at: "2026-08-18T14:30:00Z",
+    created_at: "2026-08-18T14:30:00Z",
+  },
+  {
+    id: "doc-seed-3",
+    title: "Executive Order No. RES-2026-15: Student Welfare & Academic Support Subsidies",
+    type: "EXECUTIVE ORDER",
+    tracking_number: "RES-2026-15",
+    issuing_body: "Department of Students' Welfare and Development",
+    status: "published",
+    academic_year: "2025-2026",
+    published_at: "2026-08-12T09:00:00Z",
+    created_at: "2026-08-12T09:00:00Z",
+  },
+  {
+    id: "doc-seed-4",
+    title: "Resolution No. 2026-008: ENACTING THE ANNUAL STUDENT LEADERSHIP AND ACADEMIC FREEDOM CHARTER",
+    type: "RESOLUTION",
+    tracking_number: "RES-2026-08",
+    issuing_body: "USG Senate Legislative Body",
+    status: "published",
+    academic_year: "2025-2026",
+    published_at: "2026-08-05T11:00:00Z",
+    created_at: "2026-08-05T11:00:00Z",
+  },
+  {
+    id: "doc-seed-5",
+    title: "Administrative Order No. 2026-003: Standardized Financial Liquidation and Audit Protocol",
+    type: "ADMINISTRATIVE ORDER",
+    tracking_number: "AO-2026-03",
+    issuing_body: "Department of Finance and Treasury",
+    status: "published",
+    academic_year: "2025-2026",
+    published_at: "2026-07-20T16:00:00Z",
+    created_at: "2026-07-20T16:00:00Z",
+  },
+];
+
 function DocumentsContent() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,19 +140,27 @@ function DocumentsContent() {
     fetchDocuments();
   }, []);
 
-  const fetchDocuments = async () => {
-    const { data, error } = await supabase
-      .from("documents")
-      .select("*")
-      .eq("status", "published")
-      .order("published_at", { ascending: false });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedType, selectedYear, selectedStatus, sortBy]);
 
-    if (error) {
-      console.error("Error fetching documents:", error);
-    } else {
-      setDocuments(data || []);
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        setDocuments(seedPublicDocuments);
+      } else {
+        setDocuments(data);
+      }
+    } catch {
+      setDocuments(seedPublicDocuments);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -105,15 +172,21 @@ function DocumentsContent() {
   }, [searchParams]);
 
   const filteredDocuments = documents.filter((doc: any) => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      searchQuery === "" ||
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.tracking_number.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === "All" || doc.type === selectedType.toUpperCase();
+      !q ||
+      (doc.title && doc.title.toLowerCase().includes(q)) ||
+      (doc.tracking_number && doc.tracking_number.toLowerCase().includes(q)) ||
+      (doc.document_number && doc.document_number.toLowerCase().includes(q)) ||
+      (doc.issuing_body && doc.issuing_body.toLowerCase().includes(q)) ||
+      (doc.type && doc.type.toLowerCase().includes(q));
+
+    const matchesType = selectedType === "All" || doc.type?.toUpperCase() === selectedType.toUpperCase();
     const matchesStatus =
       selectedStatus === "All" ||
-      (selectedStatus === "Enacted" && doc.status === "published") ||
-      doc.status === selectedStatus.toLowerCase();
+      (selectedStatus === "Enacted" && (doc.status === "published" || doc.status === "enacted")) ||
+      doc.status?.toLowerCase() === selectedStatus.toLowerCase();
+
     return matchesSearch && matchesType && matchesStatus;
   });
 
@@ -158,46 +231,14 @@ function DocumentsContent() {
           Public Documents
         </motion.h1>
 
-        {/* Search and Filters */}
+        {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
         >
-          <div className="flex flex-col gap-3 lg:flex-row">
-            <div className="flex-1">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search keyword, document title, or document number (e.g. Resolution 2026-015)..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
-                />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-              </div>
-            </div>
-            <button className="rounded-lg bg-[#173490] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1e4bb8]">
-              Search
-            </button>
-          </div>
-
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Document Type
@@ -234,18 +275,27 @@ function DocumentsContent() {
           </div>
         </motion.div>
 
-        {/* Document Count and Sort */}
+        {/* Document Count, Search and Sort */}
         <div className="mt-6 flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
           <p className="text-sm text-slate-600">
             <span className="font-semibold text-slate-900">{filteredDocuments.length} Documents</span> Found in {selectedYear}
           </p>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-600">Sort by:</label>
-            <DropdownMenuSelect
-              options={sortOptions}
-              value={sortBy}
-              onValueChange={setSortBy}
-              placeholder="Select"
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-slate-600">Sort by:</label>
+              <DropdownMenuSelect
+                options={sortOptions}
+                value={sortBy}
+                onValueChange={setSortBy}
+                placeholder="Select"
+              />
+            </div>
+            <ExpandableSearchBar
+              expandDirection="left"
+              width={260}
+              placeholder="Search document..."
+              value={searchQuery}
+              onSearch={(q) => setSearchQuery(q)}
             />
           </div>
         </div>

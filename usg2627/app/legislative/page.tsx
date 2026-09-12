@@ -13,10 +13,67 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
 const seedMembers = [
   {
     id: "seed-1",
+    name: "Peter Gatchalian",
+    role: "USG Senator (Senate President)",
+    department: "Department of Students' Welfare and Development",
+    avatarSrc: "/usg.jpg",
+    directLine: "0917 552 6602",
+    email: "peter.gatchalian@carsu.edu.ph",
+    roomAddress: "Room 502, Legislative Building",
+    filedBills: [
+      {
+        number: "Senate Bill No. 2627-015",
+        title: "AN ACT MODERNIZING THE UNIVERSITY STUDENT GOVERNMENT POLICY ENACTMENT PROCEDURE AND DIGITAL RESOLUTION REGISTRY",
+      },
+      {
+        number: "Senate Bill No. 2627-018",
+        title: "AN ACT PROVIDING ANNUAL INFRASTRUCTURE ACCESSIBILITY APPROPRIATIONS FOR PERSONS WITH DISABILITIES IN ALL CAMPUS BUILDINGS",
+      },
+    ],
+  },
+  {
+    id: "seed-2",
+    name: "Cindy C. Sotto",
+    role: "USG Senator (President Pro Tempore)",
+    department: "Department of Finance and Treasury",
+    avatarSrc: "/usg.jpg",
+    directLine: "0917 552 6603",
+    email: "cindy.sotto@carsu.edu.ph",
+    roomAddress: "Room 503, Legislative Building",
+    filedBills: [
+      {
+        number: "Senate Bill No. 2627-011",
+        title: "AN ACT MANDATING FISCAL ACCOUNTABILITY DISCLOSURES AND MONTHLY LIQUIDATION REPORTS FOR ALL RECOGNIZED STUDENT ORGANIZATIONS",
+      },
+      {
+        number: "Senate Bill No. 2627-014",
+        title: "AN ACT ESTABLISHING SUBSIDY ALLOCATION FUNDING FOR ANNUAL COLLEGIATE ATHLETIC AND CULTURAL REPRESENTATION",
+      },
+    ],
+  },
+  {
+    id: "seed-3",
+    name: "Fuji K. Queroda",
+    role: "USG Senator (Majority Floor Leader)",
+    department: "Department of Students' Welfare and Development",
+    avatarSrc: "/usg.jpg",
+    directLine: "0917 552 6607",
+    email: "fuji.queroda@carsu.edu.ph",
+    roomAddress: "Room 507, Legislative Building",
+    filedBills: [
+      {
+        number: "Senate Bill No. 2627-023",
+        title: "AN ACT EXPANDING CAMPUS WIRELESS CONNECTIVITY AND DIGITAL INFRASTRUCTURE IN ALL ACADEMIC BLOCKS",
+      },
+    ],
+  },
+  {
+    id: "seed-4",
     name: "Cresencio U. Ablan",
     role: "USG Senator",
     department: "Department of Public Information and Creative Communications",
@@ -36,81 +93,9 @@ const seedMembers = [
     ],
   },
   {
-    id: "seed-2",
-    name: "Win Gatchalian",
-    role: "Legislative President",
-    department: "Department of Students' Welfare and Development",
-    avatarSrc: "/usg.jpg",
-    directLine: "0917 552 6602",
-    email: "win.gatchalian@carsu.edu.ph",
-    roomAddress: "Room 502, Legislative Building",
-    filedBills: [
-      {
-        number: "Senate Bill No. 2627-015",
-        title: "AN ACT MODERNIZING THE UNIVERSITY STUDENT GOVERNMENT POLICY ENACTMENT PROCEDURE AND DIGITAL RESOLUTION REGISTRY",
-      },
-      {
-        number: "Senate Bill No. 2627-018",
-        title: "AN ACT PROVIDING ANNUAL INFRASTRUCTURE ACCESSIBILITY APPROPRIATIONS FOR PERSONS WITH DISABILITIES IN ALL CAMPUS BUILDINGS",
-      },
-    ],
-  },
-  {
-    id: "seed-3",
-    name: "Vicente C. Sotto III",
-    role: "Legislative President Pro Tempore",
-    department: "Department of Finance and Treasury",
-    avatarSrc: "/usg.jpg",
-    directLine: "0917 552 6603",
-    email: "vicente.sotto@carsu.edu.ph",
-    roomAddress: "Room 503, Legislative Building",
-    filedBills: [
-      {
-        number: "Senate Bill No. 2627-011",
-        title: "AN ACT MANDATING FISCAL ACCOUNTABILITY DISCLOSURES AND MONTHLY LIQUIDATION REPORTS FOR ALL RECOGNIZED STUDENT ORGANIZATIONS",
-      },
-      {
-        number: "Senate Bill No. 2627-014",
-        title: "AN ACT ESTABLISHING SUBSIDY ALLOCATION FUNDING FOR ANNUAL COLLEGIATE ATHLETIC AND CULTURAL REPRESENTATION",
-      },
-    ],
-  },
-  {
-    id: "seed-4",
-    name: "Maria Imelda Josefa",
-    role: "Legislative Secretary General",
-    department: "Department of the Secretariat",
-    avatarSrc: "/usg.jpg",
-    directLine: "0917 552 6604",
-    email: "maria.josefa@carsu.edu.ph",
-    roomAddress: "Room 504, Legislative Building",
-    filedBills: [
-      {
-        number: "Senate Bill No. 2627-008",
-        title: "AN ACT CREATING A UNIFIED ARCHIVAL RECORDING SYSTEM FOR ALL PASSED RESOLUTIONS AND EXECUTIVE DIRECTIVES",
-      },
-    ],
-  },
-  {
     id: "seed-5",
-    name: "Rafael P. Santos",
-    role: "Chair, Committee on Rules & Ethics",
-    department: "Department of Interior, Local Governance and Subordinate Units",
-    avatarSrc: "/usg.jpg",
-    directLine: "0917 552 6605",
-    email: "rafael.santos@carsu.edu.ph",
-    roomAddress: "Room 505, Legislative Building",
-    filedBills: [
-      {
-        number: "Senate Bill No. 2627-005",
-        title: "AN ACT ADOPTING THE COMPREHENSIVE CODE OF ETHICAL CONDUCT AND RESPONSIBILITY FOR ELECTED AND APPOINTED STUDENT OFFICIALS",
-      },
-    ],
-  },
-  {
-    id: "seed-6",
     name: "Patricia Mae Alcantara",
-    role: "Chair, Committee on Student Rights",
+    role: "USG Senator (Student Rights Chair)",
     department: "Department of Academics, Sports, Culture, Arts and Technology",
     avatarSrc: "/usg.jpg",
     directLine: "0917 552 6606",
@@ -124,41 +109,41 @@ const seedMembers = [
     ],
   },
   {
-    id: "seed-7",
-    name: "Jouard Karl Queroda",
-    role: "USG Senate Majority Floor Leader",
-    department: "Department of Students' Welfare and Development",
+    id: "seed-6",
+    name: "Maria Imelda Josefa",
+    role: "USG Senator (Secretariat Affairs)",
+    department: "Department of the Secretariat",
     avatarSrc: "/usg.jpg",
-    directLine: "0917 552 6607",
-    email: "jouard.queroda@carsu.edu.ph",
-    roomAddress: "Room 507, Legislative Building",
+    directLine: "0917 552 6604",
+    email: "maria.josefa@carsu.edu.ph",
+    roomAddress: "Room 504, Legislative Building",
     filedBills: [
       {
-        number: "Senate Bill No. 2627-023",
-        title: "AN ACT EXPANDING CAMPUS WIRELESS CONNECTIVITY AND DIGITAL INFRASTRUCTURE IN ALL ACADEMIC BLOCKS",
+        number: "Senate Bill No. 2627-008",
+        title: "AN ACT CREATING A UNIFIED ARCHIVAL RECORDING SYSTEM FOR ALL PASSED RESOLUTIONS AND EXECUTIVE DIRECTIVES",
+      },
+    ],
+  },
+  {
+    id: "seed-7",
+    name: "Christian James Macalolot",
+    role: "USG Senator",
+    department: "Department of Environment and Natural Resources",
+    avatarSrc: "/usg.jpg",
+    directLine: "0910 468 7215",
+    email: "christian.macalolot@carsu.edu.ph",
+    roomAddress: "Room 510, Legislative Building",
+    filedBills: [
+      {
+        number: "Senate Bill No. 2627-026",
+        title: "AN ACT ESTABLISHING CAMPUS ECOLOGICAL WASTE MANAGEMENT AND GREEN INITIATIVES",
       },
     ],
   },
   {
     id: "seed-8",
-    name: "Joshua Villanueva",
-    role: "USG Senate Minority Floor Leader",
-    department: "Department of Students' Welfare and Development",
-    avatarSrc: "/usg.jpg",
-    directLine: "0917 552 6608",
-    email: "joshua.villanueva@carsu.edu.ph",
-    roomAddress: "Room 508, Legislative Building",
-    filedBills: [
-      {
-        number: "Senate Bill No. 2627-024",
-        title: "AN ACT MANDATING TRANSPARENT ELECTION CODE REFORMS FOR THE STUDENT GOVERNMENT",
-      },
-    ],
-  },
-  {
-    id: "seed-9",
     name: "Steffano Mari P. Potenciano",
-    role: "Legislative Staff Director",
+    role: "USG Senator (Staff Director)",
     department: "Department of Students' Welfare and Development",
     avatarSrc: "/usg.jpg",
     directLine: "0917 552 6609",
@@ -172,18 +157,34 @@ const seedMembers = [
     ],
   },
   {
-    id: "seed-10",
-    name: "Christian James Macalolot",
-    role: "USG Senator",
-    department: "Department of Environment and Natural Resources",
+    id: "seed-9",
+    name: "Rafael P. Santos",
+    role: "USG Senator (Rules & Ethics Chair)",
+    department: "Department of Interior, Local Governance and Subordinate Units",
     avatarSrc: "/usg.jpg",
-    directLine: "0910 468 7215",
-    email: "christian.macalolot@carsu.edu.ph",
-    roomAddress: "Room 510, Legislative Building",
+    directLine: "0917 552 6605",
+    email: "rafael.santos@carsu.edu.ph",
+    roomAddress: "Room 505, Legislative Building",
     filedBills: [
       {
-        number: "Senate Bill No. 2627-026",
-        title: "AN ACT ESTABLISHING CAMPUS ECOLOGICAL WASTE MANAGEMENT AND GREEN INITIATIVES",
+        number: "Senate Bill No. 2627-005",
+        title: "AN ACT ADOPTING THE COMPREHENSIVE CODE OF ETHICAL CONDUCT AND RESPONSIBILITY FOR ELECTED AND APPOINTED STUDENT OFFICIALS",
+      },
+    ],
+  },
+  {
+    id: "seed-10",
+    name: "Joshua Villanueva",
+    role: "USG Senator (Minority Floor Leader)",
+    department: "Department of Students' Welfare and Development",
+    avatarSrc: "/usg.jpg",
+    directLine: "0917 552 6608",
+    email: "joshua.villanueva@carsu.edu.ph",
+    roomAddress: "Room 508, Legislative Building",
+    filedBills: [
+      {
+        number: "Senate Bill No. 2627-024",
+        title: "AN ACT MANDATING TRANSPARENT ELECTION CODE REFORMS FOR THE STUDENT GOVERNMENT",
       },
     ],
   },
@@ -211,72 +212,52 @@ const itemVariants = {
   },
 };
 
-const ROLE_PRIORITY_ORDER: string[] = [
-  "usg president",
-  "president",
-  "usg vice president",
-  "vice president",
-  "usg executive secretary",
-  "executive secretary",
-  "usg treasurer",
-  "treasurer",
-  "usg auditor",
-  "auditor",
-  "usg senator",
-  "senator",
-  "caalsg governor",
-  "ccislsg governor",
-  "cedlsg governor",
-  "cegslsg governor",
-  "cfeslsg governor",
-  "chasslsg governor",
-  "cmnslsg governor",
-  "governor",
-  "usg cabinet secretary",
-  "usg chief of staff",
-  "usg secretary for records and archives",
-  "usg dbm secretary",
-  "usg dft secretary",
-  "usg dswd secretary",
-  "usg dilgsu secretary",
-  "usg dascat secretary",
-  "usg denr secretary",
-  "usg dhws secretary",
-  "usg dpicc secretary",
-  "usg undersecretary",
-  "usg executive assistant",
-  "usg senate secretary",
-  "usg house secretary",
-  "usg administrative staff",
-  "usg coa chief commissioner",
-  "usg comelec chairperson",
-];
+const getLastName = (fullName: string = ""): string => {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) return "";
+  let last = parts[parts.length - 1];
+  if (/^(jr\.?|sr\.?|ii|iii|iv|v)$/i.test(last) && parts.length > 1) {
+    last = parts[parts.length - 2];
+  }
+  return last.toLowerCase();
+};
 
-const getRoleRank = (member: any): number => {
-  const role = (member.role || "").toLowerCase().trim();
+const getLegislativeRank = (member: any): number => {
+  const roleLower = (member.role || "").toLowerCase().trim();
+  const nameLower = (member.name || "").toLowerCase().trim();
 
-  // Check exact index match first
-  for (let i = 0; i < ROLE_PRIORITY_ORDER.length; i++) {
-    const key = ROLE_PRIORITY_ORDER[i];
-    if (role === key) {
-      return i + 1;
-    }
+  // Senate President = Peter
+  if ((roleLower.includes("senate president") && !roleLower.includes("pro temp")) || nameLower.includes("peter")) {
+    return 1;
+  }
+  // Pro Tempore = Cindy
+  if (roleLower.includes("pro temp") || nameLower.includes("cindy")) {
+    return 2;
+  }
+  // Majority Leader = Fuji
+  if (roleLower.includes("majority") || nameLower.includes("fuji")) {
+    return 3;
   }
 
-  // Soft inclusion matches
-  if (role.includes("president") && !role.includes("vice")) return 1;
-  if (role.includes("vice president") || role.includes("vice pres") || role.includes("vp")) return 2;
-  if (role.includes("executive secretary")) return 3;
-  if (role.includes("treasurer")) return 4;
-  if (role.includes("auditor")) return 5;
-  if (role.includes("senator")) return 6;
-  if (role.includes("governor")) return 7;
-  if (role.includes("cabinet secretary")) return 15;
-  if (role.includes("chief of staff")) return 16;
-  if (role.includes("records")) return 17;
-  if (role.includes("secretary")) return 20;
+  // All other Legislative Members
+  return 4;
+};
 
-  return 99;
+const getLegislativeSectionLabel = (member: any): string => {
+  const roleLower = (member.role || "").toLowerCase().trim();
+  const nameLower = (member.name || "").toLowerCase().trim();
+
+  if ((roleLower.includes("senate president") && !roleLower.includes("pro temp")) || nameLower.includes("peter")) {
+    return "Senate President";
+  }
+  if (roleLower.includes("pro temp") || nameLower.includes("cindy")) {
+    return "Pro Tempore";
+  }
+  if (roleLower.includes("majority") || nameLower.includes("fuji")) {
+    return "Majority Leader";
+  }
+
+  return "Legislative Member";
 };
 
 export default function LegislativePage() {
@@ -284,17 +265,16 @@ export default function LegislativePage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("ALL");
   const membersPerPage = 10;
 
   useEffect(() => {
     fetchMembers();
   }, []);
 
-  // Reset to page 1 whenever filter or search query changes
+  // Reset to page 1 whenever search query changes
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, selectedDepartment]);
+  }, [searchQuery]);
 
   const fetchMembers = async () => {
     try {
@@ -326,12 +306,41 @@ export default function LegislativePage() {
     }
   };
 
-  const departments = Array.from(
-    new Set(members.map((m) => m.department).filter(Boolean))
-  ).sort((a: any, b: any) => a.localeCompare(b));
+  const isSenatorRole = (role: string = "") => {
+    const roleLower = (role || "").toLowerCase().trim();
+    if (!roleLower) return false;
+
+    // Exclude non-senator roles explicitly
+    if (
+      roleLower.includes("comelec") ||
+      roleLower.includes("coa") ||
+      roleLower.includes("senate secretary") ||
+      roleLower.includes("house secretary") ||
+      roleLower.includes("administrative staff") ||
+      roleLower.includes("governor") ||
+      roleLower === "usg president" ||
+      roleLower === "president" ||
+      roleLower === "usg vice president" ||
+      roleLower === "vice president" ||
+      roleLower === "usg executive secretary" ||
+      roleLower === "executive secretary" ||
+      roleLower === "usg treasurer" ||
+      roleLower === "treasurer" ||
+      roleLower === "usg auditor" ||
+      roleLower === "auditor"
+    ) {
+      return false;
+    }
+
+    // Must contain "senator"
+    return roleLower.includes("senator");
+  };
 
   const filteredMembers = members
     .filter((member) => {
+      // Include only Senators & Senate leadership on Legislative page
+      if (!isSenatorRole(member.role)) return false;
+
       const matchesSearch =
         !searchQuery.trim() ||
         member.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -339,16 +348,20 @@ export default function LegislativePage() {
         member.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesDepartment =
-        selectedDepartment === "ALL" || member.department === selectedDepartment;
-
-      return matchesSearch && matchesDepartment;
+      return matchesSearch;
     })
     .sort((a, b) => {
-      const rankA = getRoleRank(a);
-      const rankB = getRoleRank(b);
+      const rankA = getLegislativeRank(a);
+      const rankB = getLegislativeRank(b);
       if (rankA !== rankB) {
         return rankA - rankB;
+      }
+      
+      // Sort rank 4 Legislative Members alphabetically by Last Name
+      const lastNameA = getLastName(a.name || "");
+      const lastNameB = getLastName(b.name || "");
+      if (lastNameA !== lastNameB) {
+        return lastNameA.localeCompare(lastNameB);
       }
       return (a.name || "").localeCompare(b.name || "");
     });
@@ -361,7 +374,6 @@ export default function LegislativePage() {
 
   const handleClearFilters = () => {
     setSearchQuery("");
-    setSelectedDepartment("ALL");
   };
 
   return (
@@ -371,127 +383,37 @@ export default function LegislativePage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-slate-200 pb-8"
+          className="border-b border-slate-200 pb-6"
         >
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#173490]/20 bg-[#173490]/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#173490]">
-              <span className="h-2 w-2 rounded-full bg-[#E7C609]" />
-              Official Directory
-            </div>
-            <h1 className="text-4xl font-black tracking-[-0.06em] text-slate-900 sm:text-5xl">
-              USG Legislative Branch
-            </h1>
-            <p className="mt-4 text-slate-600 max-w-3xl text-base sm:text-lg leading-relaxed">
-              The legislative body responsible for enacting resolutions, policy measures, budget allocations, and student ordinances.
-            </p>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#173490]/20 bg-[#173490]/5 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#173490]">
+            <span className="h-2 w-2 rounded-full bg-[#E7C609]" />
+            Official Directory
           </div>
+          <h1 className="text-4xl font-black tracking-[-0.06em] text-slate-900 sm:text-5xl">
+            USG Legislative Branch
+          </h1>
+          <p className="mt-4 text-slate-600 max-w-3xl text-base sm:text-lg leading-relaxed">
+            The legislative body responsible for enacting resolutions, policy measures, budget allocations, and student ordinances.
+          </p>
         </motion.div>
 
-        {/* Search & Filter Controls */}
-        <div className="mt-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-slate-50 border border-slate-200/80 p-4 rounded-2xl shadow-xs">
-          {/* Search Input */}
-          <div className="relative flex-1 min-w-[280px]">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search by name, role, department, or email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#173490] focus:border-transparent transition"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Department Filter */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[200px]">
-              <select
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="w-full appearance-none bg-white border border-slate-200 py-2.5 pl-3.5 pr-9 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#173490] focus:border-transparent transition cursor-pointer"
-              >
-                <option value="ALL">All Departments</option>
-                {departments.map((dept: any) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </div>
-            </div>
-
-            {(searchQuery || selectedDepartment !== "ALL") && (
-              <button
-                onClick={handleClearFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-[#173490] bg-[#173490]/10 hover:bg-[#173490] hover:text-white rounded-xl transition cursor-pointer"
-              >
-                <span>Reset Filters</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Results Counter */}
-        <div className="mt-4 flex items-center justify-between text-xs text-slate-500 font-medium">
+        {/* Results Counter & Search */}
+        <div className="mt-4 flex items-center justify-between text-xs text-slate-500 font-medium min-h-[40px]">
           <span>
             Showing {filteredMembers.length > 0 ? (page - 1) * membersPerPage + 1 : 0} -{" "}
             {Math.min(page * membersPerPage, filteredMembers.length)} of {filteredMembers.length} member
             {filteredMembers.length === 1 ? "" : "s"}
           </span>
-          {members.length > 0 && (
-            <span className="hidden sm:inline">
-              Total directory: {members.length} member{members.length === 1 ? "" : "s"}
-            </span>
-          )}
+
+          <div className="flex justify-end">
+            <ExpandableSearchBar
+              expandDirection="left"
+              width={240}
+              placeholder="Search senator..."
+              value={searchQuery}
+              onSearch={(q) => setSearchQuery(q)}
+            />
+          </div>
         </div>
 
         {loading ? (
@@ -519,20 +441,20 @@ export default function LegislativePage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900">No members found</h3>
             <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
-              We couldn't find any legislative members matching your search criteria. Try adjusting your search query or department filter.
+              We couldn't find any legislative members matching your search criteria. Try adjusting your search query.
             </p>
             <button
               onClick={handleClearFilters}
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#173490] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1e4bb8] cursor-pointer shadow-sm"
             >
-              Clear Search & Filters
+              Clear Search
             </button>
           </div>
         ) : (
           <>
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${page}-${searchQuery}-${selectedDepartment}`}
+                key={`${page}-${searchQuery}`}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
@@ -540,22 +462,7 @@ export default function LegislativePage() {
                 className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-2"
               >
                 {displayedMembers.map((member, index) => {
-                  const roleLower = (member.role || "").toLowerCase().trim();
-                  const isExecutive =
-                    roleLower === "usg president" ||
-                    roleLower === "president" ||
-                    roleLower === "usg vice president" ||
-                    roleLower === "vice president" ||
-                    roleLower === "usg executive secretary" ||
-                    roleLower === "executive secretary" ||
-                    roleLower === "usg treasurer" ||
-                    roleLower === "treasurer" ||
-                    roleLower === "usg auditor" ||
-                    roleLower === "auditor" ||
-                    roleLower.includes("governor");
-
-                  const label = isExecutive ? "USG EXECUTIVE" : "Legislative Member";
-
+                  const label = getLegislativeSectionLabel(member);
                   return (
                     <div key={member.id || index}>
                       <ProfileCard {...member} sectionLabel={label} />
