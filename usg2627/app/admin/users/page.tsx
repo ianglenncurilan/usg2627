@@ -73,7 +73,7 @@ export default function AdminUsersPage() {
         // Fallback to direct Supabase fetch from user_profiles table
         const { data } = await supabase
           .from("user_profiles")
-          .select("*")
+          .select("id, user_id, email, full_name, role, is_verified, created_at")
           .order("created_at", { ascending: false });
 
         setUsersList(data || []);

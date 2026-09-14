@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { invalidateCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import {
   Pagination,
@@ -28,6 +29,10 @@ export const departmentOptions = [
 ];
 
 export const roleOptions = [
+  "CSU President",
+  "CSU VPSAS",
+  "OSLD Director",
+  "USG Executive",
   "USG Adviser",
   "USG President",
   "USG Vice President",
@@ -179,7 +184,7 @@ export default function AdminMembersPage() {
     try {
       const { data, error } = await supabase
         .from("members")
-        .select("*")
+        .select("id, name, full_name, slug, role, role_badge, position, title, department, department_name, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -307,13 +312,15 @@ export default function AdminMembersPage() {
       const { data: insertedData, error: insertError } = await supabase
         .from("members")
         .insert(newRecord)
-        .select("*");
+        .select("id");
 
       if (insertError) {
         console.error("Supabase insert error details:", insertError);
         setErrorMessageModal(`Supabase Database Error: ${insertError.message}\n\nPlease make sure to execute the updated 006_create_members.sql migration script in your Supabase SQL Editor.`);
         setDbError(true);
       } else {
+        invalidateCache("cabinet_members");
+        invalidateCache("legislative_members");
         showToast("USG Member added successfully to Supabase database!");
         setDbError(false);
         await fetchMembers();
@@ -395,6 +402,8 @@ export default function AdminMembersPage() {
         console.error("Supabase update error:", error);
         setErrorMessageModal(`Supabase Update Error: ${error.message}`);
       } else {
+        invalidateCache("cabinet_members");
+        invalidateCache("legislative_members");
         showToast("Member updated successfully in Supabase database!");
         await fetchMembers();
         setIsEditModalOpen(false);
@@ -421,6 +430,8 @@ export default function AdminMembersPage() {
         console.warn("Delete DB error:", error.message);
         setErrorMessageModal(`Failed to delete member: ${error.message}`);
       } else {
+        invalidateCache("cabinet_members");
+        invalidateCache("legislative_members");
         setMembersList((prev) => prev.filter((m) => m.id !== deletingMember.id));
         showToast("USG Member deleted successfully!");
       }

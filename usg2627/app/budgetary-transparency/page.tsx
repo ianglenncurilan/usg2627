@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { supabase } from "@/lib/supabase";
+import { fetchWithCache } from "@/lib/cache";
 import { motion } from "framer-motion";
 import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
@@ -128,12 +129,16 @@ export default function BudgetaryTransparencyPage() {
 
   const fetchBudgetData = async () => {
     try {
-      const { data, error } = await supabase
-        .from("budgetary_transparency")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const data = await fetchWithCache("budget_transparency", async () => {
+        const { data, error } = await supabase
+          .from("budgetary_transparency")
+          .select("id, event_name, description, file_url, file_name, status, amount, academic_year, created_at")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      });
 
-      if (error || !data || data.length === 0) {
+      if (!data || data.length === 0) {
         setBudgetItems(fallbackBudgetData);
       } else {
         setBudgetItems(data);

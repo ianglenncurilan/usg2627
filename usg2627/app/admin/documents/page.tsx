@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { invalidateCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
+import { EditIcon } from "@/components/icons/EditIcon";
+import { Trash2Icon } from "@/components/icons/Trash2Icon";
 import {
   Pagination,
   PaginationContent,
@@ -44,6 +47,21 @@ export default function AdminDocumentsPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("Admin");
+
+  // Edit & Delete State
+  const [editingDocument, setEditingDocument] = useState<any | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    type: "RESOLUTION",
+    tracking_number: "",
+    issuing_body: "",
+    author: "",
+    description: "",
+    status: "pending",
+  });
 
   useEffect(() => {
     setCurrentPage(1);
@@ -91,7 +109,7 @@ export default function AdminDocumentsPage() {
   const fetchDocuments = async () => {
     const { data, error } = await supabase
       .from("documents")
-      .select("*")
+      .select("id, title, type, tracking_number, issuing_body, author, description, file_url, file_name, file_size, status, created_at, published_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -165,6 +183,8 @@ export default function AdminDocumentsPage() {
         console.error("Error inserting document:", insertError);
         alert("Error saving document. Please try again.");
       } else {
+        invalidateCache("home_documents");
+        invalidateCache("public_documents");
         alert("Document uploaded successfully! It is now pending approval.");
         setFormData({
           title: "",
@@ -196,6 +216,8 @@ export default function AdminDocumentsPage() {
       console.error("Error approving document:", error);
       alert("Error approving document.");
     } else {
+      invalidateCache("home_documents");
+      invalidateCache("public_documents");
       fetchDocuments();
     }
   };
@@ -210,6 +232,8 @@ export default function AdminDocumentsPage() {
       console.error("Error publishing document:", error);
       alert("Error publishing document.");
     } else {
+      invalidateCache("home_documents");
+      invalidateCache("public_documents");
       fetchDocuments();
     }
   };
@@ -224,7 +248,121 @@ export default function AdminDocumentsPage() {
       console.error("Error rejecting document:", error);
       alert("Error rejecting document.");
     } else {
+      invalidateCache("home_documents");
+      invalidateCache("public_documents");
       fetchDocuments();
+    }
+  };
+
+  const openEditModal = (doc: any) => {
+    setEditingDocument(doc);
+    setEditFormData({
+      title: doc.title || "",
+      type: doc.type || "RESOLUTION",
+      tracking_number: doc.tracking_number || "",
+      issuing_body: doc.issuing_body || "",
+      author: doc.author || "",
+      description: doc.description || "",
+      status: doc.status || "pending",
+    });
+    setEditFile(null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDocument) return;
+    setSavingEdit(true);
+
+    try {
+      let fileUrl = editingDocument.file_url;
+      let fileName = editingDocument.file_name;
+      let fileSize = editingDocument.file_size;
+
+      if (editFile) {
+        const fileExt = editFile.name.split(".").pop();
+        const fileNameUnique = `${Date.now()}.${fileExt}`;
+        const filePath = `documents/${fileNameUnique}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("documents")
+          .upload(filePath, editFile);
+
+        if (uploadError) {
+          console.error("Error uploading file:", uploadError);
+          alert("Error uploading file. Please try again.");
+          setSavingEdit(false);
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("documents")
+          .getPublicUrl(filePath);
+
+        fileUrl = publicUrl;
+        fileName = editFile.name;
+        fileSize = editFile.size;
+      }
+
+      const updatedFields: any = {
+        title: editFormData.title,
+        type: editFormData.type,
+        tracking_number: editFormData.tracking_number,
+        issuing_body: editFormData.issuing_body,
+        author: editFormData.author,
+        description: editFormData.description,
+        status: editFormData.status,
+        updated_at: new Date().toISOString(),
+        file_url: fileUrl,
+        file_name: fileName,
+        file_size: fileSize,
+      };
+
+      const { error } = await supabase
+        .from("documents")
+        .update(updatedFields)
+        .eq("id", editingDocument.id);
+
+      if (error) {
+        console.error("Error updating document:", error);
+        alert(`Error updating document: ${error.message}`);
+      } else {
+        invalidateCache("home_documents");
+        invalidateCache("public_documents");
+        alert("Document updated successfully!");
+        setIsEditModalOpen(false);
+        setEditingDocument(null);
+        fetchDocuments();
+      }
+    } catch (err: any) {
+      console.error("Edit error:", err);
+      alert("An error occurred while updating the document.");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
+
+    try {
+      const { error } = await supabase
+        .from("documents")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error deleting document:", error);
+        alert(`Error deleting document: ${error.message}`);
+      } else {
+        invalidateCache("home_documents");
+        invalidateCache("public_documents");
+        alert("Document deleted successfully!");
+        fetchDocuments();
+      }
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      alert("An unexpected error occurred while deleting the document.");
     }
   };
 
@@ -466,6 +604,166 @@ export default function AdminDocumentsPage() {
             </div>
           )}
 
+          {/* Edit Document Modal */}
+          {isEditModalOpen && editingDocument && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+              <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="M6 6l12 12" />
+                  </svg>
+                </button>
+
+                <h2 className="mb-4 text-lg font-bold text-slate-900">Edit Document</h2>
+
+                <form onSubmit={handleSaveEdit} className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Document Title *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editFormData.title}
+                        onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Document Type *
+                      </label>
+                      <select
+                        required
+                        value={editFormData.type}
+                        onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value })}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      >
+                        {documentTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Tracking Number *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editFormData.tracking_number}
+                        onChange={(e) => setEditFormData({ ...editFormData, tracking_number: e.target.value })}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Issuing Body *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editFormData.issuing_body}
+                        onChange={(e) => setEditFormData({ ...editFormData, issuing_body: e.target.value })}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Author *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editFormData.author}
+                        onChange={(e) => setEditFormData({ ...editFormData, author: e.target.value })}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Status *
+                      </label>
+                      <select
+                        required
+                        value={editFormData.status}
+                        onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="published">Published</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Replace File (Optional)
+                      </label>
+                      <input
+                        type="file"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setEditFile(e.target.files[0]);
+                          }
+                        }}
+                        accept=".pdf,.doc,.docx"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      />
+                      {editingDocument.file_name && !editFile && (
+                        <p className="mt-1 text-xs text-slate-500">Current file: {editingDocument.file_name}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Description
+                    </label>
+                    <textarea
+                      value={editFormData.description}
+                      onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditModalOpen(false)}
+                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingEdit}
+                      className="rounded-lg bg-[#173490] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1e4bb8] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {savingEdit ? "Saving..." : "Save Changes"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {/* Documents List */}
           <div className="rounded-xl bg-white p-6 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -631,6 +929,22 @@ export default function AdminDocumentsPage() {
                               </span>
                             )
                           )}
+                          <button
+                            onClick={() => openEditModal(doc)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition cursor-pointer shadow-xs"
+                            title="Edit Document"
+                          >
+                            <EditIcon size={14} />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDocument(doc.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3 py-1.5 text-xs font-bold text-white transition cursor-pointer shadow-xs"
+                            title="Delete Document"
+                          >
+                            <Trash2Icon size={14} color="#ffffff" />
+                            <span>Delete</span>
+                          </button>
                         </div>
                       </div>
                     </div>

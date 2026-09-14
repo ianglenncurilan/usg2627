@@ -82,7 +82,7 @@ export default function AdminOrgStructurePage() {
 
       const { data, error } = await supabase
         .from("org_charts")
-        .select("*")
+        .select("chart_key, title, subtitle, image_url")
         .order("chart_key", { ascending: true });
 
       const merged = defaultChartTemplates.map((template) => {

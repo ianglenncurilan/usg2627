@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { invalidateCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 
 const statusOptions = [
@@ -113,7 +114,7 @@ export default function AdminBudgetaryTransparencyPage() {
     try {
       const { data, error } = await supabase
         .from("budgetary_transparency")
-        .select("*")
+        .select("id, event_name, description, file_url, file_name, status, amount, academic_year, created_at")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -207,6 +208,7 @@ export default function AdminBudgetaryTransparencyPage() {
         console.warn("DB update note:", error.message);
       }
 
+      invalidateCache("budget_transparency");
       // Update in local state immediately
       setBudgetList((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
@@ -259,6 +261,7 @@ export default function AdminBudgetaryTransparencyPage() {
         console.warn("DB edit update note:", error.message);
       }
 
+      invalidateCache("budget_transparency");
       // Update local state
       setBudgetList((prev) =>
         prev.map((item) => (item.id === editingItem.id ? { ...item, ...updatedFields } : item))
@@ -289,6 +292,7 @@ export default function AdminBudgetaryTransparencyPage() {
         console.warn("Delete DB note:", error.message);
       }
 
+      invalidateCache("budget_transparency");
       setBudgetList((prev) => prev.filter((item) => item.id !== id));
       showToast("Record deleted successfully!");
     } catch (err) {

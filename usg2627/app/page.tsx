@@ -6,6 +6,7 @@ import Image from "next/image";
 import GridShell from "./components/GridShell";
 import SectionHeader from "./components/SectionHeader";
 import { supabase } from "@/lib/supabase";
+import { fetchWithCache } from "@/lib/cache";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Pagination,
@@ -176,15 +177,14 @@ export default function Home() {
   useEffect(() => {
     async function fetchNews() {
       try {
-        const { data, error } = await supabase
-          .from("news")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error fetching news:", error);
-          return;
-        }
+        const data = await fetchWithCache("home_news", async () => {
+          const { data, error } = await supabase
+            .from("news")
+            .select("id, category, headline, summary, link_url, image_url, created_at")
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          return data || [];
+        });
 
         if (data && data.length > 0) {
           const featured = data.filter((item: any) => item.category === "FEATURED STORY" || item.category === "RESOLUTION FEATURED STORY");
@@ -212,7 +212,7 @@ export default function Home() {
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching news:", err);
       }
     }
 
@@ -222,15 +222,17 @@ export default function Home() {
   useEffect(() => {
     async function fetchDocumentsData() {
       try {
-        const { data, error } = await supabase
-          .from("documents")
-          .select("*")
-          .eq("status", "published")
-          .order("created_at", { ascending: false });
+        const data = await fetchWithCache("home_documents", async () => {
+          const { data, error } = await supabase
+            .from("documents")
+            .select("id, type, tracking_number, title, published_at, created_at, file_url")
+            .eq("status", "published")
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          return data || [];
+        });
 
-        if (error) {
-          console.error("Error fetching documents:", error);
-        } else if (data) {
+        if (data) {
           // Strictly display only the 4 most recent publications
           setRecentPublications(data.slice(0, 4));
 
@@ -258,7 +260,7 @@ export default function Home() {
           setDocCounts(counts);
         }
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error fetching documents:", err);
       } finally {
         setLoadingPublications(false);
       }

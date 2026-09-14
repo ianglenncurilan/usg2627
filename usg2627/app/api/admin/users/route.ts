@@ -32,7 +32,7 @@ export async function GET() {
     // 2. Merge with user_profiles table from database
     const { data: profileData } = await supabase
       .from("user_profiles")
-      .select("*")
+      .select("id, user_id, email, full_name, role, is_verified, created_at")
       .order("created_at", { ascending: false });
 
     if (profileData && profileData.length > 0) {
@@ -211,7 +211,7 @@ export async function PATCH(req: Request) {
     }
 
     // Fetch user profile first to get target_user_id
-    let profileQuery = supabase.from("user_profiles").select("*");
+    let profileQuery = supabase.from("user_profiles").select("id, user_id, email, full_name, role, is_verified, created_at");
     if (id) profileQuery = profileQuery.eq("id", id);
     else if (user_id) profileQuery = profileQuery.eq("user_id", user_id);
     else if (email) profileQuery = profileQuery.eq("email", email);
@@ -260,7 +260,7 @@ export async function PATCH(req: Request) {
     else if (user_id) query = query.eq("user_id", user_id);
     else if (email) query = query.eq("email", email);
 
-    const { data, error } = await query.select();
+    const { data, error } = await query.select("id, user_id, email, full_name, role, is_verified, created_at");
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -284,7 +284,7 @@ export async function DELETE(req: Request) {
     }
 
     // Fetch user profile first to get auth user_id
-    let profileQuery = supabase.from("user_profiles").select("*");
+    let profileQuery = supabase.from("user_profiles").select("id, user_id, email, full_name, role, is_verified, created_at");
     if (id) profileQuery = profileQuery.eq("id", id);
     else if (emailParam) profileQuery = profileQuery.eq("email", emailParam);
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { invalidateCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import {
   Pagination,
@@ -105,7 +106,7 @@ export default function AdminNewsPage() {
     try {
       const { data, error } = await supabase
         .from("news")
-        .select("*")
+        .select("id, headline, category, summary, link_url, image_url, created_at")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -178,6 +179,7 @@ export default function AdminNewsPage() {
           console.error("Error updating news:", updateError);
           alert("Error updating news article. Please try again.");
         } else {
+          invalidateCache("home_news");
           alert("News publication updated successfully!");
           setIsModalOpen(false);
           setEditingItem(null);
@@ -199,6 +201,7 @@ export default function AdminNewsPage() {
           console.error("Error inserting news:", insertError);
           alert("Error saving news article. Please try again.");
         } else {
+          invalidateCache("home_news");
           alert("News publication created successfully!");
           setFormData({
             headline: "",
@@ -231,6 +234,7 @@ export default function AdminNewsPage() {
       console.error("Error deleting news:", error);
       alert("Error deleting news item.");
     } else {
+      invalidateCache("home_news");
       fetchNews();
     }
   };

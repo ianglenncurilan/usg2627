@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { invalidateCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 
 export default function AdminEventsPage() {
@@ -45,7 +46,7 @@ export default function AdminEventsPage() {
     try {
       const { data, error } = await supabase
         .from("events")
-        .select("*")
+        .select("id, title, description, event_date, location, created_at")
         .order("event_date", { ascending: true });
 
       if (error) {
@@ -58,7 +59,9 @@ export default function AdminEventsPage() {
         setDbError(false);
       }
     } catch (err) {
-      console.error(err);
+      console.error("fetchEvents catch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,6 +98,7 @@ export default function AdminEventsPage() {
         console.error("Error inserting event:", insertError);
         alert(`Error saving event: ${insertError.message}`);
       } else {
+        invalidateCache("events_list");
         alert("Event created successfully!");
         setFormData({
           title: "",
@@ -125,6 +129,7 @@ export default function AdminEventsPage() {
       console.error("Error deleting event:", error);
       alert("Error deleting event.");
     } else {
+      invalidateCache("events_list");
       fetchEvents();
     }
   };

@@ -93,7 +93,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       try {
         const { data, error } = await supabase
           .from("documents")
-          .select("*")
+          .select("id, type, tracking_number, title, published_at, issuing_body, status, file_name, file_url, description")
           .eq("id", id)
           .single();
 

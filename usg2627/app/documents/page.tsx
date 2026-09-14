@@ -6,6 +6,7 @@ import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { DropdownMenuSelect } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { fetchWithCache } from "@/lib/cache";
 import { motion, AnimatePresence } from "framer-motion";
 import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
@@ -146,12 +147,16 @@ function DocumentsContent() {
 
   const fetchDocuments = async () => {
     try {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const data = await fetchWithCache("public_documents", async () => {
+        const { data, error } = await supabase
+          .from("documents")
+          .select("id, title, tracking_number, issuing_body, type, status, published_at, created_at, file_url")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      });
 
-      if (error || !data || data.length === 0) {
+      if (!data || data.length === 0) {
         setDocuments(seedPublicDocuments);
       } else {
         setDocuments(data);

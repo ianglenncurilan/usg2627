@@ -68,7 +68,7 @@ export default function AdminPage() {
     try {
       const { data: allDocs, error: allDocsError } = await supabase
         .from("documents")
-        .select("*")
+        .select("id, title, type, tracking_number, status, author, created_at, published_at, created_by")
         .order("created_at", { ascending: false });
 
       if (allDocsError) {

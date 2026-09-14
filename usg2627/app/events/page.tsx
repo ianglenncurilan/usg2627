@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchWithCache, invalidateCache } from "@/lib/cache";
 import GridShell from "../components/GridShell";
 import { motion, AnimatePresence } from "framer-motion";
 import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
@@ -186,17 +187,19 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchEvents() {
+    async function fetchEvents(skipCache = false) {
       try {
-        const { data, error } = await supabase
-          .from("events")
-          .select("*")
-          .order("event_date", { ascending: false });
+        if (skipCache) invalidateCache("events_list");
+        const data = await fetchWithCache("events_list", async () => {
+          const { data, error } = await supabase
+            .from("events")
+            .select("id, title, description, event_date, location, created_at")
+            .order("event_date", { ascending: false });
+          if (error) throw error;
+          return data || [];
+        });
 
-        if (error) {
-          console.error("Error fetching events:", error);
-          setEvents(seedEvents);
-        } else if (data && data.length > 0) {
+        if (data && data.length > 0) {
           setEvents(data);
         } else {
           setEvents(seedEvents);
@@ -216,7 +219,7 @@ export default function EventsPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "events" },
         () => {
-          fetchEvents();
+          fetchEvents(true);
         }
       )
       .subscribe();

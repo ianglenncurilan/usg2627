@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
 import ProfileCard from "../components/ProfileCard";
 import { supabase } from "@/lib/supabase";
+import { fetchWithCache } from "@/lib/cache";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Pagination,
@@ -278,12 +279,16 @@ export default function LegislativePage() {
 
   const fetchMembers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("members")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const data = await fetchWithCache("legislative_members", async () => {
+        const { data, error } = await supabase
+          .from("members")
+          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, filed_bills, created_at")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      });
 
-      if (error || !data || data.length === 0) {
+      if (!data || data.length === 0) {
         setMembers(seedMembers);
       } else {
         const mapped = data.map((m: any) => ({

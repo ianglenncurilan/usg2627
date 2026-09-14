@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
 import ProfileCard from "../components/ProfileCard";
 import { supabase } from "@/lib/supabase";
+import { fetchWithCache } from "@/lib/cache";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Pagination,
@@ -480,6 +481,11 @@ const initialCabinetDepartments: CabinetDepartment[] = [
 ];
 
 const ROLE_PRIORITY_ORDER: string[] = [
+  "csu president",
+  "csu vpsas",
+  "osld director",
+  "usg executive",
+  "executive officer",
   "usg adviser",
   "adviser",
   "usg president",
@@ -533,6 +539,11 @@ const isExecutiveRole = (role: string = "") => {
   if (!roleLower) return false;
 
   return (
+    roleLower.includes("csu president") ||
+    roleLower.includes("csu vpsas") ||
+    roleLower.includes("osld director") ||
+    roleLower.includes("usg executive") ||
+    roleLower.includes("executive officer") ||
     roleLower === "usg adviser" ||
     roleLower === "adviser" ||
     roleLower === "usg president" ||
@@ -637,12 +648,16 @@ export default function CabinetPage() {
 
   const fetchDynamicMembers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("members")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const data = await fetchWithCache("cabinet_members", async () => {
+        const { data, error } = await supabase
+          .from("members")
+          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, filed_bills, created_at")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      });
 
-      if (!error && data && data.length > 0) {
+      if (data && data.length > 0) {
         // 1. Process Executive Profiling Members
         const mappedData = data.map((m: any) => ({
           id: m.id,
