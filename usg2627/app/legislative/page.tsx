@@ -327,7 +327,9 @@ export default function LegislativePage() {
       roleLower === "usg treasurer" ||
       roleLower === "treasurer" ||
       roleLower === "usg auditor" ||
-      roleLower === "auditor"
+      roleLower === "auditor" ||
+      roleLower === "usg adviser" ||
+      roleLower === "adviser"
     ) {
       return false;
     }

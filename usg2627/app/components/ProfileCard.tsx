@@ -71,6 +71,8 @@ export default function ProfileCard({
   // Compute upper right section label automatically if not explicitly provided
   const roleLower = (role || "").toLowerCase().trim();
   const isExecutive =
+    roleLower === "usg adviser" ||
+    roleLower === "adviser" ||
     roleLower === "usg president" ||
     roleLower === "president" ||
     roleLower === "usg vice president" ||

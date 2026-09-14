@@ -28,6 +28,7 @@ export const departmentOptions = [
 ];
 
 export const roleOptions = [
+  "USG Adviser",
   "USG President",
   "USG Vice President",
   "USG Executive Secretary",
