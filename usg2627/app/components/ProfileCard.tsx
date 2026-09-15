@@ -241,12 +241,10 @@ export default function ProfileCard({
                 href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1877F2] text-white hover:bg-[#166fe5] shadow-xs transition"
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:opacity-80 transition"
                 aria-label="Facebook Profile"
               >
-                <svg className="h-4.5 w-4.5 fill-white" viewBox="0 0 24 24">
-                  <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.77.386v3.315c-.473-.048-1.026-.073-1.637-.073-1.897 0-2.482.723-2.482 2.378v1.449h4.241l-.592 3.667h-3.649v7.98H9.101z" />
-                </svg>
+                <img src="/facebook-icon.svg" alt="Facebook Profile" className="h-8 w-8" />
               </a>
             </div>
 

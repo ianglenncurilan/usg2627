@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import Modal from "../../components/Modal";
 
@@ -13,6 +14,10 @@ export default function AdminUsersPage() {
   const [usersList, setUsersList] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -41,6 +46,10 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, statusFilter]);
+
+  useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -62,22 +71,36 @@ export default function AdminUsersPage() {
     return () => subscription.unsubscribe();
   }, [router]);
 
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = {};
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+    return headers;
+  };
+
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/admin/users");
-      const json = await res.json();
+      const data = await fetchWithCache("admin_users_list", async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch("/api/admin/users", { headers });
+        const json = await res.json();
 
-      if (json.success && json.users && Array.isArray(json.users)) {
-        setUsersList(json.users);
-      } else {
-        // Fallback to direct Supabase fetch from user_profiles table
-        const { data } = await supabase
-          .from("user_profiles")
-          .select("id, user_id, email, full_name, role, is_verified, created_at")
-          .order("created_at", { ascending: false });
+        if (json.success && json.users && Array.isArray(json.users)) {
+          return json.users;
+        } else {
+          // Fallback to direct Supabase fetch from user_profiles table
+          const { data } = await supabase
+            .from("user_profiles")
+            .select("id, user_id, email, full_name, role, is_verified, created_at")
+            .order("created_at", { ascending: false });
 
-        setUsersList(data || []);
-      }
+          return data || [];
+        }
+      });
+
+      setUsersList(data || []);
     } catch (err) {
       console.error("fetchUsers error:", err);
       setUsersList([]);
@@ -105,10 +128,12 @@ export default function AdminUsersPage() {
         return;
       }
 
+      const authHeaders = await getAuthHeaders();
+
       // Send creation request to Next.js API route (/api/admin/users) with auto-confirmation flag
       const response = await fetch("/api/admin/users", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           email: cleanEmail,
           password: formData.password,
@@ -132,6 +157,8 @@ export default function AdminUsersPage() {
       } else {
         await fetchUsers();
       }
+
+      invalidateCache("admin_users_list");
 
       showToast(`User account (${cleanEmail}) created in Supabase Auth successfully!`);
 
@@ -158,9 +185,10 @@ export default function AdminUsersPage() {
     const newVerifiedStatus = !user.is_verified;
 
     try {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           id: user.id,
           user_id: user.user_id,
@@ -179,6 +207,7 @@ export default function AdminUsersPage() {
           .eq("id", user.id);
       }
 
+      invalidateCache("admin_users_list");
       setUsersList((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, is_verified: newVerifiedStatus } : u))
       );
@@ -197,9 +226,10 @@ export default function AdminUsersPage() {
     const newRole = user.role === "Admin" ? "User" : "Admin";
 
     try {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           id: user.id,
           role: newRole,
@@ -215,6 +245,7 @@ export default function AdminUsersPage() {
           .eq("id", user.id);
       }
 
+      invalidateCache("admin_users_list");
       setUsersList((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
       );
@@ -228,10 +259,11 @@ export default function AdminUsersPage() {
     if (!deletingUser) return;
 
     try {
+      const authHeaders = await getAuthHeaders();
       // 1. Call API route to delete from Supabase Auth (auth.users) & user_profiles
       const res = await fetch(
         `/api/admin/users?id=${deletingUser.id}&email=${encodeURIComponent(deletingUser.email || "")}`,
-        { method: "DELETE" }
+        { method: "DELETE", headers: authHeaders }
       );
 
       // 2. Direct RPC fallback call to permanently delete from auth.users database
@@ -249,6 +281,8 @@ export default function AdminUsersPage() {
         .from("user_profiles")
         .delete()
         .or(`id.eq.${deletingUser.id},email.eq.${deletingUser.email}`);
+
+      invalidateCache("admin_users_list");
 
       setUsersList((prev) => prev.filter((u) => u.id !== deletingUser.id && u.email !== deletingUser.email));
       showToast(`User account (${deletingUser.email || deletingUser.full_name}) deleted from Supabase Auth & system!`);

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import Modal from "../../components/Modal";
 
@@ -80,10 +81,14 @@ export default function AdminOrgStructurePage() {
         if (stored) localCache = JSON.parse(stored);
       } catch {}
 
-      const { data, error } = await supabase
-        .from("org_charts")
-        .select("chart_key, title, subtitle, image_url")
-        .order("chart_key", { ascending: true });
+      const data = await fetchWithCache("admin_org_charts", async () => {
+        const { data, error } = await supabase
+          .from("org_charts")
+          .select("chart_key, title, subtitle, image_url")
+          .order("chart_key", { ascending: true });
+        if (error) return [];
+        return data || [];
+      });
 
       const merged = defaultChartTemplates.map((template) => {
         const dbFound = data?.find((d: any) => d.chart_key === template.chart_key);
@@ -142,6 +147,7 @@ export default function AdminOrgStructurePage() {
         .upsert(updatedItem, { onConflict: "chart_key" });
 
       if (error) console.warn("Supabase org_charts upsert note:", error.message);
+      invalidateCache("admin_org_charts");
 
       // 2. Sync to localStorage for instant local reactivity across tabs/pages
       try {

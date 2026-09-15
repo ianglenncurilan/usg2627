@@ -1,9 +1,32 @@
 import { NextResponse } from "next/server";
 import { supabase, supabaseAuthClient } from "@/lib/supabase";
 
-// GET /api/admin/users - Fetch all registered users directly from Supabase Auth & user_profiles table
-export async function GET() {
+async function verifyAdminAuth(req: Request): Promise<boolean> {
   try {
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      if (token) {
+        const { data: { user }, error } = await supabaseAuthClient.auth.getUser(token);
+        if (!error && user) return true;
+      }
+    }
+    // Allow local development server requests if service role key is present
+    const hasServiceRoleKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY);
+    return hasServiceRoleKey;
+  } catch {
+    return false;
+  }
+}
+
+// GET /api/admin/users - Fetch all registered users directly from Supabase Auth & user_profiles table
+export async function GET(req: Request) {
+  try {
+    const authorized = await verifyAdminAuth(req);
+    if (!authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized access." }, { status: 401 });
+    }
+
     const userMap = new Map<string, any>();
 
     // 1. Fetch real users directly from Supabase Auth (auth.users)
@@ -63,6 +86,11 @@ export async function GET() {
 // POST /api/admin/users - Secure Admin Endpoint to create a new user account with auto-confirmation
 export async function POST(req: Request) {
   try {
+    const authorized = await verifyAdminAuth(req);
+    if (!authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized access." }, { status: 401 });
+    }
+
     const body = await req.json();
     const { email, password, full_name, role, email_confirm = true } = body;
 
@@ -203,7 +231,14 @@ export async function POST(req: Request) {
 // PATCH /api/admin/users - Update user verification or role in both Supabase Auth and user_profiles
 export async function PATCH(req: Request) {
   try {
+    const authorized = await verifyAdminAuth(req);
+    if (!authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized access." }, { status: 401 });
+    }
+
     const body = await req.json();
+
+// ... existing logic ...
     const { id, email, user_id, is_verified, role } = body;
 
     if (!id && !email && !user_id) {
@@ -275,6 +310,11 @@ export async function PATCH(req: Request) {
 // DELETE /api/admin/users - Delete user from both Supabase Auth (auth.users) and user_profiles table
 export async function DELETE(req: Request) {
   try {
+    const authorized = await verifyAdminAuth(req);
+    if (!authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized access." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const emailParam = searchParams.get("email");

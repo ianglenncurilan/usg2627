@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { invalidateCache } from "@/lib/cache";
+import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import {
   Pagination,
@@ -182,32 +182,37 @@ export default function AdminMembersPage() {
 
   const fetchMembers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("members")
-        .select("id, name, full_name, slug, role, role_badge, position, title, department, department_name, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at, updated_at")
-        .order("created_at", { ascending: false });
+      const data = await fetchWithCache("admin_members_list", async () => {
+        const { data, error } = await supabase
+          .from("members")
+          .select("id, name, full_name, slug, role, role_badge, position, title, department, department_name, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at, updated_at")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching members:", error);
-        if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-          setDbError(true);
-        }
-        setMembersList(initialSeedMembers);
-      } else {
-        if (data && data.length > 0) {
-          const mappedData = data.map((m: any) => ({
-            ...m,
-            name: m.name || m.full_name || "USG Member",
-          }));
-          setMembersList(mappedData);
-        } else {
-          setMembersList(initialSeedMembers);
+        if (error) {
+          console.error("Error fetching members:", error);
+          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
+            setDbError(true);
+          }
+          return [];
         }
         setDbError(false);
+        return data || [];
+      });
+
+      if (data && data.length > 0) {
+        const mappedData = data.map((m: any) => ({
+          ...m,
+          name: m.name || m.full_name || "USG Member",
+        }));
+        setMembersList(mappedData);
+      } else {
+        setMembersList(initialSeedMembers);
       }
     } catch (err) {
       console.error(err);
       setMembersList(initialSeedMembers);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -321,6 +326,7 @@ export default function AdminMembersPage() {
       } else {
         invalidateCache("cabinet_members");
         invalidateCache("legislative_members");
+        invalidateCache("admin_members_list");
         showToast("USG Member added successfully to Supabase database!");
         setDbError(false);
         await fetchMembers();
@@ -404,6 +410,7 @@ export default function AdminMembersPage() {
       } else {
         invalidateCache("cabinet_members");
         invalidateCache("legislative_members");
+        invalidateCache("admin_members_list");
         showToast("Member updated successfully in Supabase database!");
         await fetchMembers();
         setIsEditModalOpen(false);
@@ -432,6 +439,7 @@ export default function AdminMembersPage() {
       } else {
         invalidateCache("cabinet_members");
         invalidateCache("legislative_members");
+        invalidateCache("admin_members_list");
         setMembersList((prev) => prev.filter((m) => m.id !== deletingMember.id));
         showToast("USG Member deleted successfully!");
       }
@@ -1172,6 +1180,20 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                         className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-[#173490] focus:outline-none"
                       />
                     </div>
+                  </div>
+
+                  {/* Facebook Link */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Facebook Profile URL
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.facebook_url}
+                      onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-[#173490] focus:outline-none"
+                      placeholder="https://facebook.com/username"
+                    />
                   </div>
 
                   {/* Dynamic Filed Bills with Description */}

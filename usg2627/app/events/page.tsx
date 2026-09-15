@@ -81,6 +81,17 @@ const itemVariants = {
   },
 };
 
+function getEventDateStr(evt: any): string {
+  return evt?.event_date || evt?.date || evt?.created_at || "";
+}
+
+function getEventTime(evt: any): number {
+  const str = getEventDateStr(evt);
+  if (!str) return 0;
+  const t = new Date(str).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
 function CountdownTimer({ targetDate }: { targetDate: string }) {
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -88,7 +99,14 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
   useEffect(() => {
     setMounted(true);
     const calculateTimeLeft = () => {
-      const difference = +new Date(targetDate) - +new Date();
+      if (!targetDate) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+      const targetTime = new Date(targetDate).getTime();
+      if (isNaN(targetTime)) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+      const difference = targetTime - Date.now();
       if (difference <= 0) {
         return { days: 0, hours: 0, minutes: 0, seconds: 0 };
       }
@@ -159,6 +177,7 @@ function FormattedDate({ dateString }: { dateString: string }) {
 
   useEffect(() => {
     try {
+      if (!dateString) return;
       const d = new Date(dateString);
       if (!isNaN(d.getTime())) {
         setFormatted(
@@ -193,7 +212,7 @@ export default function EventsPage() {
         const data = await fetchWithCache("events_list", async () => {
           const { data, error } = await supabase
             .from("events")
-            .select("id, title, description, event_date, location, created_at")
+            .select("id, title, description, event_date, location")
             .order("event_date", { ascending: false });
           if (error) throw error;
           return data || [];
@@ -236,9 +255,8 @@ export default function EventsPage() {
     const past: any[] = [];
 
     events.forEach((evt) => {
-      const dateStr = evt.event_date || evt.date || evt.created_at;
-      const d = new Date(dateStr);
-      if (!isNaN(d.getTime()) && d > now) {
+      const t = getEventTime(evt);
+      if (t > 0 && t > now.getTime()) {
         upcoming.push(evt);
       } else {
         past.push(evt);
@@ -246,8 +264,8 @@ export default function EventsPage() {
     });
 
     // Sort upcoming ascending (soonest first), past descending (most recent past first)
-    upcoming.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
-    past.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+    upcoming.sort((a, b) => getEventTime(a) - getEventTime(b));
+    past.sort((a, b) => getEventTime(b) - getEventTime(a));
 
     return { upcomingEvents: upcoming, pastEvents: past };
   }, [events, now]);
@@ -385,7 +403,9 @@ export default function EventsPage() {
           >
             <AnimatePresence mode="popLayout">
               {displayedEvents.map((event) => {
-                const isUpcoming = new Date(event.event_date) > now;
+                const dateStr = getEventDateStr(event);
+                const eventTime = getEventTime(event);
+                const isUpcoming = eventTime > 0 && eventTime > now.getTime();
                 return (
                   <motion.div
                     key={event.id || event.title}
@@ -462,7 +482,7 @@ export default function EventsPage() {
                           <line x1="8" x2="8" y1="2" y2="6" />
                           <line x1="3" x2="21" y1="10" y2="10" />
                         </svg>
-                        <FormattedDate dateString={event.event_date || event.date || event.created_at} />
+                        <FormattedDate dateString={dateStr} />
                       </p>
 
                       {/* Description */}
@@ -473,7 +493,7 @@ export default function EventsPage() {
 
                     {/* Countdown Timer Animation for Upcoming Events */}
                     {isUpcoming ? (
-                      <CountdownTimer targetDate={event.event_date || event.date} />
+                      <CountdownTimer targetDate={dateStr} />
                     ) : (
                       <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                         <span className="font-semibold uppercase tracking-wider text-[10px]">Status</span>

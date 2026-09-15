@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { invalidateCache } from "@/lib/cache";
+import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import {
   Pagination,
@@ -104,20 +104,24 @@ export default function AdminNewsPage() {
 
   const fetchNews = async () => {
     try {
-      const { data, error } = await supabase
-        .from("news")
-        .select("id, headline, category, summary, link_url, image_url, created_at")
-        .order("created_at", { ascending: false });
+      const data = await fetchWithCache("admin_news_list", async () => {
+        const { data, error } = await supabase
+          .from("news")
+          .select("id, headline, category, summary, link_url, image_url, created_at")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching news:", error);
-        if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-          setDbError(true);
+        if (error) {
+          console.error("Error fetching news:", error);
+          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
+            setDbError(true);
+          }
+          return [];
         }
-      } else {
-        setNewsList(data || []);
         setDbError(false);
-      }
+        return data || [];
+      });
+
+      setNewsList(data || []);
     } catch (err) {
       console.error(err);
     }
@@ -180,6 +184,7 @@ export default function AdminNewsPage() {
           alert("Error updating news article. Please try again.");
         } else {
           invalidateCache("home_news");
+          invalidateCache("admin_news_list");
           alert("News publication updated successfully!");
           setIsModalOpen(false);
           setEditingItem(null);
@@ -202,6 +207,7 @@ export default function AdminNewsPage() {
           alert("Error saving news article. Please try again.");
         } else {
           invalidateCache("home_news");
+          invalidateCache("admin_news_list");
           alert("News publication created successfully!");
           setFormData({
             headline: "",

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { invalidateCache } from "@/lib/cache";
+import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 
 export default function AdminEventsPage() {
@@ -44,20 +44,24 @@ export default function AdminEventsPage() {
 
   const fetchEvents = async () => {
     try {
-      const { data, error } = await supabase
-        .from("events")
-        .select("id, title, description, event_date, location, created_at")
-        .order("event_date", { ascending: true });
+      const data = await fetchWithCache("admin_events_list", async () => {
+        const { data, error } = await supabase
+          .from("events")
+          .select("id, title, description, event_date, location")
+          .order("event_date", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching events:", error);
-        if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-          setDbError(true);
+        if (error) {
+          console.error("Error fetching events:", error);
+          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
+            setDbError(true);
+          }
+          return [];
         }
-      } else {
-        setEventsList(data || []);
         setDbError(false);
-      }
+        return data || [];
+      });
+
+      setEventsList(data || []);
     } catch (err) {
       console.error("fetchEvents catch error:", err);
     } finally {
@@ -70,12 +74,25 @@ export default function AdminEventsPage() {
     setSaving(true);
 
     try {
+      if (!formData.event_date) {
+        alert("Please select a date and time for the event.");
+        setSaving(false);
+        return;
+      }
+
+      const parsedDate = new Date(formData.event_date);
+      if (isNaN(parsedDate.getTime())) {
+        alert("Please enter a valid date and time.");
+        setSaving(false);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
 
       const eventPayload: any = {
         title: formData.title,
         description: formData.description,
-        event_date: new Date(formData.event_date).toISOString(),
+        event_date: parsedDate.toISOString(),
         location: formData.location,
       };
 
@@ -99,6 +116,7 @@ export default function AdminEventsPage() {
         alert(`Error saving event: ${insertError.message}`);
       } else {
         invalidateCache("events_list");
+        invalidateCache("admin_events_list");
         alert("Event created successfully!");
         setFormData({
           title: "",
@@ -130,6 +148,7 @@ export default function AdminEventsPage() {
       alert("Error deleting event.");
     } else {
       invalidateCache("events_list");
+      invalidateCache("admin_events_list");
       fetchEvents();
     }
   };

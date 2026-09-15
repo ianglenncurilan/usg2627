@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "../../components/GridShell";
+import { fetchWithCache } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
@@ -91,15 +92,17 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
       }
 
       try {
-        const { data, error } = await supabase
-          .from("documents")
-          .select("id, type, tracking_number, title, published_at, issuing_body, status, file_name, file_url, description")
-          .eq("id", id)
-          .single();
+        const data = await fetchWithCache(`doc_detail_${id}`, async () => {
+          const { data, error } = await supabase
+            .from("documents")
+            .select("id, type, tracking_number, title, published_at, issuing_body, status, file_name, file_url, description")
+            .eq("id", id)
+            .single();
+          if (error) return null;
+          return data;
+        });
 
-        if (error) {
-          console.error("Error fetching document:", error);
-        } else if (data) {
+        if (data) {
           setDoc({
             type: data.type || "DOCUMENT",
             number: data.tracking_number || `Document #${data.id}`,

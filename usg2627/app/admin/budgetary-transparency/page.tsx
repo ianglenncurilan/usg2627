@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { invalidateCache } from "@/lib/cache";
+import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 
 const statusOptions = [
@@ -112,24 +112,27 @@ export default function AdminBudgetaryTransparencyPage() {
 
   const fetchBudgetItems = async () => {
     try {
-      const { data, error } = await supabase
-        .from("budgetary_transparency")
-        .select("id, event_name, description, file_url, file_name, status, amount, academic_year, created_at")
-        .order("created_at", { ascending: false });
+      const data = await fetchWithCache("admin_budget_list", async () => {
+        const { data, error } = await supabase
+          .from("budgetary_transparency")
+          .select("id, event_name, description, file_url, file_name, status, amount, academic_year, created_at")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching budgetary transparency:", error);
-        if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-          setDbError(true);
-        }
-        setBudgetList(initialMockItems);
-      } else {
-        if (data && data.length > 0) {
-          setBudgetList(data);
-        } else {
-          setBudgetList(initialMockItems);
+        if (error) {
+          console.error("Error fetching budgetary transparency:", error);
+          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
+            setDbError(true);
+          }
+          return [];
         }
         setDbError(false);
+        return data || [];
+      });
+
+      if (data && data.length > 0) {
+        setBudgetList(data);
+      } else {
+        setBudgetList(initialMockItems);
       }
     } catch (err) {
       console.error(err);
@@ -209,6 +212,7 @@ export default function AdminBudgetaryTransparencyPage() {
       }
 
       invalidateCache("budget_transparency");
+      invalidateCache("admin_budget_list");
       // Update in local state immediately
       setBudgetList((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
@@ -262,6 +266,7 @@ export default function AdminBudgetaryTransparencyPage() {
       }
 
       invalidateCache("budget_transparency");
+      invalidateCache("admin_budget_list");
       // Update local state
       setBudgetList((prev) =>
         prev.map((item) => (item.id === editingItem.id ? { ...item, ...updatedFields } : item))
@@ -293,6 +298,7 @@ export default function AdminBudgetaryTransparencyPage() {
       }
 
       invalidateCache("budget_transparency");
+      invalidateCache("admin_budget_list");
       setBudgetList((prev) => prev.filter((item) => item.id !== id));
       showToast("Record deleted successfully!");
     } catch (err) {

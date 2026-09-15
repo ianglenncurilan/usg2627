@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../components/AdminSidebar";
 
 const getRelativeTime = (dateString: string) => {
@@ -66,15 +67,17 @@ export default function AdminPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const { data: allDocs, error: allDocsError } = await supabase
-        .from("documents")
-        .select("id, title, type, tracking_number, status, author, created_at, published_at, created_by")
-        .order("created_at", { ascending: false });
-
-      if (allDocsError) {
-        console.error("Error fetching documents for dashboard:", allDocsError);
-        return;
-      }
+      const allDocs = await fetchWithCache("admin_dashboard_docs", async () => {
+        const { data, error } = await supabase
+          .from("documents")
+          .select("id, title, type, tracking_number, status, author, created_at, published_at, created_by")
+          .order("created_at", { ascending: false });
+        if (error) {
+          console.error("Error fetching documents for dashboard:", error);
+          return [];
+        }
+        return data || [];
+      });
 
       if (allDocs) {
         const total = allDocs.length;

@@ -282,7 +282,7 @@ export default function LegislativePage() {
       const data = await fetchWithCache("legislative_members", async () => {
         const { data, error } = await supabase
           .from("members")
-          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, filed_bills, created_at")
+          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at")
           .order("created_at", { ascending: false });
         if (error) throw error;
         return data || [];
@@ -299,6 +299,7 @@ export default function LegislativePage() {
           directLine: m.phone_number || "0917 552 6601",
           email: m.email || "usg@carsu.edu.ph",
           roomAddress: m.room_address || "Room 502, Legislative Building",
+          facebookUrl: m.facebook_url || "#",
           filedBills: m.filed_bills || [],
         }));
         setMembers(mapped);

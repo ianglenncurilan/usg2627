@@ -651,7 +651,7 @@ export default function CabinetPage() {
       const data = await fetchWithCache("cabinet_members", async () => {
         const { data, error } = await supabase
           .from("members")
-          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, filed_bills, created_at")
+          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at")
           .order("created_at", { ascending: false });
         if (error) throw error;
         return data || [];
@@ -668,6 +668,7 @@ export default function CabinetPage() {
           directLine: m.phone_number || "0917 552 6001",
           email: m.email || "usg@carsu.edu.ph",
           roomAddress: m.room_address || "Room 501, Executive Building",
+          facebookUrl: m.facebook_url || "#",
           filedBills: m.filed_bills || [],
         }));
 
@@ -703,6 +704,7 @@ export default function CabinetPage() {
               directLine: m.phone_number || "0917 552 6000",
               email: m.email || "usg@carsu.edu.ph",
               roomAddress: m.room_address || "Executive Suite",
+              facebookUrl: m.facebook_url || "#",
               assignedProjects: m.assigned_projects || 0,
               initiativesLed: m.initiatives_led || 0,
               term: m.term || "2026-2027",
@@ -1433,25 +1435,6 @@ export default function CabinetPage() {
                                   <span>Direct: {member.directLine}</span>
                                 </div>
                               )}
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2.5 text-center">
-                              <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                  Projects
-                                </p>
-                                <p className="text-sm font-black text-[#173490]">
-                                  {member.assignedProjects || 0}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                  Initiatives
-                                </p>
-                                <p className="text-sm font-black text-[#173490]">
-                                  {member.initiativesLed || 0}
-                                </p>
-                              </div>
                             </div>
                           </div>
 

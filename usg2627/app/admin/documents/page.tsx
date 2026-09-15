@@ -37,8 +37,8 @@ export default function AdminDocumentsPage() {
     issuing_body: "",
     author: "",
     description: "",
+    file_url: "",
   });
-  const [file, setFile] = useState<File | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +52,6 @@ export default function AdminDocumentsPage() {
   const [editingDocument, setEditingDocument] = useState<any | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [editFile, setEditFile] = useState<File | null>(null);
   const [editFormData, setEditFormData] = useState({
     title: "",
     type: "RESOLUTION",
@@ -61,6 +60,7 @@ export default function AdminDocumentsPage() {
     author: "",
     description: "",
     status: "pending",
+    file_url: "",
   });
 
   useEffect(() => {
@@ -119,48 +119,11 @@ export default function AdminDocumentsPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
 
     try {
-      let fileUrl = null;
-      let fileName = null;
-      let fileSize = null;
-
-      // Upload file if provided
-      if (file) {
-        const fileExt = file.name.split(".").pop();
-        const fileNameUnique = `${Date.now()}.${fileExt}`;
-        const filePath = `documents/${fileNameUnique}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("documents")
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error("Error uploading file:", uploadError);
-          alert("Error uploading file. Please try again.");
-          setUploading(false);
-          return;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("documents")
-          .getPublicUrl(filePath);
-
-        fileUrl = publicUrl;
-        fileName = file.name;
-        fileSize = file.size;
-      }
-
-      // Insert document record
       const { data: { user } } = await supabase.auth.getUser();
 
       const { error: insertError } = await supabase
@@ -172,9 +135,9 @@ export default function AdminDocumentsPage() {
           issuing_body: formData.issuing_body,
           author: formData.author,
           description: formData.description,
-          file_url: fileUrl,
-          file_name: fileName,
-          file_size: fileSize,
+          file_url: formData.file_url || null,
+          file_name: formData.file_url ? `${formData.title || "Document"} (Link)` : null,
+          file_size: null,
           status: "pending",
           created_by: user?.id,
         });
@@ -185,7 +148,8 @@ export default function AdminDocumentsPage() {
       } else {
         invalidateCache("home_documents");
         invalidateCache("public_documents");
-        alert("Document uploaded successfully! It is now pending approval.");
+        invalidateCache("admin_dashboard_docs");
+        alert("Document added successfully! It is now pending approval.");
         setFormData({
           title: "",
           type: "RESOLUTION",
@@ -193,8 +157,8 @@ export default function AdminDocumentsPage() {
           issuing_body: "",
           author: "",
           description: "",
+          file_url: "",
         });
-        setFile(null);
         setIsModalOpen(false);
         fetchDocuments();
       }
@@ -218,6 +182,7 @@ export default function AdminDocumentsPage() {
     } else {
       invalidateCache("home_documents");
       invalidateCache("public_documents");
+      invalidateCache("admin_dashboard_docs");
       fetchDocuments();
     }
   };
@@ -234,6 +199,7 @@ export default function AdminDocumentsPage() {
     } else {
       invalidateCache("home_documents");
       invalidateCache("public_documents");
+      invalidateCache("admin_dashboard_docs");
       fetchDocuments();
     }
   };
@@ -250,6 +216,7 @@ export default function AdminDocumentsPage() {
     } else {
       invalidateCache("home_documents");
       invalidateCache("public_documents");
+      invalidateCache("admin_dashboard_docs");
       fetchDocuments();
     }
   };
@@ -264,8 +231,8 @@ export default function AdminDocumentsPage() {
       author: doc.author || "",
       description: doc.description || "",
       status: doc.status || "pending",
+      file_url: doc.file_url || "",
     });
-    setEditFile(null);
     setIsEditModalOpen(true);
   };
 
@@ -275,35 +242,6 @@ export default function AdminDocumentsPage() {
     setSavingEdit(true);
 
     try {
-      let fileUrl = editingDocument.file_url;
-      let fileName = editingDocument.file_name;
-      let fileSize = editingDocument.file_size;
-
-      if (editFile) {
-        const fileExt = editFile.name.split(".").pop();
-        const fileNameUnique = `${Date.now()}.${fileExt}`;
-        const filePath = `documents/${fileNameUnique}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("documents")
-          .upload(filePath, editFile);
-
-        if (uploadError) {
-          console.error("Error uploading file:", uploadError);
-          alert("Error uploading file. Please try again.");
-          setSavingEdit(false);
-          return;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("documents")
-          .getPublicUrl(filePath);
-
-        fileUrl = publicUrl;
-        fileName = editFile.name;
-        fileSize = editFile.size;
-      }
-
       const updatedFields: any = {
         title: editFormData.title,
         type: editFormData.type,
@@ -312,10 +250,9 @@ export default function AdminDocumentsPage() {
         author: editFormData.author,
         description: editFormData.description,
         status: editFormData.status,
+        file_url: editFormData.file_url || null,
+        file_name: editFormData.file_url ? `${editFormData.title || "Document"} (Link)` : null,
         updated_at: new Date().toISOString(),
-        file_url: fileUrl,
-        file_name: fileName,
-        file_size: fileSize,
       };
 
       const { error } = await supabase
@@ -329,6 +266,7 @@ export default function AdminDocumentsPage() {
       } else {
         invalidateCache("home_documents");
         invalidateCache("public_documents");
+        invalidateCache("admin_dashboard_docs");
         alert("Document updated successfully!");
         setIsEditModalOpen(false);
         setEditingDocument(null);
@@ -357,6 +295,7 @@ export default function AdminDocumentsPage() {
       } else {
         invalidateCache("home_documents");
         invalidateCache("public_documents");
+        invalidateCache("admin_dashboard_docs");
         alert("Document deleted successfully!");
         fetchDocuments();
       }
@@ -561,13 +500,14 @@ export default function AdminDocumentsPage() {
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Document File
+                        Document Link / URL
                       </label>
                       <input
-                        type="file"
-                        onChange={handleFileChange}
-                        accept=".pdf,.doc,.docx"
+                        type="url"
+                        value={formData.file_url}
+                        onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                        placeholder="https://example.com/document.pdf or Google Drive link"
                       />
                     </div>
                   </div>
@@ -596,7 +536,7 @@ export default function AdminDocumentsPage() {
                       disabled={uploading}
                       className="rounded-lg bg-[#173490] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1e4bb8] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
-                      {uploading ? "Uploading..." : "Upload Document"}
+                      {uploading ? "Saving..." : "Add Document"}
                     </button>
                   </div>
                 </form>
@@ -715,21 +655,15 @@ export default function AdminDocumentsPage() {
                     </div>
                     <div className="md:col-span-2">
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Replace File (Optional)
+                        Document Link / URL
                       </label>
                       <input
-                        type="file"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            setEditFile(e.target.files[0]);
-                          }
-                        }}
-                        accept=".pdf,.doc,.docx"
+                        type="url"
+                        value={editFormData.file_url}
+                        onChange={(e) => setEditFormData({ ...editFormData, file_url: e.target.value })}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
+                        placeholder="https://example.com/document.pdf or Google Drive link"
                       />
-                      {editingDocument.file_name && !editFile && (
-                        <p className="mt-1 text-xs text-slate-500">Current file: {editingDocument.file_name}</p>
-                      )}
                     </div>
                   </div>
                   <div>
@@ -870,13 +804,10 @@ export default function AdminDocumentsPage() {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                               >
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <path d="M14 2v6h6" />
-                                <path d="M16 13H8" />
-                                <path d="M16 17H8" />
-                                <path d="M10 9H8" />
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                               </svg>
-                              View File
+                              View Link
                             </a>
                           )}
                         </div>
