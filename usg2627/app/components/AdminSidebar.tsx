@@ -120,6 +120,50 @@ export default function AdminSidebar() {
     };
   }, [mobileOpen]);
 
+  // Automatic Logout after 1 Minute of Inactivity
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    const performAutoLogout = async () => {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error("Auto logout error:", err);
+      } finally {
+        router.push("/login?reason=inactivity");
+      }
+    };
+
+    const resetInactivityTimer = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(performAutoLogout, 60000); // 1 minute (60,000 ms)
+    };
+
+    const activityEvents = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "click",
+    ];
+
+    // Initialize timer
+    resetInactivityTimer();
+
+    // Listen for any user activity
+    activityEvents.forEach((evt) => {
+      window.addEventListener(evt, resetInactivityTimer, { passive: true });
+    });
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      activityEvents.forEach((evt) => {
+        window.removeEventListener(evt, resetInactivityTimer);
+      });
+    };
+  }, [router]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");

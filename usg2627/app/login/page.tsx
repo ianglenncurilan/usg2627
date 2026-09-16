@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
@@ -13,6 +13,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [inactivityNotice, setInactivityNotice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("reason=inactivity")) {
+      setInactivityNotice(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +100,12 @@ export default function LoginPage() {
                 Sign in to access the administrative portal
               </p>
             </div>
+
+            {inactivityNotice && (
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-center text-xs font-semibold text-amber-900 shadow-2xs">
+                🔒 You were automatically logged out due to 1 minute of inactivity.
+              </div>
+            )}
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
