@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import GridShell from "../components/GridShell";
 import SectionHeader from "../components/SectionHeader";
 import FeedbackForm from "../components/FeedbackForm";
@@ -34,27 +35,32 @@ const defaultChartTemplates = [
     chart_key: "org1",
     title: "USG Organizational Structure",
     subtitle: "Overall Student Government Tree Hierarchy & Governance Diagram",
-    image_url: "/2.png",
+    image_url: "/2.webp",
     badge: "Main Overall Structure",
   },
   {
     chart_key: "org2",
     title: "The USG President's Cabinet Officials",
     subtitle: "Executive Office & Cabinet Officials Roster",
-    image_url: "/3.png",
+    image_url: "/3.webp",
     badge: "Cabinet Officials",
   },
   {
     chart_key: "org3",
     title: "The USG Executive Branch Cabinet Structure",
     subtitle: "Executive Departments & Departmental Crests Hierarchy",
-    image_url: "/org3.png",
+    image_url: "/org3.webp",
     badge: "Executive Departments",
   },
 ];
 
 export default function AboutPage() {
+  const [mounted, setMounted] = useState(false);
   const [selectedModalChart, setSelectedModalChart] = useState<any | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [orgCharts, setOrgCharts] = useState<any[]>(
     defaultChartTemplates.map((t) => ({
       id: t.chart_key,
@@ -378,25 +384,25 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* FULLSCREEN IMAGE MODAL PREVIEW */}
-        {selectedModalChart && (
+        {/* FULLSCREEN IMAGE MODAL PREVIEW (Portaled to document.body to sit above navbar layer) */}
+        {mounted && selectedModalChart && createPortal(
           <div
-            className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl p-4 sm:p-8 animate-in fade-in duration-200"
+            className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl p-4 sm:p-8 pt-20 sm:pt-24 animate-in fade-in duration-200"
             onClick={() => setSelectedModalChart(null)}
           >
-            <div className="absolute top-6 right-6 flex items-center gap-4 z-50">
+            <div className="absolute top-5 right-5 sm:top-6 sm:right-6 flex items-center gap-3 z-50">
               <a
                 href={selectedModalChart.image}
                 download={selectedModalChart.image.replace("/", "")}
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition border border-white/10"
+                className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition border border-white/10 shadow-lg"
               >
                 Download High-Res
               </a>
 
               <button
                 onClick={() => setSelectedModalChart(null)}
-                className="rounded-full bg-white/10 p-2.5 text-white hover:bg-white/20 transition cursor-pointer border border-white/10"
+                className="rounded-full bg-white/10 p-2.5 text-white hover:bg-white/20 transition cursor-pointer border border-white/10 shadow-lg"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -415,15 +421,16 @@ export default function AboutPage() {
               </button>
             </div>
 
-            <div className="t-modal is-open max-w-4xl max-h-[90vh] overflow-auto rounded-2xl border border-white/10 p-2 bg-slate-900 shadow-2xl">
+            <div className="t-modal is-open max-w-5xl max-h-[82vh] overflow-auto rounded-2xl border border-white/10 p-2 bg-slate-900 shadow-2xl my-auto">
               <img
                 src={selectedModalChart.image}
                 alt={selectedModalChart.title}
-                className="w-full h-auto max-h-[85vh] object-contain mx-auto"
+                className="w-full h-auto max-h-[78vh] object-contain mx-auto rounded-xl"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
       </div>

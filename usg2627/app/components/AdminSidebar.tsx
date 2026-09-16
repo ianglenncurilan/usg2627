@@ -16,7 +16,7 @@ const navigation = [
     ),
   },
   {
-    name: "Legislative Management",
+    name: "Member Management",
     href: "/admin/members",
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

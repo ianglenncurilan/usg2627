@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
+import { compressImageBeforeUpload, validateFileUploadSize } from "@/lib/imageUtils";
 import AdminSidebar from "../../components/AdminSidebar";
 import Modal from "../../components/Modal";
 
@@ -26,7 +27,7 @@ const defaultChartTemplates = [
     chart_key: "org3",
     title: "The USG Executive Branch Cabinet Structure",
     subtitle: "Executive Departments & Departmental Crests Hierarchy",
-    image_url: "/org3.png",
+    image_url: "/org3.webp",
     badge: "Executive Departments",
   },
 ];
@@ -107,16 +108,42 @@ export default function AdminOrgStructurePage() {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const res = reader.result as string;
-        setPreviewImage(res);
-        setNewImageInput(res);
-      };
-      reader.readAsDataURL(file);
+      const val = validateFileUploadSize(file, 3);
+      if (!val.valid) {
+        showToast(val.error || "File size too large");
+        return;
+      }
+
+      try {
+        setSaving(true);
+        const processedFile = await compressImageBeforeUpload(file, 1600, 1600, 0.85);
+
+        const formData = new FormData();
+        formData.append("file", processedFile);
+        formData.append("folder", "org-charts");
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setPreviewImage(data.url);
+          setNewImageInput(data.url);
+          showToast("Image uploaded successfully!");
+        } else {
+          showToast(data.error || "Upload failed");
+        }
+      } catch (err: any) {
+        console.error("Org chart upload failed:", err);
+        showToast("Error uploading file");
+      } finally {
+        setSaving(false);
+      }
     }
   };
 

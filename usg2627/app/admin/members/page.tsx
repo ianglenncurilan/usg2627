@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
+import { compressImageBeforeUpload, validateFileUploadSize } from "@/lib/imageUtils";
 import AdminSidebar from "../../components/AdminSidebar";
 import {
   Pagination,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/pagination";
 
 export const departmentOptions = [
+  "Not Applicable (N/A)",
   "Department of Students' Welfare and Development",
   "Department of Public Information and Creative Communications",
   "Department of Interior, Local Governance and Subordinate Units",
@@ -73,7 +75,7 @@ const initialSeedMembers = [
     name: "Cresencio U. Ablan",
     role: "USG Senator",
     department: "Department of Public Information and Creative Communications",
-    profile_url: "/usg.jpg",
+    profile_url: "/usg.webp",
     phone_number: "0917 552 6601",
     email: "cresencio.ablan@carsu.edu.ph",
     facebook_url: "https://facebook.com",
@@ -96,7 +98,7 @@ const initialSeedMembers = [
     name: "Win Gatchalian",
     role: "Legislative President",
     department: "Department of Students' Welfare and Development",
-    profile_url: "/usg.jpg",
+    profile_url: "/usg.webp",
     phone_number: "0917 552 6602",
     email: "win.gatchalian@carsu.edu.ph",
     facebook_url: "https://facebook.com",
@@ -216,28 +218,38 @@ export default function AdminMembersPage() {
     }
   };
 
-  // Image Upload Handler
+  // Image Upload Handler with Cloudflare R2 + Canvas WebP Compression
   const handleImageUpload = async (fileToUpload: File) => {
     try {
       setUploadingImage(true);
-      const fileExt = fileToUpload.name.split(".").pop();
-      const fileName = `member-${Date.now()}.${fileExt}`;
-      const filePath = `members/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(filePath, fileToUpload);
-
-      if (uploadError) {
-        console.warn("Storage upload note:", uploadError.message);
-        return URL.createObjectURL(fileToUpload);
+      // 1. Validate raw file size
+      const val = validateFileUploadSize(fileToUpload, 2);
+      if (!val.valid) {
+        setErrorMessageModal(val.error || "File size too large");
+        return null;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("documents")
-        .getPublicUrl(filePath);
+      // 2. Compress image using Canvas -> WebP
+      const processedFile = await compressImageBeforeUpload(fileToUpload, 1000, 1000, 0.8);
 
-      return publicUrl;
+      // 3. Upload to Cloudflare R2 via API Route
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", processedFile);
+      uploadFormData.append("folder", "members");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      const resData = await res.json();
+      if (!res.ok || resData.error) {
+        console.warn("R2 Upload warning:", resData.error);
+        return URL.createObjectURL(processedFile);
+      }
+
+      return resData.url;
     } catch (err) {
       console.error("Image upload failed:", err);
       return null;
@@ -303,7 +315,7 @@ export default function AdminMembersPage() {
         title: formData.role,
         department: formData.department,
         department_name: formData.department,
-        profile_url: avatarUrl || "/usg.jpg",
+        profile_url: avatarUrl || "/usg.webp",
         phone_number: formData.phone_number || null,
         email: formData.email || null,
         facebook_url: formData.facebook_url || null,
@@ -344,10 +356,14 @@ export default function AdminMembersPage() {
   // Open Edit Modal
   const openEditModal = (item: any) => {
     setEditingItem(item);
+    const normalizedDept =
+      !item.department || item.department === "N/A" || item.department === "Not Applicable"
+        ? "Not Applicable (N/A)"
+        : item.department;
     setFormData({
       name: item.name || "",
       role: item.role || "USG Senator",
-      department: item.department || departmentOptions[0],
+      department: normalizedDept,
       profile_url: item.profile_url || "",
       phone_number: item.phone_number || "",
       email: item.email || "",
@@ -391,7 +407,7 @@ export default function AdminMembersPage() {
         title: formData.role,
         department: formData.department,
         department_name: formData.department,
-        profile_url: avatarUrl || "/usg.jpg",
+        profile_url: avatarUrl || "/usg.webp",
         phone_number: formData.phone_number || null,
         email: formData.email || null,
         facebook_url: formData.facebook_url || null,
@@ -485,9 +501,13 @@ export default function AdminMembersPage() {
       item.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.department?.toLowerCase().includes(searchQuery.toLowerCase());
 
+    const itemDeptLower = item.department?.toLowerCase() || "";
+    const filterLower = departmentFilter.toLowerCase();
+
     const matchesDept =
       departmentFilter === "all" ||
-      item.department?.toLowerCase() === departmentFilter.toLowerCase();
+      itemDeptLower === filterLower ||
+      (filterLower.includes("not applicable") && (!item.department || itemDeptLower === "n/a" || itemDeptLower === "not applicable" || itemDeptLower === "not applicable (n/a)"));
 
     return matchesSearch && matchesDept;
   });
@@ -540,7 +560,7 @@ export default function AdminMembersPage() {
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900">USG Legislative Management</h1>
+                <h1 className="text-2xl font-bold text-slate-900">USG Member Management</h1>
                 <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-[#173490]">
                   Legislative & Cabinet
                 </span>
@@ -694,7 +714,7 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                         <td className="px-6 py-4 align-top">
                           <div className="flex items-center gap-3">
                             <img
-                              src={member.profile_url || "/usg.jpg"}
+                              src={member.profile_url || "/usg.webp"}
                               alt={member.name}
                               className="h-12 w-12 rounded-full object-cover border-2 border-slate-200 shadow-xs flex-shrink-0"
                             />

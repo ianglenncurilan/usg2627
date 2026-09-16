@@ -119,6 +119,35 @@ export default function AdminDocumentsPage() {
     }
   };
 
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  const handleFileUploadToR2 = async (file: File) => {
+    try {
+      setUploadingFile(true);
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("folder", "documents");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setFormData((prev) => ({ ...prev, file_url: data.url }));
+        alert("Document file uploaded successfully!");
+      } else {
+        alert(data.error || "Failed to upload document file");
+      }
+    } catch (err: any) {
+      console.error("Document upload error:", err);
+      alert("Error uploading document file");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
@@ -360,21 +389,10 @@ export default function AdminDocumentsPage() {
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
+              <div>
                 <h1 className="text-2xl font-bold text-slate-900">Documents Management</h1>
-                {currentUserRole === "Admin" ? (
-                  <span className="rounded bg-purple-100 px-2.5 py-0.5 text-xs font-black uppercase text-purple-800">
-                    Admin (Full Control)
-                  </span>
-                ) : (
-                  <span className="rounded bg-blue-100 px-2.5 py-0.5 text-xs font-bold uppercase text-blue-700">
-                    User (Upload Only)
-                  </span>
-                )}
+                <p className="text-slate-600 mt-1">Manage and publish official resolutions, executive orders, and legislative documents.</p>
               </div>
-              <p className="text-slate-600">Upload official documents (Pending review for Users, Full approval for Admins)</p>
-            </div>
             <button
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-2 rounded-lg bg-[#173490] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e4bb8] cursor-pointer"
@@ -507,7 +525,7 @@ export default function AdminDocumentsPage() {
                         value={formData.file_url}
                         onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
-                        placeholder="https://example.com/document.pdf or Google Drive link"
+                        placeholder="https://example.com/document.pdf or link"
                       />
                     </div>
                   </div>

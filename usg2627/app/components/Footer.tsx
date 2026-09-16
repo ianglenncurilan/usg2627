@@ -17,17 +17,17 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3 flex-wrap">
               <img
-                src="/usg.jpg"
+                src="/usg.webp"
                 alt="USG Logo"
                 className="h-10 w-10 sm:h-12 sm:w-12 object-contain shrink-0 rounded-full"
               />
               <img
-                src="/osr.png"
+                src="/osr.webp"
                 alt="OSR Logo"
                 className="h-10 sm:h-12 w-auto object-contain shrink-0 rounded-xl"
               />
               <img
-                src="/rise-logo.png"
+                src="/rise-logo.webp"
                 alt="RISE Logo"
                 className="h-10 sm:h-12 w-auto object-contain shrink-0 rounded-xl"
               />

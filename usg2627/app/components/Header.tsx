@@ -128,7 +128,7 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0 pr-2">
           <img
-            src="/usgwhite.png"
+            src="/usgwhite.webp"
             alt="USG Logo"
             className="h-10 w-auto sm:h-12 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
           />
@@ -214,7 +214,7 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/15 shrink-0 bg-[#010554]">
             <div className="flex items-center gap-3">
               <img
-                src="/usgwhite.png"
+                src="/usgwhite.webp"
                 alt="USG Logo"
                 className="h-9 w-auto object-contain"
               />

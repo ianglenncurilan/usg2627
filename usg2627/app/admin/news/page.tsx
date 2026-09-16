@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
+import { compressImageBeforeUpload, validateFileUploadSize } from "@/lib/imageUtils";
 import AdminSidebar from "../../components/AdminSidebar";
 import {
   Pagination,
@@ -140,28 +141,34 @@ export default function AdminNewsPage() {
     try {
       let imageUrl = editingItem ? editingItem.image_url : null;
 
-      // Upload file to documents bucket if provided
+      // Upload file to Cloudflare R2 if provided
       if (file) {
-        const fileExt = file.name.split(".").pop();
-        const fileNameUnique = `${Date.now()}.${fileExt}`;
-        const filePath = `news/${fileNameUnique}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("documents")
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error("Error uploading file:", uploadError);
-          alert("Error uploading image. Please try again.");
+        const val = validateFileUploadSize(file, 2);
+        if (!val.valid) {
+          alert(val.error || "File size too large");
           setUploading(false);
           return;
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("documents")
-          .getPublicUrl(filePath);
+        const processedFile = await compressImageBeforeUpload(file, 1200, 1200, 0.8);
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", processedFile);
+        uploadFormData.append("folder", "news");
 
-        imageUrl = publicUrl;
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        const resData = await res.json();
+        if (!res.ok || resData.error) {
+          console.error("Error uploading file:", resData.error);
+          alert(resData.error || "Error uploading image. Please try again.");
+          setUploading(false);
+          return;
+        }
+
+        imageUrl = resData.url;
       }
 
       const { data: { user } } = await supabase.auth.getUser();

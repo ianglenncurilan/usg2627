@@ -293,7 +293,7 @@ export default function Home() {
         {/* Background Image (Spans full width and height) */}
         <div className="absolute inset-0 z-0 pointer-events-none select-none">
           <Image
-            src="/usg_background1.png"
+            src="/usg_background1.webp"
             alt="USG Background"
             fill
             priority

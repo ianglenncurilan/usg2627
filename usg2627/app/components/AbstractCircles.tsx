@@ -48,7 +48,7 @@ export default function AbstractCircles({ className = "" }: AbstractCirclesProps
           }}
         >
           <Image
-            src="/12.png"
+            src="/12.webp"
             alt=""
             width={spot.size}
             height={spot.size}
