@@ -651,7 +651,7 @@ export default function CabinetPage() {
       const data = await fetchWithCache("cabinet_members", async () => {
         const { data, error } = await supabase
           .from("members")
-          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at")
+          .select("id, name, full_name, role, role_badge, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at")
           .order("created_at", { ascending: false });
         if (error) throw error;
         return data || [];
@@ -663,6 +663,7 @@ export default function CabinetPage() {
           id: m.id,
           name: m.name || m.full_name || "USG Member",
           role: m.role || "Executive Officer",
+          roleBadge: m.role_badge ? m.role_badge : undefined,
           department: m.department || "Executive Branch",
           avatarSrc: m.profile_url || "/usg.jpg",
           directLine: m.phone_number || "0917 552 6001",
@@ -882,7 +883,7 @@ export default function CabinetPage() {
                 >
                   {displayedExecMembers.map((member, index) => (
                     <div key={member.id || index}>
-                      <ProfileCard {...member} sectionLabel="USG EXECUTIVE" />
+                      <ProfileCard {...member} roleBadge={member.roleBadge} sectionLabel={member.roleBadge || "USG EXECUTIVE"} />
                     </div>
                   ))}
                 </motion.div>
@@ -986,7 +987,7 @@ export default function CabinetPage() {
                   >
                     {displayedCabMembers.map((member, index) => (
                       <div key={member.id || index}>
-                        <ProfileCard {...member} sectionLabel="USG CABINET" />
+                        <ProfileCard {...member} roleBadge={member.roleBadge} sectionLabel={member.roleBadge || "USG CABINET"} />
                       </div>
                     ))}
                   </motion.div>

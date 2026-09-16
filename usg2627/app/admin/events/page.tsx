@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
+import { EditIcon } from "@/components/icons/EditIcon";
 
 export default function AdminEventsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [dbError, setDbError] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -69,6 +72,37 @@ export default function AdminEventsPage() {
     }
   };
 
+  const handleOpenAddModal = () => {
+    setEditingId(null);
+    setFormData({
+      title: "",
+      description: "",
+      event_date: "",
+      location: "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (evt: any) => {
+    setEditingId(evt.id);
+    let dateStr = "";
+    if (evt.event_date) {
+      try {
+        const d = new Date(evt.event_date);
+        dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      } catch {
+        dateStr = evt.event_date;
+      }
+    }
+    setFormData({
+      title: evt.title || "",
+      description: evt.description || "",
+      event_date: dateStr,
+      location: evt.location || "",
+    });
+    setIsModalOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -90,42 +124,56 @@ export default function AdminEventsPage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       const eventPayload: any = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         event_date: parsedDate.toISOString(),
-        location: formData.location,
+        location: formData.location.trim(),
+        updated_at: new Date().toISOString(),
       };
 
-      if (user?.id) {
-        eventPayload.created_by = user.id;
-      }
+      if (editingId) {
+        // UPDATE existing event
+        const { error: updateError } = await supabase
+          .from("events")
+          .update(eventPayload)
+          .eq("id", editingId);
 
-      let { error: insertError } = await supabase
-        .from("events")
-        .insert(eventPayload);
-
-      // Fallback if created_by column is missing in PostgreSQL schema cache
-      if (insertError && insertError.message && (insertError.message.includes("created_by") || insertError.code === "PGRST204")) {
-        delete eventPayload.created_by;
-        const fallbackRes = await supabase.from("events").insert(eventPayload);
-        insertError = fallbackRes.error;
-      }
-
-      if (insertError) {
-        console.error("Error inserting event:", insertError);
-        alert(`Error saving event: ${insertError.message}`);
+        if (updateError) {
+          console.error("Error updating event:", updateError);
+          alert(`Error updating event: ${updateError.message}`);
+        } else {
+          invalidateCache("events_list");
+          invalidateCache("admin_events_list");
+          alert("Event title and details updated successfully!");
+          setIsModalOpen(false);
+          fetchEvents();
+        }
       } else {
-        invalidateCache("events_list");
-        invalidateCache("admin_events_list");
-        alert("Event created successfully!");
-        setFormData({
-          title: "",
-          description: "",
-          event_date: "",
-          location: "",
-        });
-        setIsModalOpen(false);
-        fetchEvents();
+        // INSERT new event
+        if (user?.id) {
+          eventPayload.created_by = user.id;
+        }
+
+        let { error: insertError } = await supabase
+          .from("events")
+          .insert(eventPayload);
+
+        if (insertError && insertError.message && (insertError.message.includes("created_by") || insertError.code === "PGRST204")) {
+          delete eventPayload.created_by;
+          const fallbackRes = await supabase.from("events").insert(eventPayload);
+          insertError = fallbackRes.error;
+        }
+
+        if (insertError) {
+          console.error("Error inserting event:", insertError);
+          alert(`Error saving event: ${insertError.message}`);
+        } else {
+          invalidateCache("events_list");
+          invalidateCache("admin_events_list");
+          alert("Event created successfully!");
+          setIsModalOpen(false);
+          fetchEvents();
+        }
       }
     } catch (error: any) {
       console.error("Error:", error);
@@ -175,57 +223,51 @@ export default function AdminEventsPage() {
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Events Management</h1>
-              <p className="text-slate-600">Schedule, coordinate, and review campus events and student assemblies</p>
+              <p className="text-slate-600">Schedule, coordinate, and edit campus events and student assemblies</p>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#173490] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e4bb8] cursor-pointer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleOpenAddModal}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#173490] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e4bb8] cursor-pointer"
               >
-                <path d="M5 12h14" />
-                <path d="M12 5v14" />
-              </svg>
-              Add Event
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14" />
+                  <path d="M12 5v14" />
+                </svg>
+                Add Event
+              </button>
+            </div>
           </div>
 
           {/* Warning for missing DB table */}
           {dbError && (
             <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 p-5 shadow-sm text-amber-800 animate-in fade-in duration-300">
-              <h3 className="font-bold text-base mb-1">Database Setup Required</h3>
+              <h3 className="font-bold text-base mb-1">Database Migration Recommended</h3>
               <p className="text-sm mb-3">
-                The `events` table was not found in Supabase. Please copy and execute the SQL script in your Supabase dashboard SQL Editor to create it:
+                Please run the SQL migration script in your Supabase dashboard SQL Editor to create or update the `events` table:
               </p>
               <div className="bg-slate-950 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto max-h-40 border border-slate-800">
-                {`-- Run this SQL in Supabase SQL Editor:
-CREATE TABLE IF NOT EXISTS events (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  event_date TIMESTAMP WITH TIME ZONE NOT NULL,
-  location TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id)
-);
+                {`-- Run migration 013 in Supabase SQL Editor:
+ALTER TABLE events ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'Assembly';
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can view events" ON events FOR SELECT USING (true);
-CREATE POLICY "Authenticated users can manage events" ON events FOR ALL USING (auth.role() = 'authenticated');`}
+CREATE POLICY "Anyone can update events" ON events FOR UPDATE USING (true);`}
               </div>
             </div>
           )}
 
-          {/* Add Event Form Modal */}
+          {/* Add / Edit Event Form Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
               <div 
@@ -252,7 +294,9 @@ CREATE POLICY "Authenticated users can manage events" ON events FOR ALL USING (a
                   </svg>
                 </button>
 
-                <h2 className="mb-4 text-lg font-bold text-slate-900">Add New Event</h2>
+                <h2 className="mb-4 text-lg font-bold text-slate-900">
+                  {editingId ? "Edit Event Title & Details" : "Add New Event"}
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
@@ -293,7 +337,7 @@ CREATE POLICY "Authenticated users can manage events" ON events FOR ALL USING (a
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none"
-                        placeholder="e.g. Student Center Assembly Hall"
+                        placeholder="e.g. Student Center"
                       />
                     </div>
                   </div>
@@ -325,7 +369,7 @@ CREATE POLICY "Authenticated users can manage events" ON events FOR ALL USING (a
                       disabled={saving}
                       className="rounded-lg bg-[#173490] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1e4bb8] disabled:opacity-50 cursor-pointer"
                     >
-                      {saving ? "Saving..." : "Save Event"}
+                      {saving ? "Saving..." : editingId ? "Update Event" : "Save Event"}
                     </button>
                   </div>
                 </form>
@@ -372,7 +416,14 @@ CREATE POLICY "Authenticated users can manage events" ON events FOR ALL USING (a
                           <td className="px-6 py-4">{new Date(evt.event_date).toLocaleString()}</td>
                           <td className="px-6 py-4">{evt.location}</td>
                           <td className="px-6 py-4 max-w-xs truncate">{evt.description}</td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenEditModal(evt)}
+                              className="rounded bg-blue-50 hover:bg-blue-100 p-2 text-[#173490] transition cursor-pointer"
+                              title="Edit Event Title & Details"
+                            >
+                              <EditIcon size={16} />
+                            </button>
                             <button
                               onClick={() => handleDelete(evt.id)}
                               className="rounded bg-red-50 hover:bg-red-100 p-2 text-red-600 transition cursor-pointer"

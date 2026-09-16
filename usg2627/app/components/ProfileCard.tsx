@@ -12,6 +12,8 @@ export interface FiledBill {
 export interface ProfileCardProps {
   name: string;
   role: string;
+  roleBadge?: string;
+  role_badge?: string;
   department?: string;
   sectionLabel?: string;
   directLine?: string;
@@ -53,6 +55,8 @@ function formatPhoneNumber(phone?: string): string {
 export default function ProfileCard({
   name,
   role,
+  roleBadge,
+  role_badge,
   department = "University Student Government",
   sectionLabel,
   directLine,
@@ -84,22 +88,12 @@ export default function ProfileCard({
     roleLower === "usg auditor" ||
     roleLower === "auditor";
 
+  const badgeValue = roleBadge || role_badge;
   const computedSectionLabel =
-    sectionLabel || (isExecutive ? "USG Executive" : "Legislative Member");
+    badgeValue || sectionLabel || (isExecutive ? "USG Executive" : "Legislative Member");
 
-  // Default sample filed bills if none provided
-  const activeFiledBills: FiledBill[] = filedBills || [
-    {
-      number: "Senate Bill No. 2627-021",
-      title: "AN ACT ESTABLISHING COLLEGE-BASED MEDICAL RESPONSE TEAMS IN EACH COLLEGE OF CARAGA STATE UNIVERSITY – MAIN CAMPUS",
-      description: "Mandates the creation and training of certified student first-responder units equipped with basic emergency kits across all college departments to ensure immediate health care support during campus activities.",
-    },
-    {
-      number: "Senate Bill No. 2627-022",
-      title: "AN ACT INSTITUTIONALIZING A SEMESTRAL MENTAL HEALTH AND WELLNESS TRIVIA CHALLENGE FOR STUDENTS OF CARAGA STATE UNIVERSITY – MAIN CAMPUS",
-      description: "Establishes semestral campus-wide mental health advocacy events and interactive wellness trivia programs aimed at promoting psychological well-being and student support awareness.",
-    },
-  ];
+  // Filed bills list (empty if none or not applicable)
+  const activeFiledBills: FiledBill[] = filedBills || [];
 
   return (
     <>
@@ -368,30 +362,38 @@ export default function ProfileCard({
                     <span>FILED BILL:</span>
                   </h3>
 
-                  <div className="space-y-4">
-                    {activeFiledBills.map((bill, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.08, duration: 0.3 }}
-                        whileHover={{ y: -2, backgroundColor: "rgba(248,250,252,1)" }}
-                        className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 text-center shadow-xs transition hover:border-slate-300"
-                      >
-                        <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                          {bill.number}
-                        </h4>
-                        <p className="mt-2 text-xs sm:text-sm font-semibold uppercase leading-relaxed text-slate-800 tracking-wide max-w-2xl mx-auto">
-                          {bill.title}
-                        </p>
-                        {bill.description && (
-                          <p className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-2.5 max-w-2xl mx-auto italic font-medium">
-                            "{bill.description}"
+                  {activeFiledBills && activeFiledBills.length > 0 ? (
+                    <div className="space-y-4">
+                      {activeFiledBills.map((bill, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.08, duration: 0.3 }}
+                          whileHover={{ y: -2, backgroundColor: "rgba(248,250,252,1)" }}
+                          className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 text-center shadow-xs transition hover:border-slate-300"
+                        >
+                          <h4 className="text-sm sm:text-base font-bold text-slate-900">
+                            {bill.number}
+                          </h4>
+                          <p className="mt-2 text-xs sm:text-sm font-semibold uppercase leading-relaxed text-slate-800 tracking-wide max-w-2xl mx-auto">
+                            {bill.title}
                           </p>
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
+                          {bill.description && (
+                            <p className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-2.5 max-w-2xl mx-auto italic font-medium">
+                              "{bill.description}"
+                            </p>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-center">
+                      <p className="text-xs font-semibold text-slate-400 italic">
+                        Not Applicable (No filed bills recorded for this member)
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Contact Information */}

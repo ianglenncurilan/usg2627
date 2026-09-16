@@ -74,6 +74,7 @@ const initialSeedMembers = [
     id: "seed-1",
     name: "Cresencio U. Ablan",
     role: "USG Senator",
+    role_badge: "USG EXECUTIVE",
     department: "Department of Public Information and Creative Communications",
     profile_url: "/usg.webp",
     phone_number: "0917 552 6601",
@@ -97,6 +98,7 @@ const initialSeedMembers = [
     id: "seed-2",
     name: "Win Gatchalian",
     role: "Legislative President",
+    role_badge: "USG EXECUTIVE",
     department: "Department of Students' Welfare and Development",
     profile_url: "/usg.webp",
     phone_number: "0917 552 6602",
@@ -135,11 +137,13 @@ export default function AdminMembersPage() {
   const [formData, setFormData] = useState({
     name: "",
     role: "USG Senator",
+    role_badge: "USG EXECUTIVE",
     department: departmentOptions[0],
     profile_url: "",
     phone_number: "",
     email: "",
     facebook_url: "",
+    has_filed_bills: false,
     filed_bills: [
       {
         number: "Senate Bill No. 2627-021",
@@ -205,6 +209,8 @@ export default function AdminMembersPage() {
         const mappedData = data.map((m: any) => ({
           ...m,
           name: m.name || m.full_name || "USG Member",
+          role: m.role || m.position || "USG Member",
+          role_badge: m.role_badge || m.role || "USG EXECUTIVE",
         }));
         setMembersList(mappedData);
       } else {
@@ -295,9 +301,11 @@ export default function AdminMembersPage() {
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      const filteredBills = formData.filed_bills.filter(
-        (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
-      );
+      const filteredBills = formData.has_filed_bills
+        ? formData.filed_bills.filter(
+            (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
+          )
+        : [];
 
       const generatedSlug = formData.name
         .toLowerCase()
@@ -305,12 +313,14 @@ export default function AdminMembersPage() {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "") || `member-${Date.now()}`;
 
+      const finalBadge = formData.role_badge?.trim() ? formData.role_badge.trim() : formData.role.toUpperCase();
+
       const newRecord: any = {
         name: formData.name,
         full_name: formData.name,
         slug: generatedSlug,
         role: formData.role,
-        role_badge: formData.role,
+        role_badge: finalBadge,
         position: formData.role,
         title: formData.role,
         department: formData.department,
@@ -333,7 +343,7 @@ export default function AdminMembersPage() {
 
       if (insertError) {
         console.error("Supabase insert error details:", insertError);
-        setErrorMessageModal(`Supabase Database Error: ${insertError.message}\n\nPlease make sure to execute the updated 006_create_members.sql migration script in your Supabase SQL Editor.`);
+        setErrorMessageModal(`Supabase Database Error: ${insertError.message}\n\nPlease make sure to execute the updated 014_create_or_update_members_table.sql migration script in your Supabase SQL Editor.`);
         setDbError(true);
       } else {
         invalidateCache("cabinet_members");
@@ -360,15 +370,22 @@ export default function AdminMembersPage() {
       !item.department || item.department === "N/A" || item.department === "Not Applicable"
         ? "Not Applicable (N/A)"
         : item.department;
+
+    const hasBills = Array.isArray(item.filed_bills) && item.filed_bills.length > 0;
+
     setFormData({
       name: item.name || "",
-      role: item.role || "USG Senator",
+      role: item.role || item.position || "USG Senator",
+      role_badge: item.role_badge || item.role || "USG EXECUTIVE",
       department: normalizedDept,
       profile_url: item.profile_url || "",
       phone_number: item.phone_number || "",
       email: item.email || "",
       facebook_url: item.facebook_url || "",
-      filed_bills: item.filed_bills && item.filed_bills.length > 0 ? item.filed_bills : [{ number: "Senate Bill No. 2627-021", title: "", description: "" }],
+      has_filed_bills: hasBills,
+      filed_bills: hasBills
+        ? item.filed_bills
+        : [{ number: "Senate Bill No. 2627-021", title: "", description: "" }],
     });
     setImageFile(null);
     setIsEditModalOpen(true);
@@ -387,9 +404,11 @@ export default function AdminMembersPage() {
         if (uploadedUrl) avatarUrl = uploadedUrl;
       }
 
-      const filteredBills = formData.filed_bills.filter(
-        (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
-      );
+      const filteredBills = formData.has_filed_bills
+        ? formData.filed_bills.filter(
+            (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
+          )
+        : [];
 
       const generatedSlug = formData.name
         .toLowerCase()
@@ -397,12 +416,14 @@ export default function AdminMembersPage() {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "") || `member-${Date.now()}`;
 
+      const finalBadge = formData.role_badge?.trim() ? formData.role_badge.trim() : formData.role.toUpperCase();
+
       const updatedFields: any = {
         name: formData.name,
         full_name: formData.name,
         slug: generatedSlug,
         role: formData.role,
-        role_badge: formData.role,
+        role_badge: finalBadge,
         position: formData.role,
         title: formData.role,
         department: formData.department,
@@ -471,11 +492,13 @@ export default function AdminMembersPage() {
     setFormData({
       name: "",
       role: "USG Senator",
+      role_badge: "USG EXECUTIVE",
       department: departmentOptions[0],
       profile_url: "",
       phone_number: "",
       email: "",
       facebook_url: "",
+      has_filed_bills: false,
       filed_bills: [
         {
           number: "Senate Bill No. 2627-021",
@@ -566,33 +589,35 @@ export default function AdminMembersPage() {
                 </span>
               </div>
               <p className="text-slate-600 mt-1">
-                Add elected senators & appointed cabinet officers with profile images, departments, and filed bills.
+                Add elected senators & appointed cabinet officers with custom positions, editable badges, and filed bills.
               </p>
             </div>
 
-            <button
-              onClick={() => {
-                resetForm();
-                setIsAddModalOpen(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#173490] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e4bb8] cursor-pointer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => {
+                  resetForm();
+                  setIsAddModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#173490] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e4bb8] cursor-pointer"
               >
-                <path d="M5 12h14" />
-                <path d="M12 5v14" />
-              </svg>
-              Add New USG Member
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14" />
+                  <path d="M12 5v14" />
+                </svg>
+                Add New USG Member
+              </button>
+            </div>
           </div>
 
           {/* Migration SQL Banner */}
@@ -620,16 +645,8 @@ export default function AdminMembersPage() {
               <p className="text-sm mt-1 text-amber-800">
                 To sync members to your Supabase database, run this SQL in Supabase SQL Editor:
               </p>
-              <div className="mt-3 bg-slate-950 text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto max-h-36 border border-slate-800">
-                {`CREATE TABLE IF NOT EXISTS members (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT, full_name TEXT, slug TEXT, role TEXT, role_badge TEXT, position TEXT, title TEXT, department TEXT, department_name TEXT, profile_url TEXT, phone_number TEXT, email TEXT, facebook_url TEXT, filed_bills JSONB DEFAULT '[]'::jsonb, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-ALTER TABLE members ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Anyone can view members" ON members;
-DROP POLICY IF EXISTS "Anyone can insert members" ON members;
-CREATE POLICY "Anyone can view members" ON members FOR SELECT USING (true);
-CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true);`}
+              <div className="mt-3 bg-slate-950 text-emerald-400 p-3 rounded-lg text-xs font-mono overflow-x-auto border border-slate-800">
+                {`ALTER TABLE members ADD COLUMN IF NOT EXISTS role_badge TEXT;`}
               </div>
             </div>
           )}
@@ -720,9 +737,13 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                             />
                             <div>
                               <p className="font-bold text-slate-900 text-base">{member.name}</p>
-                              <span className="inline-block mt-0.5 rounded-full bg-[#173490]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#173490]">
-                                {member.role}
-                              </span>
+                              <p className="text-xs font-semibold text-slate-600">{member.role}</p>
+                              <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-slate-100/90 border border-slate-200/80 px-2.5 py-0.5 shadow-2xs">
+                                <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0"></span>
+                                <span className="text-[11px] font-bold tracking-wider text-[#173490] uppercase">
+                                  {member.role_badge || member.role || "USG EXECUTIVE"}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -753,7 +774,9 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                               📜 {member.filed_bills.length} Filed Bill(s)
                             </span>
                           ) : (
-                            <span className="text-xs text-slate-400 italic">No bills filed</span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 border border-slate-200">
+                              Not Applicable
+                            </span>
                           )}
                         </td>
 
@@ -880,7 +903,7 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                 <p className="text-xs text-slate-500 mb-6">Enter member name, position, cabinet department, and filed bills with description</p>
 
                 <form onSubmit={handleSubmitNew} className="space-y-4">
-                  {/* Name & Role */}
+                  {/* Name, Role & Editable Badge Tag */}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -898,21 +921,54 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
 
                     <div>
                       <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Position / Role (Dropdown) *
+                        Position / Role *
                       </label>
-                      <select
+                      <input
+                        type="text"
                         required
                         value={formData.role}
-                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none cursor-pointer bg-white"
-                      >
-                        {roleOptions.map((role) => (
-                          <option key={role} value={role}>
-                            {role}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            role: val,
+                            role_badge:
+                              prev.role_badge === prev.role.toUpperCase() || !prev.role_badge
+                                ? val.toUpperCase()
+                                : prev.role_badge,
+                          }));
+                        }}
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none"
+                        placeholder="Type position/role (e.g. USG Executive Secretary...)"
+                      />
                     </div>
+                  </div>
+
+                  {/* Editable Role Badge Tag */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Editable Badge Tag (Pill Badge) *
+                    </label>
+                    <div className="relative flex items-center">
+                      <div className="absolute left-3.5 flex items-center justify-center">
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={formData.role_badge}
+                        onChange={(e) => setFormData({ ...formData, role_badge: e.target.value })}
+                        className="w-full rounded-xl border border-slate-300 pl-8 pr-3.5 py-2.5 text-sm font-bold text-[#173490] uppercase tracking-wide focus:border-[#173490] focus:outline-none"
+                        placeholder="e.g. USG EXECUTIVE"
+                      />
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Live Preview:{" "}
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-[#173490] uppercase shadow-2xs">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+                        {formData.role_badge || "USG EXECUTIVE"}
+                      </span>
+                    </p>
                   </div>
 
                   {/* Cabinet Department Dropdown */}
@@ -990,71 +1046,105 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                     />
                   </div>
 
-                  {/* FILED BILLS SECTION (Dynamic 1 or more bills with Description) */}
+                  {/* FILED BILLS SECTION (Applicable / Optional Toggle) */}
                   <div className="border-t border-slate-200 pt-4 mt-6">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                       <div>
-                        <h3 className="text-sm font-bold text-slate-900">Filed Bills / Legislative Acts (Optional)</h3>
-                        <p className="text-xs text-slate-500">Add bill number, act title, and bill description</p>
+                        <h3 className="text-sm font-bold text-slate-900">Filed Bills / Legislative Acts</h3>
+                        <p className="text-xs text-slate-500">Applicable for Senators and Legislative Officers who file Senate bills</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleAddBillField}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#173490] bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition cursor-pointer"
-                      >
-                        + Add Another Bill
-                      </button>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.has_filed_bills}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setFormData({
+                              ...formData,
+                              has_filed_bills: checked,
+                              filed_bills:
+                                checked && formData.filed_bills.length === 0
+                                  ? [{ number: "Senate Bill No. 2627-021", title: "", description: "" }]
+                                  : formData.filed_bills,
+                            });
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#173490]"></div>
+                        <span className="ml-2.5 text-xs font-bold text-slate-700 select-none">
+                          {formData.has_filed_bills ? "Applicable" : "Not Applicable"}
+                        </span>
+                      </label>
                     </div>
 
-                    <div className="space-y-4">
-                      {formData.filed_bills.map((bill, index) => (
-                        <div key={index} className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                          <div className="flex flex-col sm:flex-row items-start gap-2">
-                            <div className="w-full sm:w-56">
-                              <input
-                                type="text"
-                                value={bill.number}
-                                onChange={(e) => handleBillChange(index, "number", e.target.value)}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold focus:border-[#173490] focus:outline-none"
-                                placeholder="Senate Bill No. 2627-021"
-                              />
-                            </div>
-
-                            <div className="flex-1 w-full">
-                              <input
-                                type="text"
-                                value={bill.title}
-                                onChange={(e) => handleBillChange(index, "title", e.target.value)}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold focus:border-[#173490] focus:outline-none"
-                                placeholder="AN ACT ESTABLISHING COLLEGE-BASED MEDICAL RESPONSE TEAMS..."
-                              />
-                            </div>
-
-                            {formData.filed_bills.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveBillField(index)}
-                                className="text-red-500 hover:text-red-700 text-xs font-bold p-2 cursor-pointer"
-                                title="Remove Bill"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Bill Description Input */}
-                          <div>
-                            <textarea
-                              rows={2}
-                              value={bill.description || ""}
-                              onChange={(e) => handleBillChange(index, "description", e.target.value)}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-[#173490] focus:outline-none"
-                              placeholder="Bill Description / Summary (e.g. Mandates immediate emergency first-responder units across colleges...)"
-                            />
-                          </div>
+                    {formData.has_filed_bills ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-slate-600">Add bill number, act title, and bill description</p>
+                          <button
+                            type="button"
+                            onClick={handleAddBillField}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#173490] bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition cursor-pointer"
+                          >
+                            + Add Another Bill
+                          </button>
                         </div>
-                      ))}
-                    </div>
+
+                        {formData.filed_bills.map((bill, index) => (
+                          <div key={index} className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div className="flex flex-col sm:flex-row items-start gap-2">
+                              <div className="w-full sm:w-56">
+                                <input
+                                  type="text"
+                                  value={bill.number}
+                                  onChange={(e) => handleBillChange(index, "number", e.target.value)}
+                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold focus:border-[#173490] focus:outline-none"
+                                  placeholder="Senate Bill No. 2627-021"
+                                />
+                              </div>
+
+                              <div className="flex-1 w-full">
+                                <input
+                                  type="text"
+                                  value={bill.title}
+                                  onChange={(e) => handleBillChange(index, "title", e.target.value)}
+                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold focus:border-[#173490] focus:outline-none"
+                                  placeholder="AN ACT ESTABLISHING COLLEGE-BASED MEDICAL RESPONSE TEAMS..."
+                                />
+                              </div>
+
+                              {formData.filed_bills.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveBillField(index)}
+                                  className="text-red-500 hover:text-red-700 text-xs font-bold p-2 cursor-pointer"
+                                  title="Remove Bill"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Bill Description Input */}
+                            <div>
+                              <textarea
+                                rows={2}
+                                value={bill.description || ""}
+                                onChange={(e) => handleBillChange(index, "description", e.target.value)}
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-[#173490] focus:outline-none"
+                                placeholder="Bill Description / Summary (e.g. Mandates immediate emergency first-responder units across colleges...)"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center rounded-xl bg-slate-100/80 border border-dashed border-slate-300">
+                        <p className="text-xs font-medium text-slate-500">
+                          🚫 Not Applicable: This member position does not file legislative bills (e.g., Executive Officers, Cabinet Secretaries, Advisers).
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Buttons */}
@@ -1129,21 +1219,54 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
 
                     <div>
                       <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Position / Role (Dropdown) *
+                        Position / Role *
                       </label>
-                      <select
+                      <input
+                        type="text"
                         required
                         value={formData.role}
-                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none cursor-pointer bg-white"
-                      >
-                        {roleOptions.map((role) => (
-                          <option key={role} value={role}>
-                            {role}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            role: val,
+                            role_badge:
+                              prev.role_badge === prev.role.toUpperCase() || !prev.role_badge
+                                ? val.toUpperCase()
+                                : prev.role_badge,
+                          }));
+                        }}
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-[#173490] focus:outline-none"
+                        placeholder="Type position/role (e.g. USG Executive Secretary...)"
+                      />
                     </div>
+                  </div>
+
+                  {/* Editable Role Badge Tag */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Editable Badge Tag (Pill Badge) *
+                    </label>
+                    <div className="relative flex items-center">
+                      <div className="absolute left-3.5 flex items-center justify-center">
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={formData.role_badge}
+                        onChange={(e) => setFormData({ ...formData, role_badge: e.target.value })}
+                        className="w-full rounded-xl border border-slate-300 pl-8 pr-3.5 py-2.5 text-sm font-bold text-[#173490] uppercase tracking-wide focus:border-[#173490] focus:outline-none"
+                        placeholder="e.g. USG EXECUTIVE"
+                      />
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Live Preview:{" "}
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-[#173490] uppercase shadow-2xs">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+                        {formData.role_badge || "USG EXECUTIVE"}
+                      </span>
+                    </p>
                   </div>
 
                   <div>
@@ -1216,65 +1339,102 @@ CREATE POLICY "Anyone can insert members" ON members FOR INSERT WITH CHECK (true
                     />
                   </div>
 
-                  {/* Dynamic Filed Bills with Description */}
+                  {/* FILED BILLS SECTION (Applicable / Optional Toggle) */}
                   <div className="border-t border-slate-200 pt-4 mt-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-bold text-slate-900">Filed Bills / Legislative Acts</h3>
-                      <button
-                        type="button"
-                        onClick={handleAddBillField}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#173490] bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition cursor-pointer"
-                      >
-                        + Add Another Bill
-                      </button>
+                    <div className="flex items-center justify-between mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">Filed Bills / Legislative Acts</h3>
+                        <p className="text-xs text-slate-500">Applicable for Senators and Legislative Officers who file Senate bills</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.has_filed_bills}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setFormData({
+                              ...formData,
+                              has_filed_bills: checked,
+                              filed_bills:
+                                checked && formData.filed_bills.length === 0
+                                  ? [{ number: "Senate Bill No. 2627-021", title: "", description: "" }]
+                                  : formData.filed_bills,
+                            });
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#173490]"></div>
+                        <span className="ml-2.5 text-xs font-bold text-slate-700 select-none">
+                          {formData.has_filed_bills ? "Applicable" : "Not Applicable"}
+                        </span>
+                      </label>
                     </div>
 
-                    <div className="space-y-4">
-                      {formData.filed_bills.map((bill, index) => (
-                        <div key={index} className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                          <div className="flex flex-col sm:flex-row items-start gap-2">
-                            <div className="w-full sm:w-56">
-                              <input
-                                type="text"
-                                value={bill.number}
-                                onChange={(e) => handleBillChange(index, "number", e.target.value)}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold focus:border-[#173490] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="flex-1 w-full">
-                              <input
-                                type="text"
-                                value={bill.title}
-                                onChange={(e) => handleBillChange(index, "title", e.target.value)}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold focus:border-[#173490] focus:outline-none"
-                              />
-                            </div>
-
-                            {formData.filed_bills.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveBillField(index)}
-                                className="text-red-500 hover:text-red-700 text-xs font-bold p-2 cursor-pointer"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Bill Description Input */}
-                          <div>
-                            <textarea
-                              rows={2}
-                              value={bill.description || ""}
-                              onChange={(e) => handleBillChange(index, "description", e.target.value)}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-[#173490] focus:outline-none"
-                              placeholder="Bill Description / Summary..."
-                            />
-                          </div>
+                    {formData.has_filed_bills ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-slate-600">Add bill number, act title, and bill description</p>
+                          <button
+                            type="button"
+                            onClick={handleAddBillField}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#173490] bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition cursor-pointer"
+                          >
+                            + Add Another Bill
+                          </button>
                         </div>
-                      ))}
-                    </div>
+
+                        {formData.filed_bills.map((bill, index) => (
+                          <div key={index} className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div className="flex flex-col sm:flex-row items-start gap-2">
+                              <div className="w-full sm:w-56">
+                                <input
+                                  type="text"
+                                  value={bill.number}
+                                  onChange={(e) => handleBillChange(index, "number", e.target.value)}
+                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold focus:border-[#173490] focus:outline-none"
+                                />
+                              </div>
+
+                              <div className="flex-1 w-full">
+                                <input
+                                  type="text"
+                                  value={bill.title}
+                                  onChange={(e) => handleBillChange(index, "title", e.target.value)}
+                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold focus:border-[#173490] focus:outline-none"
+                                />
+                              </div>
+
+                              {formData.filed_bills.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveBillField(index)}
+                                  className="text-red-500 hover:text-red-700 text-xs font-bold p-2 cursor-pointer"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Bill Description Input */}
+                            <div>
+                              <textarea
+                                rows={2}
+                                value={bill.description || ""}
+                                onChange={(e) => handleBillChange(index, "description", e.target.value)}
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-[#173490] focus:outline-none"
+                                placeholder="Bill Description / Summary..."
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center rounded-xl bg-slate-100/80 border border-dashed border-slate-300">
+                        <p className="text-xs font-medium text-slate-500">
+                          🚫 Not Applicable: This member position does not file legislative bills (e.g., Executive Officers, Cabinet Secretaries, Advisers).
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">

@@ -282,7 +282,7 @@ export default function LegislativePage() {
       const data = await fetchWithCache("legislative_members", async () => {
         const { data, error } = await supabase
           .from("members")
-          .select("id, name, full_name, role, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at")
+          .select("id, name, full_name, role, role_badge, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at")
           .order("created_at", { ascending: false });
         if (error) throw error;
         return data || [];
@@ -294,6 +294,7 @@ export default function LegislativePage() {
         const mapped = data.map((m: any) => ({
           name: m.name || m.full_name || "USG Member",
           role: m.role,
+          roleBadge: m.role_badge || m.role || undefined,
           department: m.department,
           avatarSrc: m.profile_url || "/usg.jpg",
           directLine: m.phone_number || "0917 552 6601",
@@ -470,10 +471,10 @@ export default function LegislativePage() {
                 className="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-2"
               >
                 {displayedMembers.map((member, index) => {
-                  const label = getLegislativeSectionLabel(member);
+                  const label = member.roleBadge || getLegislativeSectionLabel(member);
                   return (
                     <div key={member.id || index}>
-                      <ProfileCard {...member} sectionLabel={label} />
+                      <ProfileCard {...member} roleBadge={member.roleBadge} sectionLabel={label} />
                     </div>
                   );
                 })}

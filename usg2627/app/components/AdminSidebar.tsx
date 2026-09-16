@@ -61,6 +61,15 @@ const navigation = [
     ),
   },
   {
+    name: "Calendar Events",
+    href: "/admin/calendar",
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v14a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5h12v2H6V7zm0 4h3v3H6v-3zm5 0h3v3h-3v-3zm5 0h3v3h-3v-3z" />
+      </svg>
+    ),
+  },
+  {
     name: "Budget Transparency",
     href: "/admin/budgetary-transparency",
     icon: (

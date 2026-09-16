@@ -6,7 +6,7 @@ type CacheEntry<T> = {
 };
 
 const memoryCache = new Map<string, CacheEntry<any>>();
-const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL default for high-traffic egress protection
+const DEFAULT_TTL_MS = 5 * 1000; // 5 seconds TTL for instant responsiveness when updating database records
 
 export async function fetchWithCache<T>(
   key: string,
