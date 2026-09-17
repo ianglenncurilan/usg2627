@@ -1,0 +1,16 @@
+-- Migration 015: Update documents table type check constraint
+-- Supports ADMINISTRATIVE ORDER, ADVISORY, FINANCIAL DOCUMENTS, RESOLUTION, EXECUTIVE ORDER, MEMORANDUM, SPECIAL ORDER
+
+ALTER TABLE documents DROP CONSTRAINT IF EXISTS documents_type_check;
+
+ALTER TABLE documents ADD CONSTRAINT documents_type_check CHECK (
+  type IN (
+    'RESOLUTION',
+    'EXECUTIVE ORDER',
+    'ADMINISTRATIVE ORDER',
+    'MEMORANDUM',
+    'SPECIAL ORDER',
+    'ADVISORY',
+    'FINANCIAL DOCUMENTS'
+  )
+);

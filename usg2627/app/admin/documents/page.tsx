@@ -120,10 +120,21 @@ export default function AdminDocumentsPage() {
   };
 
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [fileSize, setFileSize] = useState<number | null>(null);
 
-  const handleFileUploadToR2 = async (file: File) => {
+  const [editUploadingFile, setEditUploadingFile] = useState(false);
+  const [editUploadedFileName, setEditUploadedFileName] = useState("");
+  const [editFileSize, setEditFileSize] = useState<number | null>(null);
+
+  const handleFileUploadToR2 = async (file: File, isEdit: boolean = false) => {
     try {
-      setUploadingFile(true);
+      if (isEdit) {
+        setEditUploadingFile(true);
+      } else {
+        setUploadingFile(true);
+      }
+
       const uploadData = new FormData();
       uploadData.append("file", file);
       uploadData.append("folder", "documents");
@@ -135,16 +146,28 @@ export default function AdminDocumentsPage() {
 
       const data = await res.json();
       if (res.ok && data.url) {
-        setFormData((prev) => ({ ...prev, file_url: data.url }));
-        alert("Document file uploaded successfully!");
+        if (isEdit) {
+          setEditFormData((prev) => ({ ...prev, file_url: data.url }));
+          setEditUploadedFileName(file.name);
+          setEditFileSize(file.size);
+        } else {
+          setFormData((prev) => ({ ...prev, file_url: data.url }));
+          setUploadedFileName(file.name);
+          setFileSize(file.size);
+        }
+        alert(`Document file "${file.name}" uploaded successfully to Cloudflare R2!`);
       } else {
-        alert(data.error || "Failed to upload document file");
+        alert(data.error || "Failed to upload document file to Cloudflare R2.");
       }
     } catch (err: any) {
       console.error("Document upload error:", err);
-      alert("Error uploading document file");
+      alert("Error uploading document file. Please try again.");
     } finally {
-      setUploadingFile(false);
+      if (isEdit) {
+        setEditUploadingFile(false);
+      } else {
+        setUploadingFile(false);
+      }
     }
   };
 
@@ -155,6 +178,11 @@ export default function AdminDocumentsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      let formattedUrl = formData.file_url ? formData.file_url.trim() : "";
+      if (formattedUrl && !/^https?:\/\//i.test(formattedUrl)) {
+        formattedUrl = `https://${formattedUrl}`;
+      }
+
       const { error: insertError } = await supabase
         .from("documents")
         .insert({
@@ -164,16 +192,16 @@ export default function AdminDocumentsPage() {
           issuing_body: formData.issuing_body,
           author: formData.author,
           description: formData.description,
-          file_url: formData.file_url || null,
-          file_name: formData.file_url ? `${formData.title || "Document"} (Link)` : null,
-          file_size: null,
+          file_url: formattedUrl || null,
+          file_name: uploadedFileName || (formattedUrl ? `${formData.title || "Document"}` : null),
+          file_size: fileSize || null,
           status: "pending",
           created_by: user?.id,
         });
 
       if (insertError) {
         console.error("Error inserting document:", insertError);
-        alert("Error saving document. Please try again.");
+        alert(`Error saving document: ${insertError.message || insertError.details || "Please check database constraints."}`);
       } else {
         invalidateCache("home_documents");
         invalidateCache("public_documents");
@@ -188,12 +216,14 @@ export default function AdminDocumentsPage() {
           description: "",
           file_url: "",
         });
+        setUploadedFileName("");
+        setFileSize(null);
         setIsModalOpen(false);
         fetchDocuments();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error:", error);
-      alert("An error occurred. Please try again.");
+      alert(`An error occurred: ${error.message || "Please try again."}`);
     } finally {
       setUploading(false);
     }
@@ -262,6 +292,8 @@ export default function AdminDocumentsPage() {
       status: doc.status || "pending",
       file_url: doc.file_url || "",
     });
+    setEditUploadedFileName(doc.file_name || "");
+    setEditFileSize(doc.file_size || null);
     setIsEditModalOpen(true);
   };
 
@@ -271,6 +303,11 @@ export default function AdminDocumentsPage() {
     setSavingEdit(true);
 
     try {
+      let formattedUrl = editFormData.file_url ? editFormData.file_url.trim() : "";
+      if (formattedUrl && !/^https?:\/\//i.test(formattedUrl)) {
+        formattedUrl = `https://${formattedUrl}`;
+      }
+
       const updatedFields: any = {
         title: editFormData.title,
         type: editFormData.type,
@@ -279,8 +316,9 @@ export default function AdminDocumentsPage() {
         author: editFormData.author,
         description: editFormData.description,
         status: editFormData.status,
-        file_url: editFormData.file_url || null,
-        file_name: editFormData.file_url ? `${editFormData.title || "Document"} (Link)` : null,
+        file_url: formattedUrl || null,
+        file_name: editUploadedFileName || (formattedUrl ? `${editFormData.title || "Document"}` : null),
+        file_size: editFileSize || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -291,7 +329,7 @@ export default function AdminDocumentsPage() {
 
       if (error) {
         console.error("Error updating document:", error);
-        alert(`Error updating document: ${error.message}`);
+        alert(`Error updating document: ${error.message || error.details}`);
       } else {
         invalidateCache("home_documents");
         invalidateCache("public_documents");
@@ -299,6 +337,8 @@ export default function AdminDocumentsPage() {
         alert("Document updated successfully!");
         setIsEditModalOpen(false);
         setEditingDocument(null);
+        setEditUploadedFileName("");
+        setEditFileSize(null);
         fetchDocuments();
       }
     } catch (err: any) {
@@ -516,16 +556,41 @@ export default function AdminDocumentsPage() {
                         placeholder="e.g., Treasurer Lim"
                       />
                     </div>
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Document Link / URL
+                        Upload Document File (PDF, DOCX, Images)
                       </label>
                       <input
-                        type="url"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleFileUploadToR2(e.target.files[0], false);
+                          }
+                        }}
+                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#173490] hover:file:bg-blue-100 cursor-pointer"
+                      />
+                      {uploadingFile && (
+                        <p className="mt-1 text-xs text-blue-600 font-medium animate-pulse">
+                          Uploading file to Cloudflare R2...
+                        </p>
+                      )}
+                      {uploadedFileName && (
+                        <p className="mt-1 text-xs text-emerald-600 font-medium truncate">
+                          ✓ File uploaded: {uploadedFileName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Or Document Link / Direct URL
+                      </label>
+                      <input
+                        type="text"
                         value={formData.file_url}
                         onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
-                        placeholder="https://example.com/document.pdf or link"
+                        placeholder="https://example.com/document.pdf or Google Drive link"
                       />
                     </div>
                   </div>
@@ -551,7 +616,7 @@ export default function AdminDocumentsPage() {
                     </button>
                     <button
                       type="submit"
-                      disabled={uploading}
+                      disabled={uploading || uploadingFile}
                       className="rounded-lg bg-[#173490] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1e4bb8] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {uploading ? "Saving..." : "Add Document"}
@@ -673,10 +738,35 @@ export default function AdminDocumentsPage() {
                     </div>
                     <div className="md:col-span-2">
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Document Link / URL
+                        Upload Replacement File (PDF, DOCX, Images)
                       </label>
                       <input
-                        type="url"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleFileUploadToR2(e.target.files[0], true);
+                          }
+                        }}
+                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#173490] hover:file:bg-blue-100 cursor-pointer"
+                      />
+                      {editUploadingFile && (
+                        <p className="mt-1 text-xs text-blue-600 font-medium animate-pulse">
+                          Uploading file to Cloudflare R2...
+                        </p>
+                      )}
+                      {editUploadedFileName && (
+                        <p className="mt-1 text-xs text-emerald-600 font-medium truncate">
+                          ✓ New file uploaded: {editUploadedFileName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Or Document Link / Direct URL
+                      </label>
+                      <input
+                        type="text"
                         value={editFormData.file_url}
                         onChange={(e) => setEditFormData({ ...editFormData, file_url: e.target.value })}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#173490] focus:outline-none focus:ring-1 focus:ring-[#173490]"
