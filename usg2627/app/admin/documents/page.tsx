@@ -556,34 +556,9 @@ export default function AdminDocumentsPage() {
                         placeholder="e.g., Treasurer Lim"
                       />
                     </div>
-                    <div className="md:col-span-2">
+                    <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Upload Document File (PDF, DOCX, Images)
-                      </label>
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleFileUploadToR2(e.target.files[0], false);
-                          }
-                        }}
-                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#173490] hover:file:bg-blue-100 cursor-pointer"
-                      />
-                      {uploadingFile && (
-                        <p className="mt-1 text-xs text-blue-600 font-medium animate-pulse">
-                          Uploading file to Cloudflare R2...
-                        </p>
-                      )}
-                      {uploadedFileName && (
-                        <p className="mt-1 text-xs text-emerald-600 font-medium truncate">
-                          ✓ File uploaded: {uploadedFileName}
-                        </p>
-                      )}
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Or Document Link / Direct URL
+                        Document Link / URL
                       </label>
                       <input
                         type="text"
@@ -738,32 +713,7 @@ export default function AdminDocumentsPage() {
                     </div>
                     <div className="md:col-span-2">
                       <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Upload Replacement File (PDF, DOCX, Images)
-                      </label>
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            handleFileUploadToR2(e.target.files[0], true);
-                          }
-                        }}
-                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#173490] hover:file:bg-blue-100 cursor-pointer"
-                      />
-                      {editUploadingFile && (
-                        <p className="mt-1 text-xs text-blue-600 font-medium animate-pulse">
-                          Uploading file to Cloudflare R2...
-                        </p>
-                      )}
-                      {editUploadedFileName && (
-                        <p className="mt-1 text-xs text-emerald-600 font-medium truncate">
-                          ✓ New file uploaded: {editUploadedFileName}
-                        </p>
-                      )}
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Or Document Link / Direct URL
+                        Document Link / URL
                       </label>
                       <input
                         type="text"
