@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 // Lazy-initialized S3 client configured for Cloudflare R2
 let s3Client: S3Client | null = null;
@@ -77,3 +77,36 @@ export async function uploadToR2(
     };
   }
 }
+
+/**
+ * Extracts object Key from a Cloudflare R2 public URL and deletes the file from R2 bucket
+ */
+export async function deleteFromR2(fileUrl: string): Promise<{ success: boolean; error?: string }> {
+  if (!fileUrl) return { success: true };
+
+  const client = getR2Client();
+  const bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
+  if (!client || !bucketName) {
+    return { success: false, error: "Cloudflare R2 client or bucket name not configured" };
+  }
+
+  try {
+    const urlObj = new URL(fileUrl);
+    const key = urlObj.pathname.replace(/^\//, ""); // Remove leading slash
+
+    if (!key) return { success: true };
+
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: key,
+      })
+    );
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Cloudflare R2 Delete Error:", err);
+    return { success: false, error: err.message || "Failed to delete file from Cloudflare R2" };
+  }
+}
+

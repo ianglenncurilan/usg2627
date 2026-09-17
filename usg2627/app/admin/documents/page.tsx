@@ -119,6 +119,32 @@ export default function AdminDocumentsPage() {
     }
   };
 
+  // Custom Feedback & Alert Modal State
+  const [feedbackModal, setFeedbackModal] = useState<{
+    isOpen: boolean;
+    type: "success" | "error" | "confirm";
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  const showSuccessModal = (title: string, message: string) => {
+    setFeedbackModal({ isOpen: true, type: "success", title, message });
+  };
+
+  const showErrorModal = (title: string, message: string) => {
+    setFeedbackModal({ isOpen: true, type: "error", title, message });
+  };
+
+  const showConfirmModal = (title: string, message: string, onConfirm: () => void) => {
+    setFeedbackModal({ isOpen: true, type: "confirm", title, message, onConfirm });
+  };
+
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -155,13 +181,13 @@ export default function AdminDocumentsPage() {
           setUploadedFileName(file.name);
           setFileSize(file.size);
         }
-        alert(`Document file "${file.name}" uploaded successfully to Cloudflare R2!`);
+        showSuccessModal("File Uploaded", `Document file "${file.name}" uploaded successfully!`);
       } else {
-        alert(data.error || "Failed to upload document file to Cloudflare R2.");
+        showErrorModal("Upload Failed", data.error || "Failed to upload document file.");
       }
     } catch (err: any) {
       console.error("Document upload error:", err);
-      alert("Error uploading document file. Please try again.");
+      showErrorModal("Upload Error", "Error uploading document file. Please try again.");
     } finally {
       if (isEdit) {
         setEditUploadingFile(false);
@@ -201,12 +227,12 @@ export default function AdminDocumentsPage() {
 
       if (insertError) {
         console.error("Error inserting document:", insertError);
-        alert(`Error saving document: ${insertError.message || insertError.details || "Please check database constraints."}`);
+        showErrorModal("Error Saving Document", insertError.message || insertError.details || "Please check database constraints.");
       } else {
         invalidateCache("home_documents");
         invalidateCache("public_documents");
         invalidateCache("admin_dashboard_docs");
-        alert("Document added successfully! It is now pending approval.");
+        showSuccessModal("Document Submitted", "Document added successfully! It is now pending approval.");
         setFormData({
           title: "",
           type: "RESOLUTION",
@@ -223,7 +249,7 @@ export default function AdminDocumentsPage() {
       }
     } catch (error: any) {
       console.error("Error:", error);
-      alert(`An error occurred: ${error.message || "Please try again."}`);
+      showErrorModal("Submission Error", `An error occurred: ${error.message || "Please try again."}`);
     } finally {
       setUploading(false);
     }
@@ -237,11 +263,12 @@ export default function AdminDocumentsPage() {
 
     if (error) {
       console.error("Error approving document:", error);
-      alert("Error approving document.");
+      showErrorModal("Approval Failed", `Error approving document: ${error.message}`);
     } else {
       invalidateCache("home_documents");
       invalidateCache("public_documents");
       invalidateCache("admin_dashboard_docs");
+      showSuccessModal("Document Approved", "The document has been approved.");
       fetchDocuments();
     }
   };
@@ -254,11 +281,12 @@ export default function AdminDocumentsPage() {
 
     if (error) {
       console.error("Error publishing document:", error);
-      alert("Error publishing document.");
+      showErrorModal("Publishing Failed", `Error publishing document: ${error.message}`);
     } else {
       invalidateCache("home_documents");
       invalidateCache("public_documents");
       invalidateCache("admin_dashboard_docs");
+      showSuccessModal("Document Published", "The document is now live and published publicly.");
       fetchDocuments();
     }
   };
@@ -271,11 +299,12 @@ export default function AdminDocumentsPage() {
 
     if (error) {
       console.error("Error rejecting document:", error);
-      alert("Error rejecting document.");
+      showErrorModal("Rejection Failed", `Error rejecting document: ${error.message}`);
     } else {
       invalidateCache("home_documents");
       invalidateCache("public_documents");
       invalidateCache("admin_dashboard_docs");
+      showSuccessModal("Document Rejected", "The document status was set to rejected.");
       fetchDocuments();
     }
   };
@@ -329,12 +358,25 @@ export default function AdminDocumentsPage() {
 
       if (error) {
         console.error("Error updating document:", error);
-        alert(`Error updating document: ${error.message || error.details}`);
+        showErrorModal("Update Failed", `Error updating document: ${error.message || error.details}`);
       } else {
+        // If file_url was replaced or changed, clean up old file from Cloudflare R2
+        if (editingDocument.file_url && editingDocument.file_url !== formattedUrl) {
+          try {
+            await fetch("/api/delete", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ fileUrl: editingDocument.file_url }),
+            });
+          } catch (delErr) {
+            console.warn("Failed to delete replaced file from Cloudflare R2:", delErr);
+          }
+        }
+
         invalidateCache("home_documents");
         invalidateCache("public_documents");
         invalidateCache("admin_dashboard_docs");
-        alert("Document updated successfully!");
+        showSuccessModal("Document Updated", "Document details updated successfully!");
         setIsEditModalOpen(false);
         setEditingDocument(null);
         setEditUploadedFileName("");
@@ -343,35 +385,53 @@ export default function AdminDocumentsPage() {
       }
     } catch (err: any) {
       console.error("Edit error:", err);
-      alert("An error occurred while updating the document.");
+      showErrorModal("Update Error", "An error occurred while updating the document.");
     } finally {
       setSavingEdit(false);
     }
   };
 
-  const handleDeleteDocument = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
+  const handleDeleteDocument = (id: string, title?: string) => {
+    const targetDoc = documents.find((d) => d.id === id);
+    showConfirmModal(
+      "Confirm Deletion",
+      `Are you sure you want to delete "${title || "this document"}"? This action cannot be undone.`,
+      async () => {
+        try {
+          // If file_url exists, clean up file from Cloudflare R2
+          if (targetDoc?.file_url) {
+            try {
+              await fetch("/api/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fileUrl: targetDoc.file_url }),
+              });
+            } catch (delErr) {
+              console.warn("Failed to delete file from Cloudflare R2:", delErr);
+            }
+          }
 
-    try {
-      const { error } = await supabase
-        .from("documents")
-        .delete()
-        .eq("id", id);
+          const { error } = await supabase
+            .from("documents")
+            .delete()
+            .eq("id", id);
 
-      if (error) {
-        console.error("Error deleting document:", error);
-        alert(`Error deleting document: ${error.message}`);
-      } else {
-        invalidateCache("home_documents");
-        invalidateCache("public_documents");
-        invalidateCache("admin_dashboard_docs");
-        alert("Document deleted successfully!");
-        fetchDocuments();
+          if (error) {
+            console.error("Error deleting document:", error);
+            showErrorModal("Delete Failed", `Error deleting document: ${error.message}`);
+          } else {
+            invalidateCache("home_documents");
+            invalidateCache("public_documents");
+            invalidateCache("admin_dashboard_docs");
+            showSuccessModal("Document Deleted", "Document deleted successfully!");
+            fetchDocuments();
+          }
+        } catch (err: any) {
+          console.error("Delete error:", err);
+          showErrorModal("Delete Error", "An unexpected error occurred while deleting the document.");
+        }
       }
-    } catch (err: any) {
-      console.error("Delete error:", err);
-      alert("An unexpected error occurred while deleting the document.");
-    }
+    );
   };
 
   const filteredDocuments = documents.filter((doc) => {
@@ -927,7 +987,7 @@ export default function AdminDocumentsPage() {
                             <span>Edit</span>
                           </button>
                           <button
-                            onClick={() => handleDeleteDocument(doc.id)}
+                            onClick={() => handleDeleteDocument(doc.id, doc.title)}
                             className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3 py-1.5 text-xs font-bold text-white transition cursor-pointer shadow-xs"
                             title="Delete Document"
                           >
@@ -977,6 +1037,82 @@ export default function AdminDocumentsPage() {
           </div>
         </div>
       </main>
+
+      {/* Feedback & Alert Modal */}
+      {feedbackModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl transition-all border border-slate-100 transform scale-100">
+            <div className="flex flex-col items-center text-center">
+              {feedbackModal.type === "success" && (
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-8 ring-emerald-50">
+                  <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+
+              {feedbackModal.type === "error" && (
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600 ring-8 ring-rose-50">
+                  <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              )}
+
+              {feedbackModal.type === "confirm" && (
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600 ring-8 ring-amber-50">
+                  <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              )}
+
+              <h3 className="text-lg font-bold text-slate-900 mb-1">
+                {feedbackModal.title}
+              </h3>
+              <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                {feedbackModal.message}
+              </p>
+
+              <div className="flex w-full gap-3 justify-center">
+                {feedbackModal.type === "confirm" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
+                      className="w-1/2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+                        if (feedbackModal.onConfirm) feedbackModal.onConfirm();
+                      }}
+                      className="w-1/2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-rose-700 cursor-pointer"
+                    >
+                      Confirm
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
+                    className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-md transition cursor-pointer ${
+                      feedbackModal.type === "success"
+                        ? "bg-[#173490] hover:bg-[#1e4bb8]"
+                        : "bg-slate-900 hover:bg-black"
+                    }`}
+                  >
+                    OK
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
