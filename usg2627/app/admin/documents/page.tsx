@@ -489,10 +489,10 @@ export default function AdminDocumentsPage() {
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">Documents Management</h1>
-                <p className="text-slate-600 mt-1">Manage and publish official resolutions, executive orders, and legislative documents.</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Documents Management</h1>
+              <p className="text-slate-600 mt-1">Manage and publish official resolutions, executive orders, and legislative documents.</p>
+            </div>
             <button
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-2 rounded-lg bg-[#173490] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e4bb8] cursor-pointer"
@@ -1099,11 +1099,10 @@ export default function AdminDocumentsPage() {
                   <button
                     type="button"
                     onClick={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
-                    className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-md transition cursor-pointer ${
-                      feedbackModal.type === "success"
+                    className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-md transition cursor-pointer ${feedbackModal.type === "success"
                         ? "bg-[#173490] hover:bg-[#1e4bb8]"
                         : "bg-slate-900 hover:bg-black"
-                    }`}
+                      }`}
                   >
                     OK
                   </button>
