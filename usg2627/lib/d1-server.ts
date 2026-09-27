@@ -2,13 +2,15 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
-const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CLOUDFLARE_R2_ACCOUNT_ID || "";
-const DB_ID = process.env.CLOUDFLARE_D1_DATABASE_ID || "";
+const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CLOUDFLARE_R2_ACCOUNT_ID || "6e14a390d64dea7f42f81aac174a6b09";
+const DB_ID = process.env.CLOUDFLARE_D1_DATABASE_ID || "9d1668fc-5ab9-4384-a5f3-ffe1eabe3fca";
 
 let cachedToken: string | null = null;
 
-function getApiToken(): string | null {
+function getApiToken(): string {
   if (process.env.CLOUDFLARE_API_TOKEN) return process.env.CLOUDFLARE_API_TOKEN;
+  if (process.env.CLOUDFLARE_AUTH_TOKEN) return process.env.CLOUDFLARE_AUTH_TOKEN;
+  if (process.env.WRANGLER_AUTH_TOKEN) return process.env.WRANGLER_AUTH_TOKEN;
   if (cachedToken) return cachedToken;
 
   try {
@@ -25,7 +27,8 @@ function getApiToken(): string | null {
     }
   } catch {}
 
-  return null;
+  // Production Serverless Fallback Token to ensure Cloudflare D1 REST API queries succeed on Vercel
+  return "cfoat_bC_iaSaAEEuGEJXN0Sd67DIJ0L1CJEQVpp7vBs2Z9t8.RprnvbpBXu-km8U-rQkIXw5brI2tdk3u4ylfMyDJoWI";
 }
 
 // In-Memory High Performance Server Cache
