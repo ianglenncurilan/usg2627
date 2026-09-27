@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import { compressImageBeforeUpload, validateFileUploadSize } from "@/lib/imageUtils";
 import AdminSidebar from "../../components/AdminSidebar";
@@ -106,16 +107,16 @@ export default function AdminNewsPage() {
   const fetchNews = async () => {
     try {
       const data = await fetchWithCache("admin_news_list", async () => {
-        const { data, error } = await supabase
-          .from("news")
-          .select("id, headline, category, summary, link_url, image_url, created_at")
-          .order("created_at", { ascending: false });
+        const { data, error } = await d1("news").select(
+          "id, headline, category, summary, link_url, image_url, created_at",
+          "",
+          [],
+          "created_at DESC"
+        );
 
         if (error) {
           console.error("Error fetching news:", error);
-          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-            setDbError(true);
-          }
+          setDbError(true);
           return [];
         }
         setDbError(false);
@@ -124,7 +125,9 @@ export default function AdminNewsPage() {
 
       setNewsList(data || []);
     } catch (err) {
-      console.error(err);
+      console.error("fetchNews catch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,17 +177,28 @@ export default function AdminNewsPage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (editingItem) {
-        const { error: updateError } = await supabase
-          .from("news")
-          .update({
+        if (editingItem.image_url && imageUrl && editingItem.image_url !== imageUrl) {
+          try {
+            await fetch("/api/delete", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ fileUrl: editingItem.image_url }),
+            });
+          } catch { }
+        }
+
+        const { error: updateError } = await d1("news").update(
+          {
             headline: formData.headline,
             category: formData.category,
             summary: formData.summary,
             link_url: formData.link_url || null,
             image_url: imageUrl,
             updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingItem.id);
+          },
+          "id = ?",
+          [editingItem.id]
+        );
 
         if (updateError) {
           console.error("Error updating news:", updateError);
@@ -198,16 +212,14 @@ export default function AdminNewsPage() {
           fetchNews();
         }
       } else {
-        const { error: insertError } = await supabase
-          .from("news")
-          .insert({
-            headline: formData.headline,
-            category: formData.category,
-            summary: formData.summary,
-            link_url: formData.link_url || null,
-            image_url: imageUrl,
-            created_by: user?.id,
-          });
+        const { error: insertError } = await d1("news").insert({
+          headline: formData.headline,
+          category: formData.category,
+          summary: formData.summary,
+          link_url: formData.link_url || null,
+          image_url: imageUrl,
+          created_by: user?.id,
+        });
 
         if (insertError) {
           console.error("Error inserting news:", insertError);
@@ -238,10 +250,18 @@ export default function AdminNewsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this news article?")) return;
 
-    const { error } = await supabase
-      .from("news")
-      .delete()
-      .eq("id", id);
+    const targetNews = newsList.find((n) => n.id === id);
+    if (targetNews?.image_url) {
+      try {
+        await fetch("/api/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileUrl: targetNews.image_url }),
+        });
+      } catch { }
+    }
+
+    const { error } = await d1("news").delete("id = ?", [id]);
 
     if (error) {
       console.error("Error deleting news:", error);
@@ -269,7 +289,7 @@ export default function AdminNewsPage() {
 
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 md:p-8">
-          
+
           {/* Header */}
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -328,7 +348,7 @@ CREATE POLICY "Authenticated users can manage news" ON news FOR ALL USING (auth.
           {/* News Form Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
-              <div 
+              <div
                 className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl border border-slate-100 animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
               >

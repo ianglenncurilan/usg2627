@@ -6,6 +6,7 @@ import Image from "next/image";
 import GridShell from "./components/GridShell";
 import SectionHeader from "./components/SectionHeader";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { fetchWithCache } from "@/lib/cache";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -178,10 +179,12 @@ export default function Home() {
     async function fetchNews() {
       try {
         const data = await fetchWithCache("home_news", async () => {
-          const { data, error } = await supabase
-            .from("news")
-            .select("id, category, headline, summary, link_url, image_url, created_at")
-            .order("created_at", { ascending: false });
+          const { data, error } = await d1("news").select(
+            "id, category, headline, summary, link_url, image_url, created_at",
+            "",
+            [],
+            "created_at DESC"
+          );
           if (error) throw error;
           return data || [];
         });
@@ -223,11 +226,12 @@ export default function Home() {
     async function fetchDocumentsData() {
       try {
         const data = await fetchWithCache("home_documents", async () => {
-          const { data, error } = await supabase
-            .from("documents")
-            .select("id, type, tracking_number, title, published_at, created_at, file_url")
-            .eq("status", "published")
-            .order("created_at", { ascending: false });
+          const { data, error } = await d1("documents").select(
+            "id, type, tracking_number, title, published_at, created_at, file_url",
+            "status = ?",
+            ["published"],
+            "created_at DESC"
+          );
           if (error) throw error;
           return data || [];
         });

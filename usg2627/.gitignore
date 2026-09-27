@@ -42,3 +42,8 @@ next-env.d.ts
 
 
 .env.local
+
+# Migration scripts and exported data
+scripts/export-supabase-to-d1.mjs
+supabase_data.sql
+.supabase_data.sql

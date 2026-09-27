@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import { EditIcon } from "@/components/icons/EditIcon";
@@ -48,16 +49,16 @@ export default function AdminCalendarPage() {
   const fetchEvents = async () => {
     try {
       const data = await fetchWithCache("admin_calendar_events_list", async () => {
-        const { data, error } = await supabase
-          .from("calendar_events")
-          .select("id, title, description, event_date, location")
-          .order("event_date", { ascending: true });
+        const { data, error } = await d1("calendar_events").select(
+          "id, title, description, event_date, location",
+          "",
+          [],
+          "event_date ASC"
+        );
 
         if (error) {
           console.error("Error fetching calendar events:", error);
-          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-            setDbError(true);
-          }
+          setDbError(true);
           return [];
         }
         setDbError(false);
@@ -133,10 +134,11 @@ export default function AdminCalendarPage() {
 
       if (editingId) {
         // UPDATE existing calendar event
-        const { error: updateError } = await supabase
-          .from("calendar_events")
-          .update(eventPayload)
-          .eq("id", editingId);
+        const { error: updateError } = await d1("calendar_events").update(
+          eventPayload,
+          "id = ?",
+          [editingId]
+        );
 
         if (updateError) {
           console.error("Error updating calendar event:", updateError);
@@ -153,9 +155,7 @@ export default function AdminCalendarPage() {
           eventPayload.created_by = user.id;
         }
 
-        const { error: insertError } = await supabase
-          .from("calendar_events")
-          .insert([eventPayload]);
+        const { error: insertError } = await d1("calendar_events").insert(eventPayload);
 
         if (insertError) {
           console.error("Error creating calendar event:", insertError);
@@ -181,10 +181,7 @@ export default function AdminCalendarPage() {
     }
 
     try {
-      const { error } = await supabase
-        .from("calendar_events")
-        .delete()
-        .eq("id", id);
+      const { error } = await d1("calendar_events").delete("id = ?", [id]);
 
       if (error) {
         console.error("Error deleting calendar event:", error);
@@ -217,7 +214,7 @@ export default function AdminCalendarPage() {
 
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 md:p-8">
-          
+
           {/* Header */}
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

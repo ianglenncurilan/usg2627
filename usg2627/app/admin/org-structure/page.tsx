@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import { compressImageBeforeUpload, validateFileUploadSize } from "@/lib/imageUtils";
 import AdminSidebar from "../../components/AdminSidebar";
@@ -13,14 +14,14 @@ const defaultChartTemplates = [
     chart_key: "org1",
     title: "USG Organizational Structure",
     subtitle: "Overall Student Government Tree Hierarchy & Governance Diagram",
-    image_url: "/org1.png",
+    image_url: "/2.webp",
     badge: "Main Overall Structure",
   },
   {
     chart_key: "org2",
     title: "The USG President's Cabinet Officials",
     subtitle: "Executive Office & Cabinet Officials Roster",
-    image_url: "/org2.png",
+    image_url: "/3.webp",
     badge: "Cabinet Officials",
   },
   {
@@ -80,13 +81,15 @@ export default function AdminOrgStructurePage() {
       try {
         const stored = localStorage.getItem("usg_org_charts_store");
         if (stored) localCache = JSON.parse(stored);
-      } catch {}
+      } catch { }
 
       const data = await fetchWithCache("admin_org_charts", async () => {
-        const { data, error } = await supabase
-          .from("org_charts")
-          .select("chart_key, title, subtitle, image_url")
-          .order("chart_key", { ascending: true });
+        const { data, error } = await d1("org_charts").select(
+          "chart_key, title, subtitle, image_url",
+          "",
+          [],
+          "chart_key ASC"
+        );
         if (error) return [];
         return data || [];
       });
@@ -160,7 +163,20 @@ export default function AdminOrgStructurePage() {
     try {
       const finalImageUrl = newImageInput;
 
-      // 1. Upsert into Supabase database org_charts table
+      // Delete old image from Cloudflare R2 if it was an uploaded R2 file and is being replaced
+      if (
+        updatingChart.image_url &&
+        (updatingChart.image_url.includes("pub-") || updatingChart.image_url.includes("r2.dev")) &&
+        updatingChart.image_url !== finalImageUrl
+      ) {
+        fetch("/api/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: updatingChart.image_url }),
+        }).catch((e) => console.warn("Old R2 image cleanup note:", e));
+      }
+
+      // 1. Insert/Update into Cloudflare D1 database org_charts table
       const updatedItem = {
         chart_key: updatingChart.chart_key,
         title: updatingChart.title,
@@ -169,11 +185,9 @@ export default function AdminOrgStructurePage() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from("org_charts")
-        .upsert(updatedItem, { onConflict: "chart_key" });
+      const { error } = await d1("org_charts").insert(updatedItem);
 
-      if (error) console.warn("Supabase org_charts upsert note:", error.message);
+      if (error) console.warn("D1 org_charts insert note:", error.message);
       invalidateCache("admin_org_charts");
 
       // 2. Sync to localStorage for instant local reactivity across tabs/pages
@@ -286,6 +300,10 @@ export default function AdminOrgStructurePage() {
                         src={chart.image_url}
                         alt={chart.title}
                         className="h-full w-full object-contain transition duration-300 group-hover:scale-102"
+                        onError={(e) => {
+                          const fallback = defaultChartTemplates.find((t) => t.chart_key === chart.chart_key)?.image_url || "/2.webp";
+                          (e.target as HTMLImageElement).src = fallback;
+                        }}
                       />
                     ) : (
                       <div className="flex h-full w-full flex-col items-center justify-center rounded-xl bg-slate-900/60 p-6 text-center text-slate-400">

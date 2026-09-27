@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import { EditIcon } from "@/components/icons/EditIcon";
@@ -48,16 +49,16 @@ export default function AdminEventsPage() {
   const fetchEvents = async () => {
     try {
       const data = await fetchWithCache("admin_events_list", async () => {
-        const { data, error } = await supabase
-          .from("events")
-          .select("id, title, description, event_date, location")
-          .order("event_date", { ascending: true });
+        const { data, error } = await d1("events").select(
+          "id, title, description, event_date, location",
+          "",
+          [],
+          "event_date ASC"
+        );
 
         if (error) {
           console.error("Error fetching events:", error);
-          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-            setDbError(true);
-          }
+          setDbError(true);
           return [];
         }
         setDbError(false);
@@ -133,10 +134,7 @@ export default function AdminEventsPage() {
 
       if (editingId) {
         // UPDATE existing event
-        const { error: updateError } = await supabase
-          .from("events")
-          .update(eventPayload)
-          .eq("id", editingId);
+        const { error: updateError } = await d1("events").update(eventPayload, "id = ?", [editingId]);
 
         if (updateError) {
           console.error("Error updating event:", updateError);
@@ -154,15 +152,7 @@ export default function AdminEventsPage() {
           eventPayload.created_by = user.id;
         }
 
-        let { error: insertError } = await supabase
-          .from("events")
-          .insert(eventPayload);
-
-        if (insertError && insertError.message && (insertError.message.includes("created_by") || insertError.code === "PGRST204")) {
-          delete eventPayload.created_by;
-          const fallbackRes = await supabase.from("events").insert(eventPayload);
-          insertError = fallbackRes.error;
-        }
+        const { error: insertError } = await d1("events").insert(eventPayload);
 
         if (insertError) {
           console.error("Error inserting event:", insertError);
@@ -186,10 +176,7 @@ export default function AdminEventsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this event?")) return;
 
-    const { error } = await supabase
-      .from("events")
-      .delete()
-      .eq("id", id);
+    const { error } = await d1("events").delete("id = ?", [id]);
 
     if (error) {
       console.error("Error deleting event:", error);
@@ -218,7 +205,7 @@ export default function AdminEventsPage() {
 
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 md:p-8">
-          
+
           {/* Header */}
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -270,7 +257,7 @@ CREATE POLICY "Anyone can update events" ON events FOR UPDATE USING (true);`}
           {/* Add / Edit Event Form Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
-              <div 
+              <div
                 className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl border border-slate-100 animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -404,11 +391,10 @@ CREATE POLICY "Anyone can update events" ON events FOR UPDATE USING (true);`}
                           <td className="px-6 py-4 font-semibold text-slate-900">{evt.title}</td>
                           <td className="px-6 py-4">
                             <span
-                              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                isUpcoming
+                              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${isUpcoming
                                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                   : "bg-slate-100 text-slate-600 border border-slate-200"
-                              }`}
+                                }`}
                             >
                               {isUpcoming ? "Upcoming" : "Past"}
                             </span>

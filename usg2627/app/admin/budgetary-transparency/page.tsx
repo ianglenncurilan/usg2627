@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 
@@ -113,10 +114,12 @@ export default function AdminBudgetaryTransparencyPage() {
   const fetchBudgetItems = async () => {
     try {
       const data = await fetchWithCache("admin_budget_list", async () => {
-        const { data, error } = await supabase
-          .from("budgetary_transparency")
-          .select("id, event_name, description, file_url, file_name, status, amount, academic_year, created_at")
-          .order("created_at", { ascending: false });
+        const { data, error } = await d1("budgetary_transparency").select(
+          "id, event_name, description, file_url, file_name, status, amount, academic_year, created_at",
+          "",
+          [],
+          "created_at DESC"
+        );
 
         if (error) {
           console.error("Error fetching budgetary transparency:", error);
@@ -158,8 +161,7 @@ export default function AdminBudgetaryTransparencyPage() {
         created_by: user?.id,
       };
 
-      const { error: insertError } = await supabase
-        .from("budgetary_transparency")
+      const { error: insertError } = await d1("budgetary_transparency")
         .insert(newRecord);
 
       if (insertError) {
@@ -174,7 +176,7 @@ export default function AdminBudgetaryTransparencyPage() {
           created_at: new Date().toISOString(),
         };
         setBudgetList((prev) => [mockCreated, ...prev]);
-        showToast("Record saved locally! (Please execute migration SQL in Supabase)");
+        showToast("Record saved locally!");
       } else {
         showToast("Budgetary event added successfully!");
         fetchBudgetItems();
@@ -202,10 +204,11 @@ export default function AdminBudgetaryTransparencyPage() {
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     setStatusUpdatingId(id);
     try {
-      const { error } = await supabase
-        .from("budgetary_transparency")
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", id);
+      const { error } = await d1("budgetary_transparency").update(
+        { status: newStatus, updated_at: new Date().toISOString() },
+        "id = ?",
+        [id]
+      );
 
       if (error) {
         console.warn("DB update note:", error.message);
@@ -256,10 +259,21 @@ export default function AdminBudgetaryTransparencyPage() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from("budgetary_transparency")
-        .update(updatedFields)
-        .eq("id", editingItem.id);
+      if (editingItem.file_url && editingItem.file_url !== (formData.link_url || null)) {
+        try {
+          await fetch("/api/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fileUrl: editingItem.file_url }),
+          });
+        } catch { }
+      }
+
+      const { error } = await d1("budgetary_transparency").update(
+        updatedFields,
+        "id = ?",
+        [editingItem.id]
+      );
 
       if (error) {
         console.warn("DB edit update note:", error.message);
@@ -288,10 +302,21 @@ export default function AdminBudgetaryTransparencyPage() {
     if (!confirm("Are you sure you want to delete this budgetary transparency record?")) return;
 
     try {
-      const { error } = await supabase
-        .from("budgetary_transparency")
-        .delete()
-        .eq("id", id);
+      const targetItem = budgetList.find((item) => item.id === id);
+      if (targetItem?.file_url) {
+        try {
+          await fetch("/api/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fileUrl: targetItem.file_url }),
+          });
+        } catch { }
+      }
+
+      const { error } = await d1("budgetary_transparency").delete(
+        "id = ?",
+        [id]
+      );
 
       if (error) {
         console.warn("Delete DB note:", error.message);
@@ -356,7 +381,7 @@ export default function AdminBudgetaryTransparencyPage() {
 
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 md:p-8 max-w-7xl">
-          
+
           {/* Toast Notification */}
           {toastMessage && (
             <div className="fixed top-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
@@ -531,11 +556,10 @@ CREATE POLICY "Authenticated users can manage budgetary transparency" ON budgeta
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
-                    statusFilter === st
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${statusFilter === st
                       ? "bg-[#173490] text-white shadow-sm"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}
+                    }`}
                 >
                   {st === "all" ? "All" : st}
                 </button>
@@ -575,7 +599,7 @@ CREATE POLICY "Authenticated users can manage budgetary transparency" ON budgeta
                   <tbody className="divide-y divide-slate-100">
                     {paginatedItems.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-50/70 transition">
-                        
+
                         {/* 1. Events */}
                         <td className="px-6 py-4 align-top">
                           <div className="flex flex-col">
@@ -738,11 +762,10 @@ CREATE POLICY "Authenticated users can manage budgetary transparency" ON budgeta
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition cursor-pointer ${
-                            currentPage === pageNum
+                          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition cursor-pointer ${currentPage === pageNum
                               ? "bg-[#173490] text-white font-bold shadow-sm"
                               : "border border-slate-300 text-slate-700 hover:bg-slate-50"
-                          }`}
+                            }`}
                         >
                           {pageNum}
                         </button>

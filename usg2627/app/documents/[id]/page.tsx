@@ -5,7 +5,9 @@ import Link from "next/link";
 import GridShell from "../../components/GridShell";
 import { fetchWithCache } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { motion } from "framer-motion";
+import { Ripple, PageSkeleton } from "@/app/components/Skeletons";
 
 const documentData = {
   "2026-015": {
@@ -93,11 +95,10 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
 
       try {
         const data = await fetchWithCache(`doc_detail_${id}`, async () => {
-          const { data, error } = await supabase
-            .from("documents")
-            .select("id, type, tracking_number, title, published_at, issuing_body, status, file_name, file_url, description")
-            .eq("id", id)
-            .single();
+          const { data, error } = await d1("documents").single(
+            "id = ?",
+            [id]
+          );
           if (error) return null;
           return data;
         });
@@ -129,11 +130,7 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
   if (loading) {
     return (
       <GridShell>
-        <main className="mx-auto max-w-7xl px-6 py-20">
-          <div className="flex items-center justify-center py-20">
-            <div className="h-12 w-12 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        </main>
+        <PageSkeleton text="Loading Document Details..." />
       </GridShell>
     );
   }

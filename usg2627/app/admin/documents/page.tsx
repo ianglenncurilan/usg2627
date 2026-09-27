@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import { EditIcon } from "@/components/icons/EditIcon";
@@ -76,11 +77,7 @@ export default function AdminDocumentsPage() {
         setLoading(false);
         if (session.user) {
           try {
-            const { data: profile } = await supabase
-              .from("user_profiles")
-              .select("role")
-              .eq("user_id", session.user.id)
-              .single();
+            const { data: profile } = await d1("user_profiles").single("user_id = ?", [session.user.id]);
 
             if (profile?.role) {
               setCurrentUserRole(profile.role);
@@ -107,10 +104,12 @@ export default function AdminDocumentsPage() {
   }, [router]);
 
   const fetchDocuments = async () => {
-    const { data, error } = await supabase
-      .from("documents")
-      .select("id, title, type, tracking_number, issuing_body, author, description, file_url, file_name, file_size, status, created_at, published_at")
-      .order("created_at", { ascending: false });
+    const { data, error } = await d1("documents").select(
+      "id, title, type, tracking_number, issuing_body, author, description, file_url, file_name, file_size, status, created_at, published_at",
+      "",
+      [],
+      "created_at DESC"
+    );
 
     if (error) {
       console.error("Error fetching documents:", error);
@@ -209,25 +208,23 @@ export default function AdminDocumentsPage() {
         formattedUrl = `https://${formattedUrl}`;
       }
 
-      const { error: insertError } = await supabase
-        .from("documents")
-        .insert({
-          title: formData.title,
-          type: formData.type,
-          tracking_number: formData.tracking_number,
-          issuing_body: formData.issuing_body,
-          author: formData.author,
-          description: formData.description,
-          file_url: formattedUrl || null,
-          file_name: uploadedFileName || (formattedUrl ? `${formData.title || "Document"}` : null),
-          file_size: fileSize || null,
-          status: "pending",
-          created_by: user?.id,
-        });
+      const { error: insertError } = await d1("documents").insert({
+        title: formData.title,
+        type: formData.type,
+        tracking_number: formData.tracking_number,
+        issuing_body: formData.issuing_body,
+        author: formData.author,
+        description: formData.description,
+        file_url: formattedUrl || null,
+        file_name: uploadedFileName || (formattedUrl ? `${formData.title || "Document"}` : null),
+        file_size: fileSize || null,
+        status: "pending",
+        created_by: user?.id,
+      });
 
       if (insertError) {
         console.error("Error inserting document:", insertError);
-        showErrorModal("Error Saving Document", insertError.message || insertError.details || "Please check database constraints.");
+        showErrorModal("Error Saving Document", insertError.message || "Please check database constraints.");
       } else {
         invalidateCache("home_documents");
         invalidateCache("public_documents");
@@ -256,10 +253,7 @@ export default function AdminDocumentsPage() {
   };
 
   const handleApprove = async (id: string) => {
-    const { error } = await supabase
-      .from("documents")
-      .update({ status: "approved" })
-      .eq("id", id);
+    const { error } = await d1("documents").update({ status: "approved" }, "id = ?", [id]);
 
     if (error) {
       console.error("Error approving document:", error);
@@ -274,10 +268,11 @@ export default function AdminDocumentsPage() {
   };
 
   const handlePublish = async (id: string) => {
-    const { error } = await supabase
-      .from("documents")
-      .update({ status: "published", published_at: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await d1("documents").update(
+      { status: "published", published_at: new Date().toISOString() },
+      "id = ?",
+      [id]
+    );
 
     if (error) {
       console.error("Error publishing document:", error);
@@ -292,10 +287,7 @@ export default function AdminDocumentsPage() {
   };
 
   const handleReject = async (id: string) => {
-    const { error } = await supabase
-      .from("documents")
-      .update({ status: "rejected" })
-      .eq("id", id);
+    const { error } = await d1("documents").update({ status: "rejected" }, "id = ?", [id]);
 
     if (error) {
       console.error("Error rejecting document:", error);
@@ -351,14 +343,11 @@ export default function AdminDocumentsPage() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from("documents")
-        .update(updatedFields)
-        .eq("id", editingDocument.id);
+      const { error } = await d1("documents").update(updatedFields, "id = ?", [editingDocument.id]);
 
       if (error) {
         console.error("Error updating document:", error);
-        showErrorModal("Update Failed", `Error updating document: ${error.message || error.details}`);
+        showErrorModal("Update Failed", `Error updating document: ${error.message}`);
       } else {
         // If file_url was replaced or changed, clean up old file from Cloudflare R2
         if (editingDocument.file_url && editingDocument.file_url !== formattedUrl) {
@@ -411,10 +400,7 @@ export default function AdminDocumentsPage() {
             }
           }
 
-          const { error } = await supabase
-            .from("documents")
-            .delete()
-            .eq("id", id);
+          const { error } = await d1("documents").delete("id = ?", [id]);
 
           if (error) {
             console.error("Error deleting document:", error);
@@ -1100,8 +1086,8 @@ export default function AdminDocumentsPage() {
                     type="button"
                     onClick={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
                     className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-md transition cursor-pointer ${feedbackModal.type === "success"
-                        ? "bg-[#173490] hover:bg-[#1e4bb8]"
-                        : "bg-slate-900 hover:bg-black"
+                      ? "bg-[#173490] hover:bg-[#1e4bb8]"
+                      : "bg-slate-900 hover:bg-black"
                       }`}
                   >
                     OK

@@ -1,0 +1,15 @@
+{
+  "name": "usg2627",
+  "account_id": "6e14a390d64dea7f42f81aac174a6b09",
+  "compatibility_date": "2026-09-26",
+  "placement": {
+    "mode": "smart"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "usg2627-db",
+      "database_id": "9d1668fc-5ab9-4384-a5f3-ffe1eabe3fca"
+    }
+  ]
+}

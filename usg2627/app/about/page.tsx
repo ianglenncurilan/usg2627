@@ -6,6 +6,7 @@ import GridShell from "../components/GridShell";
 import SectionHeader from "../components/SectionHeader";
 import FeedbackForm from "../components/FeedbackForm";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { motion } from "framer-motion";
 
 const containerVariants = {
@@ -81,11 +82,13 @@ export default function AboutPage() {
           if (stored) localCache = JSON.parse(stored);
         } catch { }
 
-        // Fetch live database records from Supabase org_charts table
-        const { data, error } = await supabase
-          .from("org_charts")
-          .select("chart_key, title, subtitle, image_url")
-          .order("chart_key", { ascending: true });
+        // Fetch live database records from Cloudflare D1 org_charts table
+        const { data, error } = await d1("org_charts").select(
+          "chart_key, title, subtitle, image_url",
+          "",
+          [],
+          "chart_key ASC"
+        );
 
         const merged = defaultChartTemplates.map((template) => {
           const dbFound = data?.find((d: any) => d.chart_key === template.chart_key);
@@ -107,27 +110,14 @@ export default function AboutPage() {
 
     loadCharts();
 
-    // 3. Listen for custom window event & storage event across tabs/pages
+    // Listen for custom window event & storage event across tabs/pages
     const handleCustomUpdate = () => loadCharts();
     window.addEventListener("usg_org_charts_updated", handleCustomUpdate);
     window.addEventListener("storage", handleCustomUpdate);
 
-    // 4. Supabase Realtime postgres_changes subscription
-    const channel = supabase
-      .channel("realtime-org-charts")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "org_charts" },
-        () => {
-          loadCharts();
-        }
-      )
-      .subscribe();
-
     return () => {
       window.removeEventListener("usg_org_charts_updated", handleCustomUpdate);
       window.removeEventListener("storage", handleCustomUpdate);
-      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -368,6 +358,10 @@ export default function AboutPage() {
                     alt={chart.title}
                     className="w-full h-auto max-h-[1050px] object-contain rounded-xl shadow-md cursor-pointer transition hover:scale-[1.005]"
                     onClick={() => setSelectedModalChart(chart)}
+                    onError={(e) => {
+                      const fallback = defaultChartTemplates.find((t) => t.chart_key === chart.id)?.image_url || "/2.webp";
+                      (e.target as HTMLImageElement).src = fallback;
+                    }}
                   />
                 </div>
               </motion.section>
@@ -427,6 +421,10 @@ export default function AboutPage() {
                 alt={selectedModalChart.title}
                 className="w-full h-auto max-h-[78vh] object-contain mx-auto rounded-xl"
                 onClick={(e) => e.stopPropagation()}
+                onError={(e) => {
+                  const fallback = defaultChartTemplates.find((t) => t.chart_key === selectedModalChart.id)?.image_url || "/2.webp";
+                  (e.target as HTMLImageElement).src = fallback;
+                }}
               />
             </div>
           </div>,

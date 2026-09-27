@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { fetchWithCache } from "@/lib/cache";
 import { motion } from "framer-motion";
+import { Ripple } from "@/components/ui/ripple";
 import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
 // Pre-seeded fallback data if database is empty or not yet migrated
@@ -130,10 +132,12 @@ export default function BudgetaryTransparencyPage() {
   const fetchBudgetData = async () => {
     try {
       const data = await fetchWithCache("budget_transparency", async () => {
-        const { data, error } = await supabase
-          .from("budgetary_transparency")
-          .select("id, event_name, description, file_url, file_name, status, amount, academic_year, created_at")
-          .order("created_at", { ascending: false });
+        const { data, error } = await d1("budgetary_transparency").select(
+          "id, event_name, description, file_url, file_name, status, amount, academic_year, created_at",
+          "",
+          [],
+          "created_at DESC"
+        );
         if (error) throw error;
         return data || [];
       });
@@ -270,8 +274,11 @@ export default function BudgetaryTransparencyPage() {
           className="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
         >
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="h-10 w-10 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex flex-col items-center justify-center py-20">
+              <Ripple className="w-14 h-14 text-[#173490]" />
+              <p className="mt-3 text-xs font-bold text-slate-600 font-mono tracking-wider uppercase animate-pulse">
+                Loading Budgetary Records...
+              </p>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="py-16 text-center">

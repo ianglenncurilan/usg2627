@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import GridShell from "../components/GridShell";
 import ProfileCard from "../components/ProfileCard";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { fetchWithCache } from "@/lib/cache";
 import { motion, AnimatePresence } from "framer-motion";
+import { Ripple } from "@/components/ui/ripple";
 import {
   Pagination,
   PaginationContent,
@@ -649,29 +651,44 @@ export default function CabinetPage() {
   const fetchDynamicMembers = async () => {
     try {
       const data = await fetchWithCache("cabinet_members", async () => {
-        const { data, error } = await supabase
-          .from("members")
-          .select("id, name, full_name, role, role_badge, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at")
-          .order("created_at", { ascending: false });
+        const { data, error } = await d1("members").select(
+          "id, name, full_name, role, role_badge, department, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at",
+          "",
+          [],
+          "created_at DESC"
+        );
         if (error) throw error;
         return data || [];
       });
 
       if (data && data.length > 0) {
         // 1. Process Executive Profiling Members
-        const mappedData = data.map((m: any) => ({
-          id: m.id,
-          name: m.name || m.full_name || "USG Member",
-          role: m.role || "Executive Officer",
-          roleBadge: m.role_badge ? m.role_badge : undefined,
-          department: m.department || "Executive Branch",
-          avatarSrc: m.profile_url || "/usg.jpg",
-          directLine: m.phone_number || "0917 552 6001",
-          email: m.email || "usg@carsu.edu.ph",
-          roomAddress: m.room_address || "Room 501, Executive Building",
-          facebookUrl: m.facebook_url || "#",
-          filedBills: m.filed_bills || [],
-        }));
+        const mappedData = data.map((m: any) => {
+          let bills = [];
+          if (typeof m.filed_bills === "string") {
+            try {
+              bills = JSON.parse(m.filed_bills);
+            } catch {
+              bills = [];
+            }
+          } else if (Array.isArray(m.filed_bills)) {
+            bills = m.filed_bills;
+          }
+
+          return {
+            id: m.id,
+            name: m.name || m.full_name || "USG Member",
+            role: m.role || "Executive Officer",
+            roleBadge: m.role_badge ? m.role_badge : undefined,
+            department: m.department || "Executive Branch",
+            avatarSrc: m.profile_url || "/usg.jpg",
+            directLine: m.phone_number || "0917 552 6001",
+            email: m.email || "usg@carsu.edu.ph",
+            roomAddress: m.room_address || "Room 501, Executive Building",
+            facebookUrl: m.facebook_url || "#",
+            filedBills: bills,
+          };
+        });
 
         const executiveOnly = mappedData.filter((m: any) => isExecutiveRole(m.role));
 
@@ -839,7 +856,7 @@ export default function CabinetPage() {
 
           {loadingExec ? (
             <div className="flex items-center justify-center py-16">
-              <div className="h-10 w-10 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
+              <Ripple className="w-12 h-12 text-[#173490]" />
             </div>
           ) : filteredExecMembers.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs">

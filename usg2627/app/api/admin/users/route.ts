@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase, supabaseAuthClient } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 
 async function verifyAdminAuth(req: Request): Promise<boolean> {
   try {
@@ -19,7 +20,7 @@ async function verifyAdminAuth(req: Request): Promise<boolean> {
   }
 }
 
-// GET /api/admin/users - Fetch all registered users directly from Supabase Auth & user_profiles table
+// GET /api/admin/users - Fetch all registered users directly from Supabase Auth & Cloudflare D1 user_profiles table
 export async function GET(req: Request) {
   try {
     const authorized = await verifyAdminAuth(req);
@@ -52,11 +53,13 @@ export async function GET(req: Request) {
       console.warn("Supabase auth.admin.listUsers note:", authErr);
     }
 
-    // 2. Merge with user_profiles table from database
-    const { data: profileData } = await supabase
-      .from("user_profiles")
-      .select("id, user_id, email, full_name, role, is_verified, created_at")
-      .order("created_at", { ascending: false });
+    // 2. Merge with user_profiles table from Cloudflare D1 database
+    const { data: profileData } = await d1("user_profiles").select(
+      "id, user_id, email, full_name, role, is_verified, created_at",
+      "",
+      [],
+      "created_at DESC"
+    );
 
     if (profileData && profileData.length > 0) {
       profileData.forEach((p: any) => {
@@ -181,8 +184,9 @@ export async function POST(req: Request) {
       authUserId = signUpData?.user?.id || null;
     }
 
-    // 2. Insert or update user profile record in public.user_profiles
+    // 2. Insert user profile record into Cloudflare D1 user_profiles
     const profilePayload = {
+      id: authUserId || crypto.randomUUID(),
       user_id: authUserId,
       email: cleanEmail,
       full_name: cleanName,
@@ -191,12 +195,9 @@ export async function POST(req: Request) {
       updated_at: new Date().toISOString(),
     };
 
-    const { data: profileData, error: profileError } = await supabase
-      .from("user_profiles")
-      .upsert(profilePayload, { onConflict: "email" })
-      .select();
+    const { data: profileData } = await d1("user_profiles").insert(profilePayload);
 
-    // 3. Auto-confirm user in Supabase auth.users via RPC verify_supabase_user
+    // 3. Auto-confirm user in Supabase auth.users via RPC verify_supabase_user if possible
     if (autoConfirm) {
       try {
         await supabase.rpc("verify_supabase_user", {
@@ -209,7 +210,6 @@ export async function POST(req: Request) {
     }
 
     const createdUser = (profileData && profileData[0]) || {
-      id: authUserId || `usr-${Date.now()}`,
       ...profilePayload,
       created_at: new Date().toISOString(),
     };
@@ -228,7 +228,7 @@ export async function POST(req: Request) {
   }
 }
 
-// PATCH /api/admin/users - Update user verification or role in both Supabase Auth and user_profiles
+// PATCH /api/admin/users - Update user verification or role in both Supabase Auth and Cloudflare D1 user_profiles
 export async function PATCH(req: Request) {
   try {
     const authorized = await verifyAdminAuth(req);
@@ -237,21 +237,31 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-
-// ... existing logic ...
     const { id, email, user_id, is_verified, role } = body;
 
     if (!id && !email && !user_id) {
       return NextResponse.json({ success: false, error: "User identifier is required." }, { status: 400 });
     }
 
-    // Fetch user profile first to get target_user_id
-    let profileQuery = supabase.from("user_profiles").select("id, user_id, email, full_name, role, is_verified, created_at");
-    if (id) profileQuery = profileQuery.eq("id", id);
-    else if (user_id) profileQuery = profileQuery.eq("user_id", user_id);
-    else if (email) profileQuery = profileQuery.eq("email", email);
+    let whereClause = "";
+    const whereParams: any[] = [];
+    if (id) {
+      whereClause = "id = ?";
+      whereParams.push(id);
+    } else if (user_id) {
+      whereClause = "user_id = ?";
+      whereParams.push(user_id);
+    } else if (email) {
+      whereClause = "email = ?";
+      whereParams.push(email);
+    }
 
-    const { data: existingProfiles } = await profileQuery;
+    // Fetch user profile first from Cloudflare D1
+    const { data: existingProfiles } = await d1("user_profiles").select(
+      "id, user_id, email, full_name, role, is_verified, created_at",
+      whereClause,
+      whereParams
+    );
     const targetUser = existingProfiles?.[0];
     const targetAuthUserId = targetUser?.user_id || user_id;
     const targetEmail = targetUser?.email || email;
@@ -269,20 +279,22 @@ export async function PATCH(req: Request) {
       }
     }
 
-    // 2. Sync verification status in auth.users and user_profiles via RPC
+    // 2. Sync verification status in auth.users via RPC if available
     if (typeof is_verified === "boolean") {
       if (is_verified) {
-        const { error: rpcError } = await supabase.rpc("verify_supabase_user", {
-          target_email: targetEmail || "",
-          target_user_id: targetAuthUserId || null,
-        });
-        if (rpcError) console.warn("RPC verify_supabase_user note:", rpcError.message);
+        try {
+          await supabase.rpc("verify_supabase_user", {
+            target_email: targetEmail || "",
+            target_user_id: targetAuthUserId || null,
+          });
+        } catch { }
       } else {
-        const { error: rpcError } = await supabase.rpc("unverify_supabase_user", {
-          target_email: targetEmail || "",
-          target_user_id: targetAuthUserId || null,
-        });
-        if (rpcError) console.warn("RPC unverify_supabase_user note:", rpcError.message);
+        try {
+          await supabase.rpc("unverify_supabase_user", {
+            target_email: targetEmail || "",
+            target_user_id: targetAuthUserId || null,
+          });
+        } catch { }
       }
     }
 
@@ -290,24 +302,25 @@ export async function PATCH(req: Request) {
     if (typeof is_verified === "boolean") updates.is_verified = is_verified;
     if (role) updates.role = role;
 
-    let query = supabase.from("user_profiles").update(updates);
-    if (id) query = query.eq("id", id);
-    else if (user_id) query = query.eq("user_id", user_id);
-    else if (email) query = query.eq("email", email);
-
-    const { data, error } = await query.select("id, user_id, email, full_name, role, is_verified, created_at");
+    const { error } = await d1("user_profiles").update(updates, whereClause, whereParams);
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, user: data?.[0] });
+    const { data: updatedData } = await d1("user_profiles").select(
+      "id, user_id, email, full_name, role, is_verified, created_at",
+      whereClause,
+      whereParams
+    );
+
+    return NextResponse.json({ success: true, user: updatedData?.[0] });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
-// DELETE /api/admin/users - Delete user from both Supabase Auth (auth.users) and user_profiles table
+// DELETE /api/admin/users - Delete user from both Supabase Auth (auth.users) and Cloudflare D1 user_profiles table
 export async function DELETE(req: Request) {
   try {
     const authorized = await verifyAdminAuth(req);
@@ -323,12 +336,22 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, error: "User ID or Email is required." }, { status: 400 });
     }
 
-    // Fetch user profile first to get auth user_id
-    let profileQuery = supabase.from("user_profiles").select("id, user_id, email, full_name, role, is_verified, created_at");
-    if (id) profileQuery = profileQuery.eq("id", id);
-    else if (emailParam) profileQuery = profileQuery.eq("email", emailParam);
+    let whereClause = "";
+    const whereParams: any[] = [];
+    if (id) {
+      whereClause = "id = ?";
+      whereParams.push(id);
+    } else if (emailParam) {
+      whereClause = "email = ?";
+      whereParams.push(emailParam);
+    }
 
-    const { data: profiles } = await profileQuery;
+    // Fetch user profile first to get auth user_id
+    const { data: profiles } = await d1("user_profiles").select(
+      "id, user_id, email, full_name, role, is_verified, created_at",
+      whereClause,
+      whereParams
+    );
     const targetUser = profiles?.[0];
 
     const authUserId = targetUser?.user_id || id;
@@ -349,22 +372,26 @@ export async function DELETE(req: Request) {
         target_email: targetEmail || "",
         target_user_id: authUserId || null,
       });
-    } catch (rpcDelErr) {
-      // ignore
+    } catch { }
+
+    // 3. Delete from Cloudflare D1 user_profiles table
+    let delWhereClause = "";
+    const delWhereParams: any[] = [];
+    if (id) {
+      delWhereClause = "id = ?";
+      delWhereParams.push(id);
+    } else if (targetEmail) {
+      delWhereClause = "email = ?";
+      delWhereParams.push(targetEmail);
     }
 
-    // 3. Delete from user_profiles table
-    let deleteQuery = supabase.from("user_profiles").delete();
-    if (id) deleteQuery = deleteQuery.eq("id", id);
-    else if (targetEmail) deleteQuery = deleteQuery.eq("email", targetEmail);
-
-    const { error } = await deleteQuery;
+    const { error } = await d1("user_profiles").delete(delWhereClause, delWhereParams);
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, message: "User account deleted from Supabase Auth and user profiles." });
+    return NextResponse.json({ success: true, message: "User account deleted from Supabase Auth and D1 user profiles." });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

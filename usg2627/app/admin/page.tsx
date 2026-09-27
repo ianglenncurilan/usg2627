@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../components/AdminSidebar";
 
@@ -68,10 +69,12 @@ export default function AdminPage() {
   const fetchDashboardData = async () => {
     try {
       const allDocs = await fetchWithCache("admin_dashboard_docs", async () => {
-        const { data, error } = await supabase
-          .from("documents")
-          .select("id, title, type, tracking_number, status, author, created_at, published_at, created_by")
-          .order("created_at", { ascending: false });
+        const { data, error } = await d1("documents").select(
+          "id, title, type, tracking_number, status, author, created_at, published_at, created_by",
+          "",
+          [],
+          "created_at DESC"
+        );
         if (error) {
           console.error("Error fetching documents for dashboard:", error);
           return [];
@@ -82,7 +85,7 @@ export default function AdminPage() {
       if (allDocs) {
         const total = allDocs.length;
         const pending = allDocs.filter((d: any) => d.status === "pending").length;
-        
+
         // Count published this month
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

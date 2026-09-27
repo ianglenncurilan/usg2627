@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import AdminSidebar from "../../components/AdminSidebar";
 import Modal from "../../components/Modal";
@@ -90,11 +91,13 @@ export default function AdminUsersPage() {
         if (json.success && json.users && Array.isArray(json.users)) {
           return json.users;
         } else {
-          // Fallback to direct Supabase fetch from user_profiles table
-          const { data } = await supabase
-            .from("user_profiles")
-            .select("id, user_id, email, full_name, role, is_verified, created_at")
-            .order("created_at", { ascending: false });
+          // Fallback to direct D1 fetch from user_profiles table
+          const { data } = await d1("user_profiles").select(
+            "id, user_id, email, full_name, role, is_verified, created_at",
+            "",
+            [],
+            "created_at DESC"
+          );
 
           return data || [];
         }
@@ -201,10 +204,7 @@ export default function AdminUsersPage() {
 
       if (!json.success) {
         // Fallback update
-        await supabase
-          .from("user_profiles")
-          .update({ is_verified: newVerifiedStatus })
-          .eq("id", user.id);
+        await d1("user_profiles").update({ is_verified: newVerifiedStatus }, "id = ?", [user.id]);
       }
 
       invalidateCache("admin_users_list");
@@ -239,10 +239,7 @@ export default function AdminUsersPage() {
       const json = await res.json();
 
       if (!json.success) {
-        await supabase
-          .from("user_profiles")
-          .update({ role: newRole })
-          .eq("id", user.id);
+        await d1("user_profiles").update({ role: newRole }, "id = ?", [user.id]);
       }
 
       invalidateCache("admin_users_list");
@@ -266,21 +263,8 @@ export default function AdminUsersPage() {
         { method: "DELETE", headers: authHeaders }
       );
 
-      // 2. Direct RPC fallback call to permanently delete from auth.users database
-      try {
-        await supabase.rpc("delete_supabase_user", {
-          target_email: deletingUser.email || "",
-          target_user_id: deletingUser.user_id || deletingUser.id || null,
-        });
-      } catch (rpcErr) {
-        console.warn("delete_supabase_user client fallback note:", rpcErr);
-      }
-
-      // 3. Delete from public.user_profiles table
-      await supabase
-        .from("user_profiles")
-        .delete()
-        .or(`id.eq.${deletingUser.id},email.eq.${deletingUser.email}`);
+      // 2. Delete from D1 user_profiles table
+      await d1("user_profiles").delete("id = ? OR email = ?", [deletingUser.id, deletingUser.email]);
 
       invalidateCache("admin_users_list");
 

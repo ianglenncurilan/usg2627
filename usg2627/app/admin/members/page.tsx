@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { invalidateCache, fetchWithCache } from "@/lib/cache";
 import { compressImageBeforeUpload, validateFileUploadSize } from "@/lib/imageUtils";
 import AdminSidebar from "../../components/AdminSidebar";
@@ -123,7 +124,7 @@ export default function AdminMembersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any | null>(null);
-  
+
   // Custom HCI Modals State
   const [deletingMember, setDeletingMember] = useState<any | null>(null);
   const [errorMessageModal, setErrorMessageModal] = useState<string | null>(null);
@@ -189,16 +190,16 @@ export default function AdminMembersPage() {
   const fetchMembers = async () => {
     try {
       const data = await fetchWithCache("admin_members_list", async () => {
-        const { data, error } = await supabase
-          .from("members")
-          .select("id, name, full_name, slug, role, role_badge, position, title, department, department_name, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at, updated_at")
-          .order("created_at", { ascending: false });
+        const { data, error } = await d1("members").select(
+          "id, name, full_name, slug, role, role_badge, position, title, department, department_name, profile_url, phone_number, email, room_address, facebook_url, filed_bills, created_at, updated_at",
+          "",
+          [],
+          "created_at DESC"
+        );
 
         if (error) {
           console.error("Error fetching members:", error);
-          if (error.message && (error.message.includes("relation") || error.message.includes("cache"))) {
-            setDbError(true);
-          }
+          setDbError(true);
           return [];
         }
         setDbError(false);
@@ -206,12 +207,26 @@ export default function AdminMembersPage() {
       });
 
       if (data && data.length > 0) {
-        const mappedData = data.map((m: any) => ({
-          ...m,
-          name: m.name || m.full_name || "USG Member",
-          role: m.role || m.position || "USG Member",
-          role_badge: m.role_badge || m.role || "USG EXECUTIVE",
-        }));
+        const mappedData = data.map((m: any) => {
+          let bills = [];
+          if (typeof m.filed_bills === "string") {
+            try {
+              bills = JSON.parse(m.filed_bills);
+            } catch {
+              bills = [];
+            }
+          } else if (Array.isArray(m.filed_bills)) {
+            bills = m.filed_bills;
+          }
+
+          return {
+            ...m,
+            filed_bills: bills,
+            name: m.name || m.full_name || "USG Member",
+            role: m.role || m.position || "USG Member",
+            role_badge: m.role_badge || m.role || "USG EXECUTIVE",
+          };
+        });
         setMembersList(mappedData);
       } else {
         setMembersList(initialSeedMembers);
@@ -303,8 +318,8 @@ export default function AdminMembersPage() {
 
       const filteredBills = formData.has_filed_bills
         ? formData.filed_bills.filter(
-            (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
-          )
+          (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
+        )
         : [];
 
       const generatedSlug = formData.name
@@ -336,20 +351,17 @@ export default function AdminMembersPage() {
         newRecord.created_by = user.id;
       }
 
-      const { data: insertedData, error: insertError } = await supabase
-        .from("members")
-        .insert(newRecord)
-        .select("id");
+      const { error: insertError } = await d1("members").insert(newRecord);
 
       if (insertError) {
-        console.error("Supabase insert error details:", insertError);
-        setErrorMessageModal(`Supabase Database Error: ${insertError.message}\n\nPlease make sure to execute the updated 014_create_or_update_members_table.sql migration script in your Supabase SQL Editor.`);
+        console.error("D1 insert error details:", insertError);
+        setErrorMessageModal(`Cloudflare D1 Error: ${insertError.message}`);
         setDbError(true);
       } else {
         invalidateCache("cabinet_members");
         invalidateCache("legislative_members");
         invalidateCache("admin_members_list");
-        showToast("USG Member added successfully to Supabase database!");
+        showToast("USG Member added successfully to Cloudflare D1 database!");
         setDbError(false);
         await fetchMembers();
         resetForm();
@@ -406,8 +418,8 @@ export default function AdminMembersPage() {
 
       const filteredBills = formData.has_filed_bills
         ? formData.filed_bills.filter(
-            (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
-          )
+          (b) => b.title.trim() !== "" || b.number.trim() !== "" || b.description?.trim() !== ""
+        )
         : [];
 
       const generatedSlug = formData.name
@@ -436,19 +448,26 @@ export default function AdminMembersPage() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from("members")
-        .update(updatedFields)
-        .eq("id", editingItem.id);
+      if (editingItem.profile_url && editingItem.profile_url !== avatarUrl && editingItem.profile_url.startsWith("http")) {
+        try {
+          await fetch("/api/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fileUrl: editingItem.profile_url }),
+          });
+        } catch { }
+      }
+
+      const { error } = await d1("members").update(updatedFields, "id = ?", [editingItem.id]);
 
       if (error) {
-        console.error("Supabase update error:", error);
-        setErrorMessageModal(`Supabase Update Error: ${error.message}`);
+        console.error("D1 update error:", error);
+        setErrorMessageModal(`D1 Update Error: ${error.message}`);
       } else {
         invalidateCache("cabinet_members");
         invalidateCache("legislative_members");
         invalidateCache("admin_members_list");
-        showToast("Member updated successfully in Supabase database!");
+        showToast("Member updated successfully in Cloudflare D1 database!");
         await fetchMembers();
         setIsEditModalOpen(false);
         setEditingItem(null);
@@ -465,10 +484,17 @@ export default function AdminMembersPage() {
   const confirmDeleteMember = async () => {
     if (!deletingMember) return;
     try {
-      const { error } = await supabase
-        .from("members")
-        .delete()
-        .eq("id", deletingMember.id);
+      if (deletingMember.profile_url && deletingMember.profile_url.startsWith("http")) {
+        try {
+          await fetch("/api/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fileUrl: deletingMember.profile_url }),
+          });
+        } catch { }
+      }
+
+      const { error } = await d1("members").delete("id = ?", [deletingMember.id]);
 
       if (error) {
         console.warn("Delete DB error:", error.message);
@@ -726,7 +752,7 @@ export default function AdminMembersPage() {
                   <tbody className="divide-y divide-slate-100">
                     {displayedMembers.map((member) => (
                       <tr key={member.id} className="hover:bg-slate-50/70 transition">
-                        
+
                         {/* Member Info */}
                         <td className="px-6 py-4 align-top">
                           <div className="flex items-center gap-3">

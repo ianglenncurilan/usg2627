@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { fetchWithCache, invalidateCache } from "@/lib/cache";
 import GridShell from "../components/GridShell";
 import { motion, AnimatePresence } from "framer-motion";
@@ -79,17 +80,21 @@ export default function CalendarPage() {
       try {
         if (skipCache) invalidateCache("calendar_events_list");
         const data = await fetchWithCache("calendar_events_list", async () => {
-          const { data, error } = await supabase
-            .from("calendar_events")
-            .select("id, title, description, event_date, location, category")
-            .order("event_date", { ascending: true });
+          const { data, error } = await d1("calendar_events").select(
+            "id, title, description, event_date, location, category",
+            "",
+            [],
+            "event_date ASC"
+          );
 
           if (error) {
-            // If calendar_events table doesn't exist yet in Supabase, fallback to events table
-            const { data: fallbackData } = await supabase
-              .from("events")
-              .select("id, title, description, event_date, location, category")
-              .order("event_date", { ascending: true });
+            // Fallback to events table
+            const { data: fallbackData } = await d1("events").select(
+              "id, title, description, event_date, location, category",
+              "",
+              [],
+              "event_date ASC"
+            );
             return fallbackData || null;
           }
           return data || [];

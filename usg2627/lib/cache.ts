@@ -6,7 +6,7 @@ type CacheEntry<T> = {
 };
 
 const memoryCache = new Map<string, CacheEntry<any>>();
-const DEFAULT_TTL_MS = 5 * 1000; // 5 seconds TTL for instant responsiveness when updating database records
+const DEFAULT_TTL_MS = 30 * 1000; // 30 seconds TTL for instant page loads and zero lag navigation
 
 export async function fetchWithCache<T>(
   key: string,

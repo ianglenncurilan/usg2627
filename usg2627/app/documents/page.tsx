@@ -6,8 +6,10 @@ import Link from "next/link";
 import GridShell from "../components/GridShell";
 import { DropdownMenuSelect } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { fetchWithCache } from "@/lib/cache";
 import { motion, AnimatePresence } from "framer-motion";
+import { Ripple, PageSkeleton } from "@/app/components/Skeletons";
 import ExpandableSearchBar from "@/components/ui/expandable-search-bar";
 
 const documentTypes = [
@@ -148,10 +150,12 @@ function DocumentsContent() {
   const fetchDocuments = async () => {
     try {
       const data = await fetchWithCache("public_documents", async () => {
-        const { data, error } = await supabase
-          .from("documents")
-          .select("id, title, tracking_number, issuing_body, type, status, published_at, created_at, file_url")
-          .order("created_at", { ascending: false });
+        const { data, error } = await d1("documents").select(
+          "id, title, tracking_number, issuing_body, type, status, published_at, created_at, file_url",
+          "",
+          [],
+          "created_at DESC"
+        );
         if (error) throw error;
         return data || [];
       });
@@ -206,11 +210,7 @@ function DocumentsContent() {
   if (loading) {
     return (
       <GridShell>
-        <main className="mx-auto max-w-7xl px-6 py-20">
-          <div className="flex items-center justify-center">
-            <div className="h-12 w-12 border-4 border-[#173490] border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        </main>
+        <PageSkeleton text="Loading Public Documents..." />
       </GridShell>
     );
   }
@@ -419,10 +419,7 @@ export default function DocumentsPage() {
     <Suspense
       fallback={
         <GridShell>
-          <main className="mx-auto max-w-7xl px-6 py-20 text-center">
-            <div className="h-12 w-12 border-4 border-[#173490] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-600">Loading Documents...</p>
-          </main>
+          <PageSkeleton text="Loading Documents..." />
         </GridShell>
       }
     >

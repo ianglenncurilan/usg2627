@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { d1 } from "@/lib/d1";
 import { fetchWithCache, invalidateCache } from "@/lib/cache";
 import GridShell from "../components/GridShell";
 import { motion, AnimatePresence } from "framer-motion";
@@ -210,10 +211,12 @@ export default function EventsPage() {
       try {
         if (skipCache) invalidateCache("events_list");
         const data = await fetchWithCache("events_list", async () => {
-          const { data, error } = await supabase
-            .from("events")
-            .select("id, title, description, event_date, location")
-            .order("event_date", { ascending: false });
+          const { data, error } = await d1("events").select(
+            "id, title, description, event_date, location",
+            "",
+            [],
+            "event_date DESC"
+          );
           if (error) throw error;
           return data || [];
         });

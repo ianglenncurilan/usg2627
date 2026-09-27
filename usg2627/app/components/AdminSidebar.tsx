@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { motion, AnimatePresence } from "framer-motion";
 
 const navigation = [
   {
@@ -93,10 +94,12 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
 
-  // Close mobile drawer when route changes
+  // Close mobile drawer and reset loading state when route changes
   useEffect(() => {
     setMobileOpen(false);
+    setNavigatingHref(null);
   }, [pathname]);
 
   // Handle escape key
@@ -136,7 +139,7 @@ export default function AdminSidebar() {
 
     const resetInactivityTimer = () => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(performAutoLogout, 60000); // 1 minute (60,000 ms)
+      timer = setTimeout(performAutoLogout, 60000);
     };
 
     const activityEvents = [
@@ -148,10 +151,8 @@ export default function AdminSidebar() {
       "click",
     ];
 
-    // Initialize timer
     resetInactivityTimer();
 
-    // Listen for any user activity
     activityEvents.forEach((evt) => {
       window.addEventListener(evt, resetInactivityTimer, { passive: true });
     });
@@ -172,9 +173,9 @@ export default function AdminSidebar() {
   const navContent = (
     <>
       {/* Sidebar Header Brand with USG White Logo */}
-      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5 select-none">
         <img
-          src="/usgwhite.png"
+          src="/usg-icon.webp"
           alt="USG Logo"
           className="h-10 w-auto object-contain shrink-0"
         />
@@ -194,22 +195,54 @@ export default function AdminSidebar() {
           {navigation.map((item) => {
             const isActive =
               pathname === item.href || (pathname === "/admin" && item.name === "Dashboard");
+            const isNavigating = navigatingHref === item.href;
+
             return (
-              <li key={item.name}>
+              <motion.li
+                key={item.name}
+                whileHover={{ x: 3 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="relative"
+              >
                 <Link
                   href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${isActive
-                    ? "bg-[#E7C609] text-[#173490] font-bold shadow-md shadow-amber-500/20"
-                    : "text-slate-200 hover:bg-white/10 hover:text-white"
-                    }`}
+                  prefetch={true}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    if (pathname !== item.href) {
+                      setNavigatingHref(item.href);
+                    }
+                  }}
+                  className={`relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "text-[#173490] font-bold shadow-md shadow-amber-500/20"
+                      : "text-slate-200 hover:text-white"
+                  }`}
                 >
-                  <span className={isActive ? "text-[#173490]" : "text-slate-300"}>
+                  {/* Smooth Animated Active Pill Background */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeAdminPill"
+                      className="absolute inset-0 bg-[#E7C609] rounded-xl z-0"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+
+                  {/* Icon */}
+                  <span className={`relative z-10 ${isActive ? "text-[#173490]" : "text-slate-300"}`}>
                     {item.icon}
                   </span>
-                  <span>{item.name}</span>
+
+                  {/* Name & Loading Indicator */}
+                  <span className="relative z-10 flex-1 flex items-center justify-between">
+                    <span>{item.name}</span>
+                    {isNavigating && !isActive && (
+                      <span className="h-2 w-2 rounded-full bg-[#E7C609] animate-ping" />
+                    )}
+                  </span>
                 </Link>
-              </li>
+              </motion.li>
             );
           })}
         </ul>
@@ -217,9 +250,11 @@ export default function AdminSidebar() {
 
       {/* Footer / Logout */}
       <div className="border-t border-white/10 p-4 space-y-3">
-        <button
+        <motion.button
+          whileHover={{ x: 2 }}
+          whileTap={{ scale: 0.97 }}
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-red-500/20 hover:text-red-300"
+          className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-red-500/20 hover:text-red-300 cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -237,7 +272,7 @@ export default function AdminSidebar() {
             <line x1="21" x2="9" y1="12" y2="12" />
           </svg>
           Logout
-        </button>
+        </motion.button>
         <div className="flex items-center justify-between px-2 text-[11px] text-slate-400">
           <span>USG System</span>
           <span>v2.4.0</span>
@@ -268,7 +303,7 @@ export default function AdminSidebar() {
           </button>
           <div className="flex items-center gap-2">
             <img
-              src="/usgwhite.png"
+              src="/usg-icon.webp"
               alt="USG Logo"
               className="h-8 w-auto object-contain"
             />
@@ -284,40 +319,52 @@ export default function AdminSidebar() {
         </Link>
       </div>
 
-      {/* 2. Mobile Drawer & Backdrop (Visible when mobileOpen is true on < md) */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
-            onClick={() => setMobileOpen(false)}
-          />
+      {/* 2. Mobile Drawer & Backdrop */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
 
-          {/* Drawer Panel */}
-          <aside className="relative flex w-72 max-w-[85vw] flex-col bg-[#173490] text-white shadow-2xl z-10 animate-in slide-in-from-left duration-250">
-            {/* Close Button Header */}
-            <div className="absolute top-3.5 right-3.5 z-20">
-              <button
-                onClick={() => setMobileOpen(false)}
-                aria-label="Close menu"
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+            {/* Drawer Panel */}
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 250 }}
+              className="relative flex w-72 max-w-[85vw] flex-col bg-[#173490] text-white shadow-2xl z-10"
+            >
+              {/* Close Button Header */}
+              <div className="absolute top-3.5 right-3.5 z-20">
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close menu"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 active:scale-95 transition cursor-pointer"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-            {navContent}
-          </aside>
-        </div>
-      )}
+              {navContent}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* 3. Desktop Persistent Sidebar (Visible only on md+) */}
       <aside className="hidden md:flex h-screen w-64 flex-col bg-[#173490] text-white sticky top-0 shrink-0 border-r border-blue-900 shadow-lg">
