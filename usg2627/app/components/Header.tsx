@@ -116,10 +116,10 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
     if (mobileMenuOpen) {
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
 
@@ -216,7 +216,7 @@ export default function Header({ subtitle = "Official Portal" }: HeaderProps) {
 
         {/* Sliding Drawer Panel */}
         <div
-          className={`fixed inset-y-0 right-0 z-50 flex h-full max-h-[100dvh] w-80 max-w-[85vw] flex-col bg-[#02076C] text-white shadow-2xl border-l border-white/15 transition-transform duration-300 ease-out will-change-transform ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          className={`fixed inset-y-0 right-0 z-50 flex h-full max-h-[100dvh] w-80 max-w-[85vw] flex-col bg-[#02076C] text-white shadow-2xl border-l border-white/15 transition-transform duration-300 ease-out will-change-transform ${mobileMenuOpen ? "translate-x-0 visible" : "translate-x-full invisible"
             }`}
         >
           {/* Drawer Header */}
