@@ -28,7 +28,7 @@ function getApiToken(): string {
   } catch {}
 
   // Production Serverless Fallback Token to ensure Cloudflare D1 REST API queries succeed on Vercel
-  return "cfoat_bC_iaSaAEEuGEJXN0Sd67DIJ0L1CJEQVpp7vBs2Z9t8.RprnvbpBXu-km8U-rQkIXw5brI2tdk3u4ylfMyDJoWI";
+  return "cfoat_aTmDKIv2VFgcSwom8eZ3HHCtYo5LmOFMB8lIJbqZgd4.tatYkQTiO-dqgJRIyQQxxOi6NrmV_L7xOUaaXaQWTxA";
 }
 
 // In-Memory High Performance Server Cache
@@ -72,13 +72,21 @@ export async function executeD1QueryServer(sql: string, params: any[] = []) {
           serverCache.set(cacheKey, { data: results, timestamp: Date.now() });
         }
         return results;
+      } else if (json.errors && json.errors.length > 0) {
+        console.error("Cloudflare D1 REST API Error:", json.errors);
       }
     } catch (err) {
-      console.warn("REST API fallback to Wrangler CLI:", err);
+      console.warn("REST API request failed:", err);
     }
   }
 
-  // 3. Fallback via Wrangler CLI
+  // Skip Wrangler CLI subprocess fallback on Vercel serverless environment
+  if (process.env.VERCEL === "1") {
+    console.error("Cloudflare D1 REST API failed on Vercel deployment.");
+    return [];
+  }
+
+  // 3. Fallback via Wrangler CLI (Local dev environment only)
   try {
     const escapeSingleQuotes = (str: string) => str.replace(/'/g, "''");
 
