@@ -27,8 +27,7 @@ function getApiToken(): string {
     }
   } catch {}
 
-  // Production Serverless Fallback Token to ensure Cloudflare D1 REST API queries succeed on Vercel
-  return "cfoat_aTmDKIv2VFgcSwom8eZ3HHCtYo5LmOFMB8lIJbqZgd4.tatYkQTiO-dqgJRIyQQxxOi6NrmV_L7xOUaaXaQWTxA";
+  return "";
 }
 
 // In-Memory High Performance Server Cache
