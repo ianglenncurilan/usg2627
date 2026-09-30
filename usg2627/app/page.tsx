@@ -374,7 +374,7 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-6 py-12">
+      <main className="w-full max-w-full pb-16 flex flex-col">
 
         {/* Featured Story Carousel (Fixed Height Container to guarantee ZERO layout movement) */}
         {currentStory && (
@@ -383,7 +383,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-12 mb-12 sm:mb-16 shrink-0"
+            className="mx-auto max-w-7xl px-4 sm:px-6 w-full mt-8 sm:mt-12 mb-12 sm:mb-16 shrink-0"
           >
             <div className="relative w-full h-[720px] sm:h-[640px] lg:h-[540px] overflow-hidden">
               <AnimatePresence initial={false}>
@@ -516,14 +516,14 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-8 sm:mt-12"
+          className="mt-4 w-full max-w-full"
         >
           <SectionHeader
             title="Quick Access Document Portal"
             subtitle="Browse official USG documents by category"
           />
 
-          <div className="space-y-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 w-full space-y-6 mt-6 sm:mt-8">
             {/* Top Row: 4 Cards */}
             <motion.div
               variants={containerVariants}
@@ -604,14 +604,15 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-20"
+          className="mt-12 sm:mt-16 w-full max-w-full"
         >
           <SectionHeader
             title="Recent Documents"
             subtitle="Latest official documents and releases"
             action={{ label: "View Archive", href: "/documents" }}
           />
-          <motion.div
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 w-full mt-6 sm:mt-8">
+            <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -677,6 +678,7 @@ export default function Home() {
               ))
             )}
           </motion.div>
+          </div>
         </motion.section>
 
         {/* News & Press Releases */}
@@ -685,100 +687,102 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-20"
+          className="mt-12 sm:mt-16 w-full max-w-full"
         >
           <SectionHeader
             title="News & Press Releases"
             subtitle="Latest updates and announcements from USG"
           />
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={newsPage}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="grid gap-6 md:grid-cols-3"
-            >
-              {displayedNewsItems.map((news) => (
-                <motion.div
-                  key={news.title}
-                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between"
-                >
-                  <div>
-                    {news.imageSrc ? (
-                      <div className="mb-4 h-64 sm:h-72 md:h-80 rounded-xl overflow-hidden relative border border-slate-100 shadow-sm">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={news.imageSrc} alt={news.title} className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className="mb-4 h-64 sm:h-72 md:h-80 rounded-xl bg-gradient-to-br from-[#173490] to-[#1e4bb8]" />
-                    )}
-                    <span className="text-xs font-semibold text-slate-500">
-                      {news.date}
-                    </span>
-                    <h3 className="mt-2 text-lg font-bold text-slate-900">
-                      {news.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-600 line-clamp-3">
-                      {news.description}
-                    </p>
-                  </div>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 w-full mt-6 sm:mt-8">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={newsPage}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="grid gap-6 md:grid-cols-3"
+              >
+                {displayedNewsItems.map((news) => (
+                  <motion.div
+                    key={news.title}
+                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between"
+                  >
+                    <div>
+                      {news.imageSrc ? (
+                        <div className="mb-4 h-64 sm:h-72 md:h-80 rounded-xl overflow-hidden relative border border-slate-100 shadow-sm">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={news.imageSrc} alt={news.title} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="mb-4 h-64 sm:h-72 md:h-80 rounded-xl bg-gradient-to-br from-[#173490] to-[#1e4bb8]" />
+                      )}
+                      <span className="text-xs font-semibold text-slate-500">
+                        {news.date}
+                      </span>
+                      <h3 className="mt-2 text-lg font-bold text-slate-900">
+                        {news.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-600 line-clamp-3">
+                        {news.description}
+                      </p>
+                    </div>
 
-                  <div className="mt-4">
-                    {news.linkHref ? (
-                      <a
-                        href={news.linkHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]"
-                      >
-                        Read Full Article →
-                      </a>
-                    ) : (
-                      <button className="text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]">
-                        Read Full Article →
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
+                    <div className="mt-4">
+                      {news.linkHref ? (
+                        <a
+                          href={news.linkHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]"
+                        >
+                          Read Full Article →
+                        </a>
+                      ) : (
+                        <button className="text-sm font-semibold text-[#173490] transition hover:text-[#E7C609]">
+                          Read Full Article →
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
 
-          {totalNewsPages > 1 && (
-            <div className="mt-10 flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => setNewsPage((p) => Math.max(1, p - 1))}
-                      disabled={newsPage === 1}
-                      className={newsPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: totalNewsPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        isActive={page === newsPage}
-                        onClick={() => setNewsPage(page)}
-                      >
-                        {page}
-                      </PaginationLink>
+            {totalNewsPages > 1 && (
+              <div className="mt-10 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setNewsPage((p) => Math.max(1, p - 1))}
+                        disabled={newsPage === 1}
+                        className={newsPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                      />
                     </PaginationItem>
-                  ))}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => setNewsPage((p) => Math.min(totalNewsPages, p + 1))}
-                      disabled={newsPage === totalNewsPages}
-                      className={newsPage === totalNewsPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+                    {Array.from({ length: totalNewsPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          isActive={page === newsPage}
+                          onClick={() => setNewsPage(page)}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setNewsPage((p) => Math.min(totalNewsPages, p + 1))}
+                        disabled={newsPage === totalNewsPages}
+                        className={newsPage === totalNewsPages ? "opacity-50 pointer-events-none" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </div>
         </motion.section>
       </main>
     </GridShell>

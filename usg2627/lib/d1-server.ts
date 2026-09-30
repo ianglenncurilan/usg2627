@@ -25,7 +25,7 @@ function getApiToken(): string {
         return cachedToken;
       }
     }
-  } catch {}
+  } catch { }
 
   return "";
 }

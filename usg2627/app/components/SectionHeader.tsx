@@ -20,7 +20,7 @@ export default function SectionHeader({
   children,
 }: SectionHeaderProps) {
   return (
-    <div className="w-full max-w-full mb-10 bg-white px-6 py-8 sm:py-10 text-center shadow-sm border-y border-slate-200/80 overflow-hidden select-none relative">
+    <div className="w-full max-w-full my-6 sm:my-8 bg-white px-4 sm:px-6 py-8 sm:py-10 text-center shadow-sm border-y border-slate-200/80 overflow-hidden select-none relative">
       {/* Distinct Large Curved Background Circles in subtle blue tint */}
       <div className="absolute -top-[200px] -left-[160px] w-[520px] h-[520px] rounded-full bg-[#02076C]/[0.04] pointer-events-none" />
       <div className="absolute -bottom-[220px] -right-[140px] w-[500px] h-[500px] rounded-full bg-[#02076C]/[0.04] pointer-events-none" />
